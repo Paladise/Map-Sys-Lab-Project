@@ -1,5 +1,6 @@
 import cv2 as cv
 import numpy as np
+import math
 
 
 def main():    
@@ -14,7 +15,21 @@ def main():
     
     # Copy edges to the images that will display the results in BGR
     cdst = cv.cvtColor(dst, cv.COLOR_GRAY2BGR)
+    cdst_reg = np.copy(cdst)
     
+    lines_reg = cv.HoughLines(dst, 0.5, np.pi / 180, 10, None)
+
+    if lines_reg is not None:
+        for i in range(0, len(lines_reg)):
+            rho = lines_reg[i][0][0]
+            theta = lines_reg[i][0][1]
+            a = math.cos(theta)
+            b = math.sin(theta)
+            x0 = a * rho
+            y0 = b * rho
+            pt1 = (int(x0 + 1000*(-b)), int(y0 + 1000*(a)))
+            pt2 = (int(x0 - 1000*(-b)), int(y0 - 1000*(a)))
+            cv.line(cdst_reg, pt1, pt2, (0,0,255), 1)
     
     lines = cv.HoughLinesP(dst, 0.5, np.pi / 180, 10, None, 10, 2) # Probabilitistic Hough Lines Transformation
     
@@ -25,6 +40,7 @@ def main():
 
     # cv.imshow("Source", src)
     cv.imshow("Detected Lines", cdst)
+    cv.imshow("Detect lines - reg", cdst_reg)
     cv.imwrite("detected_lines.jpg", cdst)
 
     cv.waitKey()

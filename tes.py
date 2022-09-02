@@ -58,11 +58,7 @@ for x in range(pil_img.width):
             pix[x, y] = (0, 0, 0) # Black
         elif max(r, g, b) - min(r, g, b) > 20 and max(r, g, b) == b:
             pix[x, y] = (255, 255, 255)
-        
-        if prev != pix[x, y] and pix[x, y] != (255, 255, 255) and pix[x, y] != (0, 0, 0):
-            prev = pix[x, y]
-            print(pix[x, y])
 
 pil_img.show()
-# pil_img.save("good.png")
+pil_img.save("good_map.png")
 cv.waitKey()

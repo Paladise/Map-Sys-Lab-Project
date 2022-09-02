@@ -1,21 +1,19 @@
-import tkinter
+import tkinter as tk
 from PIL import Image, ImageTk
-from tkinter import *
-from PIL import ImageTk, Image
 
-root = tkinter.Tk()
+root = tk.Tk()
 
-img = Image.open("detected_lines.jpg")
-pix = img.load()
+image = Image.open("detected_lines.png")
+pix = image.load()
 
 # Create an object of tkinter ImageTk
-tk_img = ImageTk.PhotoImage(img)
+tk_image = ImageTk.PhotoImage(image)
 
-label = Label(root, image = tk_img)
+label = tk.Label(root, image = tk_image)
 label.pack()
 root.update()
 
-q = [(x, y) for x in range(img.width) for y in range(img.height)]
+q = [(x, y) for x in range(image.width) for y in range(image.height)]
 count = 0
 
 while q:
@@ -26,55 +24,39 @@ while q:
         pix[x, y] = (0, 0, 255) # Make pixel actual blue
         count += 1
         if count == 1000:
-            print("updated")
             count = 0
             # Create an object of tkinter ImageTk
-            img.save("temp.jpg")
-            tk_img = ImageTk.PhotoImage(Image.open("temp.jpg"))
-            label.configure(image = tk_img)
+            tk_image = ImageTk.PhotoImage(image)
+            label.configure(image = tk_image)
             label.pack()
             root.update()
+        
+        go_through = (-3, -2, -1, 1, 2, 3)
 
         # Loop through neighboring pixels 
-        for x1 in (-2, -1, 1, 2):
-            for y1 in (-2, -1, 1, 2):
+        for x1 in go_through:
+            for y1 in go_through:
                 try:
                     r, g, b = pix[x + x1, y + y1]
                 except:
                     continue
-                if abs(r - 255) + abs(g - 255) + abs(b - 255) < 220: # If whiteish pixel
+                if abs(r - 255) + abs(g - 255) + abs(b - 255) < 300: # If whiteish pixel
                     pix[x + x1, y + y1] = (0, 0, 255) # Make pixel blue
                     q.append((x + x1, y + y1)) # Add to q
 
 
 # Remove extra whiteish pixels
 
-for x in range(img.width):
-    for y in range(img.height):
+for x in range(image.width):
+    for y in range(image.height):
         
         if pix[x, y] != (0, 0, 255):
             pix[x, y] = (0, 0, 0)
         else:
             pix[x, y] = (0, 0, 255)
         
-
-img.show()
-img.save("only_walls_finalized.jpg")
-
-new_img = Image.open("only_walls_finalized.jpg")
-new_img = new_img.convert("RGB")
-new_pix = new_img.load()
-
-for x in range(new_img.width):
-    for y in range(new_img.height):
-        r, g, b = new_pix[x, y]      
-        if r + g + abs(b - 255) < 100:
-            new_pix[x, y] = (255, 0, 0)
-        else:
-            new_pix[x, y] = (0, 0, 0)
-
-new_img.save("FINALIZED.jpg")
-print("Finished")
+image.show()
+image.save("only_walls.png")
 
 root.mainloop()
         

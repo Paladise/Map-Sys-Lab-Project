@@ -1,10 +1,8 @@
 import colorsys
 import random
-import pytesseract
 import sys
 from PIL import Image
 
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract"
 sys.setrecursionlimit(10000) # We don't talk about this line
 
 
@@ -62,8 +60,6 @@ for x in range(width):
         else:
             pixels[x, y] = (255, 255, 255)
 
-# image.save("black_and_white.png")
-
 # Drawing boxes around potential candidates
 
 loaded_pixels = set()
@@ -92,3 +88,48 @@ for x in range(width):
        
 image.show()
 image.save("custom_boxes.png")
+
+# Save & Replace Characters
+
+def save_and_replace_char(x1, x2, y1, y2):
+    padding = 3
+    image2 = Image.new("RGB", (x2 - x1 + 1 + 2*padding, y2 - y1 + 1 + 2*padding), color = "white")
+    pixels2 = image2.load()
+    for x in range(x1 + 1, x2):
+        for y in range(y1 + 1, y2):
+            print(f"x: {x}, y: {y}, x1: {x1}, y1: {y1}")
+            pixels2[x - x1 + padding, y - y1 + padding] = pixels[x, y]
+            print("color:", pixels[x, y])
+    image2.show()
+    exit()
+
+used_rectangles = set()
+
+for rectangle in rectangles:
+    used_rectangles.add(rectangle)
+    if len(used_rectangles) <= 6:
+        continue
+    ax1, ax2, ay1, ay2 = rectangle
+
+    overlap = False
+
+    for rectangle2 in (rectangles - used_rectangles):
+        bx1, bx2, by1, by2 = rectangle2
+
+        if ax1 <= bx2 and ax2 >= bx1 and ay1 >= by2 and ay2 <= by1: # Rectangles overlap
+            overlap = True
+            area_a = (ax2 - ax1) * (ay2 - ay1)
+            area_b = (bx2 - bx1) * (by2 - by1)
+
+            if area_a < area_b:
+                save_and_replace_char(ax1, ax2, ay1, ay2)
+                save_and_replace_char(bx1, bx2, by1, by2)
+            else:
+                save_and_replace_char(bx1, bx2, by1, by2)
+                save_and_replace_char(ax1, ax2, ay1, ay2)
+
+            break
+
+    if not overlap:
+        save_and_replace_char(ax1, ax2, ay1, ay2)
+                    

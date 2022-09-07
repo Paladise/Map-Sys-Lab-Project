@@ -163,6 +163,19 @@ for rectangle in rectangles:
         save_and_replace_char(ax1, ax2, ay1, ay2)
 
 """
+BEFORE identifying boxes for characters, go through key
+In example image, this includes:
+- Restroom
+- Elevator
+- Signage
+- Door
+
+Maybe ask user to take another picture of key if applicable?
+
+Go through image and crop image of same size to compare
+If within certain threshold, save those coordinates and crop out of original image
+- Should help deal with the annoyingness of it later
+
 Save coordinates of each box identified to be a character
 Go through each set of coordinates
 

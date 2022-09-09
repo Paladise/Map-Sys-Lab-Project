@@ -1,12 +1,22 @@
 import colorsys 
+import pickle
 import pytesseract
 import random
 import sys
+import time
 import tkinter as tk
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageDraw, ImageFont
+
+USING_TESSERACT = True
 
 sys.setrecursionlimit(10000) # We don't talk about this line
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract"
+
+if USING_TESSERACT:
+    pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract"
+    box_stats = {}
+else:
+    with open('boxes.pickle', 'rb') as handle:
+        box_stats = pickle.load(handle)
 
 root = tk.Tk()
 
@@ -38,12 +48,12 @@ def flood(x, y, found, min_x, max_x, min_y, max_y):
     return found, min_x, max_x, min_y, max_y
 
 
-def draw_line(x1, x2, y1, y2, r, g, b):
+def draw_line(p, x1, x2, y1, y2, r, g, b):
     
     for x in range(x1, x2 + 1):
         for y in range(y1, y2 + 1):
             try: # Crude way of making sure pixel is not outside of image
-                pixels[x, y] = (r, g, b)
+                p[x, y] = (r, g, b)
             except:
                 pass
 
@@ -59,15 +69,17 @@ width, height = image.width, image.height
 for x in range(width):
     for y in range(height):
         r, g, b = pixels[x, y]
-        if 0.2126*r + 0.7152*g + 0.0722*b < 255/2: 
+        if 0.2126*r + 0.7152*g + 0.0722*b < 150:
             pixels[x, y] = (0, 0, 0)
         else:
             pixels[x, y] = (255, 255, 255)
 
+image.save("black_and_white.png")
+
 # Drawing boxes around potential candidates
 
 loaded_pixels = set()
-rectangles = set()
+boxes = set()
 for x in range(width):
     # print(width - x, "x left")
     for y in range(height):
@@ -81,20 +93,20 @@ for x in range(width):
         loaded_pixels.update(found)
 
         if 10 < len(found) and len(found) < 500 and x_len < 30 and y_len > 5 and y_len < 30: # Is appropriate size for character
-            print(f"Drawing box, {x_len} by {y_len} ==> {len(found)}")
+            # print(f"Drawing box, {x_len} by {y_len} ==> {len(found)}")
             min_x -= 1
             max_x += 1
             min_y -= 1 
             max_y += 1
-            rectangles.add((min_x, max_x, min_y, max_y))
+            boxes.add((min_x, max_x, min_y, max_y))
             h,s,l = random.random(), 0.5 + random.random()/2.0, 0.4 + random.random()/5.0
             r,g,b = [int(256*i) for i in colorsys.hls_to_rgb(h,l,s)]            
-            draw_line(min_x, max_x, min_y, min_y, r, g, b)
-            draw_line(max_x, max_x, min_y, max_y, r, g, b)
-            draw_line(min_x, max_x, max_y, max_y, r, g, b)
-            draw_line(min_x, min_x, min_y, max_y, r, g, b)
+            draw_line(pixels, min_x, max_x, min_y, min_y, r, g, b)
+            draw_line(pixels, max_x, max_x, min_y, max_y, r, g, b)
+            draw_line(pixels, min_x, max_x, max_y, max_y, r, g, b)
+            draw_line(pixels, min_x, min_x, min_y, max_y, r, g, b)
        
-image.show()
+# image.show()
 image.save("custom_boxes.png")
 
 # Save & Replace Characters
@@ -107,19 +119,31 @@ def save_and_replace_char(x1, x2, y1, y2):
         for y in range(y1 + 1, y2):
             pixels2[x - x1 + padding, y - y1 + padding] = pixels[x, y]
     image2 = image2.convert("L")
-    predict = pytesseract.image_to_string(
-     image2, config=("-c tessedit"
-                  "_char_whitelist=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-                  " --psm 10"
-                  " -l osd"
-                  " "))
-    tk_image = ImageTk.PhotoImage(image2.resize((250, 250)))
-    image_label.configure(image = tk_image)
-    caption_label.configure(text=f"Predicted as: {predict}")
-    image_label.pack()
-    caption_label.pack()
-    root.update()
-    return predict
+    if USING_TESSERACT:
+        predict = pytesseract.image_to_data(
+            image2, config=("-c tessedit"
+                            "_char_whitelist=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+                            " --psm 10"
+                            " -l osd"
+                            " "), output_type="data.frame")
+        predict = predict[predict.conf != -1]
+        try:
+            detected_char = str(predict["text"].iloc[0])[0]
+            confidence = predict["conf"].iloc[0]   
+        except:
+            detected_char = ""
+            confidence = -1 
+    else:
+        detected_char = box_stats[(x1, x2, y1, y2)][0]
+        confidence = box_stats[(x1, x2, y1, y2)][1]
+    # tk_image = ImageTk.PhotoImage(image2.resize((250, 250)))
+    # image_label.configure(image = tk_image)
+    # caption_label.configure(text=f"{detected_char}, {confidence}% confidence")
+    # image_label.pack()
+    # caption_label.pack()
+    # root.update()
+
+    return detected_char, confidence
 
 
 image_label = tk.Label(root)
@@ -129,38 +153,78 @@ image_label.pack()
 caption_label.pack()
 root.update()
 
-used_rectangles = []
-rectangles = sorted(list(rectangles), key = lambda r: (r[0], r[2], r[1], r[3]))
+def generate_names(cur_box, used_boxes, detected_name):
+    used_boxes.append(cur_box)
+    ax1, ax2, ay1, ay2 = cur_box
+    detected_char, confidence = save_and_replace_char(ax1, ax2, ay1, ay2)
+    global box_stats
+    box_stats[cur_box] = (detected_char, confidence)
+    if confidence > 69:
+        detected_name.append((cur_box, detected_char))
 
-for rectangle in rectangles:
-    used_rectangles.append(rectangle)
-    if len(used_rectangles) < 6:
+        for box in boxes:
+            if box in used_boxes:
+                continue
+                
+            bx1, bx2, by1, by2 = box
+
+            if abs(ay2 - by2) <= y_threshold and abs(ax2 - bx1) <= dist_between_letters: # Part of same word
+                used_boxes, detected_name = generate_names(box, used_boxes, detected_name)
+                break
+    
+    return used_boxes, detected_name
+
+used_boxes = []
+boxes = sorted(list(boxes), key = lambda b: (b[0], b[3]))
+dist_between_letters = 5
+y_threshold = 4
+
+for box in boxes:    
+    if box in used_boxes:
         continue
-    ax1, ax2, ay1, ay2 = rectangle
 
-    overlap = False
+    used_boxes, detected_name = generate_names(box, used_boxes, [])
+    if not detected_name:
+        continue
 
-    for rectangle2 in rectangles:
-        if rectangle2 in used_rectangles:
+    label = "".join([i[1] for i in detected_name])
+
+    # Change l's to 1's in room names
+    change = True
+    is_start = True
+    for i in range(len(label)):
+        if label[i] == "l":
             continue
-        bx1, bx2, by1, by2 = rectangle2
+        elif label[i].isnumeric() and is_start:
+            is_start = False
+        elif not is_start and not label[i].isnumeric():
+            change = False
+    if change:
+        label = "".join([i if i != "l" else "1" for i in label])
 
-        if ax1 <= bx2 and ax2 >= bx1 and ay1 >= by2 and ay2 <= by1: # Rectangles overlap
-            overlap = True
-            area_a = (ax2 - ax1) * (ay2 - ay1)
-            area_b = (bx2 - bx1) * (by2 - by1)
+    print("Found room:", label)
+    
+    # image3 = Image.open(file_name)
+    # pixels3 = image3.load()
+    # for i in detected_name:
+    #     x1, x2, y1, y2 = i[0]
+    #     font = ImageFont.truetype("arial", 45)
+        
+    #     draw_line(pixels3, x1, x2, y1, y1, 255, 0, 0)
+    #     draw_line(pixels3, x2, x2, y1, y2, 255, 0, 0)
+    #     draw_line(pixels3, x1, x2, y2, y2, 255, 0, 0)
+    #     draw_line(pixels3, x1, x1, y1, y2, 255, 0, 0)
+    # ImageDraw.Draw(image3).text((0, 0), f"{label}", (255, 0, 0), font = font)
+    # image3.show()
+    # tk_image = ImageTk.PhotoImage(image3.resize((1000, 600)))
+    # image_label.configure(image = tk_image)
+    # image_label.pack()
+    # root.update()
+    # time.sleep(3)
+    
 
-            if area_a < area_b:
-                save_and_replace_char(ax1, ax2, ay1, ay2)
-                save_and_replace_char(bx1, bx2, by1, by2)
-            else:
-                save_and_replace_char(bx1, bx2, by1, by2)
-                save_and_replace_char(ax1, ax2, ay1, ay2)
-
-            break
-
-    if not overlap:
-        save_and_replace_char(ax1, ax2, ay1, ay2)
+with open('boxes.pickle', 'wb') as handle:
+    pickle.dump(box_stats, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 """
 BEFORE identifying boxes for characters, go through key

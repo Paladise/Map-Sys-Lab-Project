@@ -1,13 +1,24 @@
 import colorsys 
+import cv2 as cv
+import numpy as np
 import pickle
 import pytesseract
-import random
+import re 
 import sys
 import time
 import tkinter as tk
+from image_similarity_measures.quality_metrics import rmse
 from PIL import Image, ImageTk, ImageDraw, ImageFont
+from random import random
 
-USING_TESSERACT = True
+with open("words_alpha.txt") as file:
+    all_words = set(file.read().split())
+
+USING_TESSERACT = False
+SHOW_IMAGES = False
+
+CONFIDENCE_LEVEL = 75
+IMAGE_SAVE_PATH = "images/"
 
 sys.setrecursionlimit(10000) # We don't talk about this line
 
@@ -17,8 +28,6 @@ if USING_TESSERACT:
 else:
     with open('boxes.pickle', 'rb') as handle:
         box_stats = pickle.load(handle)
-
-root = tk.Tk()
 
 def flood(x, y, found, min_x, max_x, min_y, max_y):
     # print(f"Flooding on ({x}, {y})")
@@ -58,13 +67,14 @@ def draw_line(p, x1, x2, y1, y2, r, g, b):
                 pass
 
 
-file_name = "map5.jpg"
+file_name = IMAGE_SAVE_PATH + "practice_map.jpg"
 
 image = Image.open(file_name)
 pixels = image.load()
 width, height = image.width, image.height
 
 # Convert to black and white
+print("Converting to black and white...")
 
 for x in range(width):
     for y in range(height):
@@ -74,9 +84,10 @@ for x in range(width):
         else:
             pixels[x, y] = (255, 255, 255)
 
-image.save("black_and_white.png")
+# image.save(IMAGE_SAVE_PATH + "black_and_white.png")
 
 # Drawing boxes around potential candidates
+print("Drawing boxes...")
 
 loaded_pixels = set()
 boxes = set()
@@ -99,7 +110,7 @@ for x in range(width):
             min_y -= 1 
             max_y += 1
             boxes.add((min_x, max_x, min_y, max_y))
-            h,s,l = random.random(), 0.5 + random.random()/2.0, 0.4 + random.random()/5.0
+            h,s,l = random(), 0.5 + random()/2.0, 0.4 + random()/5.0
             r,g,b = [int(256*i) for i in colorsys.hls_to_rgb(h,l,s)]            
             draw_line(pixels, min_x, max_x, min_y, min_y, r, g, b)
             draw_line(pixels, max_x, max_x, min_y, max_y, r, g, b)
@@ -107,11 +118,11 @@ for x in range(width):
             draw_line(pixels, min_x, min_x, min_y, max_y, r, g, b)
        
 # image.show()
-image.save("custom_boxes.png")
+# image.save(IMAGE_SAVE_PATH + "custom_boxes.png")
 
 # Save & Replace Characters
 
-def save_and_replace_char(x1, x2, y1, y2):
+def save_and_replace_char(x1, x2, y1, y2, single_char = True):
     padding = 3
     image2 = Image.new("RGB", (x2 - x1 + 1 + 2*padding, y2 - y1 + 1 + 2*padding), color = "white")
     pixels2 = image2.load()
@@ -119,20 +130,46 @@ def save_and_replace_char(x1, x2, y1, y2):
         for y in range(y1 + 1, y2):
             pixels2[x - x1 + padding, y - y1 + padding] = pixels[x, y]
     image2 = image2.convert("L")
+    
+    # Check if door
+
+    door_image = cv.imread(IMAGE_SAVE_PATH + "door.png")
+    width, height = door_image.shape[1], door_image.shape[0]
+    dim = (width, height)
+
+    opencv_image = cv.cvtColor(np.array(image2), cv.COLOR_GRAY2RGB)
+    resized_image = cv.resize(opencv_image, dim, interpolation = cv.INTER_AREA)
+    measure = rmse(door_image, resized_image).item()
+    m = round(measure, 3)
+
+    if m < 0.02:
+        image2.save(f"extras/DOOR_{x1}{x2}{y1}{y2}_{m}.png")
+        return "Door ", 100.0        
+
     if USING_TESSERACT:
-        predict = pytesseract.image_to_data(
+        if single_char:
+            predict = pytesseract.image_to_data(
             image2, config=("-c tessedit"
                             "_char_whitelist=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
                             " --psm 10"
                             " -l osd"
-                            " "), output_type="data.frame")
-        predict = predict[predict.conf != -1]
-        try:
-            detected_char = str(predict["text"].iloc[0])[0]
-            confidence = predict["conf"].iloc[0]   
-        except:
-            detected_char = ""
-            confidence = -1 
+                            " "), output_type="data.frame")        
+            predict = predict[predict.conf != -1]
+            try:
+                detected_char = str(predict["text"].iloc[0])[0]
+                confidence = predict["conf"].iloc[0]   
+            except:
+                detected_char = ""
+                confidence = -1 
+        else: # Full word
+            predict = pytesseract.image_to_data(image2, output_type="data.frame")
+            predict = predict[predict.conf != -1]
+            try:
+                detected_char = str(predict["text"].iloc[0])
+                confidence = predict["conf"].iloc[0]   
+            except:
+                detected_char = ""
+                confidence = -1 
     else:
         detected_char = box_stats[(x1, x2, y1, y2)][0]
         confidence = box_stats[(x1, x2, y1, y2)][1]
@@ -143,15 +180,34 @@ def save_and_replace_char(x1, x2, y1, y2):
     # caption_label.pack()
     # root.update()
 
+    image2.save(f"extras/{detected_char}_{confidence}.png")
+
     return detected_char, confidence
 
+image = Image.open(file_name)
+pixels = image.load()
+width, height = image.width, image.height
 
-image_label = tk.Label(root)
-caption_label = tk.Label(root)
-caption_label.config(font =("Arial", 60))
-image_label.pack()
-caption_label.pack()
-root.update()
+# Convert to black and white
+print("Converting to black and white...")
+
+for x in range(width):
+    for y in range(height):
+        r, g, b = pixels[x, y]
+        if 0.2126*r + 0.7152*g + 0.0722*b < 150:
+            pixels[x, y] = (0, 0, 0)
+        else:
+            pixels[x, y] = (255, 255, 255)
+
+if SHOW_IMAGES:
+    root = tk.Tk()
+    root.attributes("-fullscreen", True)
+    image_label = tk.Label(root)
+    caption_label = tk.Label(root)
+    caption_label.config(font = ("Arial", 60))
+    image_label.pack()
+    caption_label.pack()
+    root.update()
 
 def generate_names(cur_box, used_boxes, detected_name):
     used_boxes.append(cur_box)
@@ -159,19 +215,22 @@ def generate_names(cur_box, used_boxes, detected_name):
     detected_char, confidence = save_and_replace_char(ax1, ax2, ay1, ay2)
     global box_stats
     box_stats[cur_box] = (detected_char, confidence)
-    if confidence > 69:
-        detected_name.append((cur_box, detected_char))
+    if confidence > 0:
+        if confidence < CONFIDENCE_LEVEL:
+            detected_name.append((cur_box, "."))
+        else:
+            detected_name.append((cur_box, detected_char))
 
         for box in boxes:
             if box in used_boxes:
                 continue
                 
-            bx1, bx2, by1, by2 = box
+            bx1, _, _, by2 = box
 
             if abs(ay2 - by2) <= y_threshold and abs(ax2 - bx1) <= dist_between_letters: # Part of same word
                 used_boxes, detected_name = generate_names(box, used_boxes, detected_name)
                 break
-    
+
     return used_boxes, detected_name
 
 used_boxes = []
@@ -186,6 +245,13 @@ for box in boxes:
     used_boxes, detected_name = generate_names(box, used_boxes, [])
     if not detected_name:
         continue
+
+    if any(i[1] != "." for i in detected_name) or 0 == 0:
+        first = detected_name[0][0]
+        last = detected_name[-1][0]
+        full_word, confidence = save_and_replace_char(first[0], last[1], first[2], last[3], False)
+        print("Full room using full name:", full_word, "with confidence", confidence)
+        box_stats[(first[0], last[1], first[2], last[3])] = (full_word, confidence)
 
     label = "".join([i[1] for i in detected_name])
 
@@ -202,25 +268,44 @@ for box in boxes:
     if change:
         label = "".join([i if i != "l" else "1" for i in label])
 
-    print("Found room:", label)
+    # Change 0's to O's in room names
+
+    if all(i == "0" or i.isalpha() for i in label) and len(label) > 1:
+        label = "".join([i if i != "0" else "o" for i in label])
+
+    # Try to fix wrongly identified room names
+
+    label = label.capitalize()
+    # if "." in label and any(i != "." for i in label):
+    #     pattern = re.compile(label.lower())
+    #     possible_words = "\t" + "\n\t".join([word for word in all_words if re.fullmatch(pattern, word)])
+    #     print("Found APPROXIMATE room:", label)
+    #     # input()
+    #     print(possible_words)
+    # else:
+    #     print("Found room:", label)    
+    print("Found room using each character:", label)
+    print()
     
-    # image3 = Image.open(file_name)
-    # pixels3 = image3.load()
-    # for i in detected_name:
-    #     x1, x2, y1, y2 = i[0]
-    #     font = ImageFont.truetype("arial", 45)
-        
-    #     draw_line(pixels3, x1, x2, y1, y1, 255, 0, 0)
-    #     draw_line(pixels3, x2, x2, y1, y2, 255, 0, 0)
-    #     draw_line(pixels3, x1, x2, y2, y2, 255, 0, 0)
-    #     draw_line(pixels3, x1, x1, y1, y2, 255, 0, 0)
-    # ImageDraw.Draw(image3).text((0, 0), f"{label}", (255, 0, 0), font = font)
-    # image3.show()
-    # tk_image = ImageTk.PhotoImage(image3.resize((1000, 600)))
-    # image_label.configure(image = tk_image)
-    # image_label.pack()
-    # root.update()
-    # time.sleep(3)
+    if SHOW_IMAGES:
+        image3 = Image.open(file_name)
+        pixels3 = image3.load()
+        for i in detected_name:
+            x1, x2, y1, y2 = i[0]
+            font = ImageFont.truetype("arial", 45)
+            
+            draw_line(pixels3, x1, x2, y1, y1, 255, 0, 0)
+            draw_line(pixels3, x2, x2, y1, y2, 255, 0, 0)
+            draw_line(pixels3, x1, x2, y2, y2, 255, 0, 0)
+            draw_line(pixels3, x1, x1, y1, y2, 255, 0, 0)
+        ImageDraw.Draw(image3).text((x1, y1), f"{label}", (255, 0, 0), font = font)
+
+        # image3.show()
+        tk_image = ImageTk.PhotoImage(image3.resize((1000, 600)))
+        image_label.configure(image = tk_image)
+        image_label.pack()
+        root.update()
+        time.sleep(3)
     
 
 with open('boxes.pickle', 'wb') as handle:
@@ -251,20 +336,28 @@ Go through each set of coordinates
     These should be part of the same word / room number
     Combine these to form room tag
 
+    ##########################
+    USE SMALLEST AND BIGGEST Y-VALUES NOT JUST END CHARACTERS
+    DOESN'T RECOGNIZE BOTTOM PART OF G IN "STORAGE"
+    ##########################
+
+    Find complete room names / door numbers that are not text-wrapped and combine them
+    - Instead of just checking right, check below also and make sure there are no pixels between two boxes
+
     TRY TO DIFFERENTIATE BETWEEN SINGULAR ROOM NUMBERS LIKE 8 AND MISCLASSIFIED PIXELS
 
     TRY TO REMOVE DOTS ABOVE I's
 
     If it is a word
         Check if it is actually a word, if it isn't a word
-            Check pixels in between letters and pixels along the side
+            Check pixels in between letters and pixels along the side, if not connected?
 
             For example, in practice image:
             - Doesn't identify the first "i" in Einstein
             - Doesn't identify "N" and "o" in Neuro since those letters are connected to walls
             - Doesn't identify "h" in Chem since h is connected to wall
 
-            POSSSIBLY CREATE A LIST OF "OFFICE" WORDS TO COMPARE WITH?
+            POSSSIBLY CREATE A LIST OF "OFFICE" WORDS TO COMPARE WITH? may not be feasible for non-office buildings
              
             For example, in practice image:
             - Doesn't identify "A" and "d" in Admin, but catches "min"

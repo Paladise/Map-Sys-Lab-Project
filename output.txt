@@ -1,0 +1,395 @@
+Full room using full name:  with confidence -1
+Found room using each character: 12
+
+Full room using full name: Door  with confidence 100.0
+Found room using each character: Door 
+
+Full room using full name: 1i- with confidence 27.427559
+Found room using each character: 11.
+
+Full room using full name: Door  with confidence 100.0
+Found room using each character: Door 
+
+Full room using full name: fio with confidence 45.576927
+Found room using each character: ..
+
+Full room using full name:  with confidence -1
+Found room using each character: ..
+
+Full room using full name:  with confidence -1
+Found room using each character: 98
+
+Full room using full name: 135.0 with confidence 95.757385
+Found room using each character: 135
+
+Full room using full name: 134.0 with confidence 96.69519
+Found room using each character: 134
+
+Full room using full name: 131.0 with confidence 96.014229
+Found room using each character: 131
+
+Full room using full name: on1o0 with confidence 0.0
+Found room using each character: Door 10
+
+Full room using full name: Auditorium with confidence 96.439514
+Found room using each character: .ud..o..um
+
+Full room using full name:  with confidence -1
+Found room using each character: ..
+
+Full room using full name: Aud with confidence 96.120796
+Found room using each character: ..d
+
+Full room using full name: Gym with confidence 94.040245
+Found room using each character: ..m
+
+Full room using full name: Storage with confidence 81.222557
+Found room using each character: 5.o....
+
+Full room using full name: reson with confidence 0.0
+Found room using each character: ..s....
+
+Full room using full name: Weiaht with confidence 90.68058
+Found room using each character: .e.9h.
+
+Full room using full name: Lob with confidence 94.681656
+Found room using each character: ...
+
+Full room using full name: mia with confidence 31.097992
+Found room using each character: Door 1.
+
+Full room using full name: Gym with confidence 75.389069
+Found room using each character: ..m
+
+Full room using full name: ptikipascs with confidence 0.0
+Found room using each character: ......
+
+Full room using full name:  with confidence -1
+Found room using each character: 110
+
+Full room using full name: 109.0 with confidence 95.93103
+Found room using each character: 109
+
+Full room using full name: 113.0 with confidence 95.599701
+Found room using each character: ...
+
+Full room using full name: PCRIL18 with confidence 72.336594
+Found room using each character: ....18
+
+Full room using full name: Gandhi with confidence 95.98278
+Found room using each character: ..nd..
+
+Full room using full name: 1106.0 with confidence 76.304092
+Found room using each character: .106
+
+Full room using full name:  with confidence -1
+Found room using each character: ..
+
+Full room using full name: 105.0 with confidence 96.800346
+Found room using each character: 105
+
+Full room using full name: ans. with confidence 9.184967
+Found room using each character: Door 15
+
+Full room using full name:  with confidence -1
+Found room using each character: 88
+
+Full room using full name:  with confidence -1
+Found room using each character: 89
+
+Full room using full name: min with confidence 94.780083
+Found room using each character: M.n
+
+Full room using full name:  with confidence -1
+Found room using each character: 111
+
+Full room using full name: 107.0 with confidence 96.866821
+Found room using each character: 107
+
+Full room using full name: Gailery with confidence 85.475151
+Found room using each character: ....e.
+
+Full room using full name:  with confidence -1
+Found room using each character: 87
+
+Full room using full name:  with confidence -1
+Found room using each character: 86
+
+Full room using full name: Front with confidence 95.525429
+Found room using each character: .ron.
+
+Full room using full name:  with confidence -1
+Found room using each character: ..ce
+
+Full room using full name:  with confidence -1
+Found room using each character: .5
+
+Full room using full name: Faraday with confidence 96.377747
+Found room using each character: .......
+
+Full room using full name: Nobel with confidence 95.620514
+Found room using each character: .0...
+
+Full room using full name: Dome with confidence 96.472115
+Found room using each character: .ome
+
+Full room using full name:  with confidence -1
+Found room using each character: 8.
+
+Full room using full name:  with confidence -1
+Found room using each character: Door 1
+
+Full room using full name:  with confidence -1
+Found room using each character: 83
+
+Full room using full name:  with confidence -1
+Found room using each character: 82
+
+Full room using full name: 115.0 with confidence 95.879417
+Found room using each character: 115
+
+Full room using full name:  with confidence -1
+Found room using each character: Door 8
+
+Full room using full name:  with confidence -1
+Found room using each character: ..
+
+Full room using full name: Pla with confidence 79.664078
+Found room using each character: ..
+
+Full room using full name:  with confidence -1
+Found room using each character: 69
+
+Full room using full name:  with confidence -1
+Found room using each character: 70
+
+Full room using full name:  with confidence -1
+Found room using each character: 71
+
+Full room using full name:  with confidence -1
+Found room using each character: 73
+
+Full room using full name:  with confidence -1
+Found room using each character: 7.
+
+Full room using full name:  with confidence -1
+Found room using each character: 75
+
+Full room using full name:  with confidence -1
+Found room using each character: 81
+
+Full room using full name:  with confidence -1
+Found room using each character: 68
+
+Full room using full name:  with confidence -1
+Found room using each character: Door 2
+
+Full room using full name:  with confidence -1
+Found room using each character: ..
+
+Full room using full name: Sallis with confidence 4.583359
+Found room using each character: ....sc
+
+Full room using full name:  with confidence -1
+Found room using each character: 66
+
+Full room using full name:  with confidence -1
+Found room using each character: 65
+
+Full room using full name:  with confidence -1
+Found room using each character: 6.
+
+Full room using full name:  with confidence -1
+Found room using each character: 62
+
+Full room using full name:  with confidence -1
+Found room using each character: 61
+
+Full room using full name:  with confidence -1
+Found room using each character: 60
+
+Full room using full name:  with confidence -1
+Found room using each character: 67
+
+Full room using full name:  with confidence -1
+Found room using each character: .7
+
+Full room using full name: Energy with confidence 96.025375
+Found room using each character: ......
+
+Full room using full name:  with confidence -1
+Found room using each character: 5.
+
+Full room using full name:  with confidence -1
+Found room using each character: 53
+
+Full room using full name:  with confidence -1
+Found room using each character: 59
+
+Full room using full name: Optics with confidence 93.836853
+Found room using each character: 0p....
+
+Full room using full name: Galileo with confidence 6.582024
+Found room using each character: .......
+
+Full room using full name:  with confidence -1
+Found room using each character: 58
+
+Full room using full name:  with confidence -1
+Found room using each character: ....s.e.
+
+Full room using full name:  with confidence -1
+Found room using each character: 57
+
+Full room using full name:  with confidence -1
+Found room using each character: 12
+
+Full room using full name:  with confidence -1
+Found room using each character: ..
+
+Full room using full name:  with confidence -1
+Found room using each character: 56
+
+Full room using full name:  with confidence -1
+Found room using each character: 1.
+
+Full room using full name: Proto with confidence 96.763641
+Found room using each character: P...0
+
+Full room using full name:  with confidence -1
+Found room using each character: .7
+
+Full room using full name:  with confidence -1
+Found room using each character: 50
+
+Full room using full name:  with confidence -1
+Found room using each character: 11
+
+Full room using full name:  with confidence -1
+Found room using each character: 51
+
+Full room using full name:  with confidence -1
+Found room using each character: 52
+
+Full room using full name: Cafe with confidence 96.290604
+Found room using each character: ....
+
+Full room using full name: DaVinci with confidence 80.228409
+Found room using each character: 0......
+
+Full room using full name:  with confidence -1
+Found room using each character: 15
+
+Full room using full name:  with confidence -1
+Found room using each character: 18
+
+Full room using full name:  with confidence -1
+Found room using each character: 22
+
+Full room using full name:  with confidence -1
+Found room using each character: 23
+
+Full room using full name:  with confidence -1
+Found room using each character: .8
+
+Full room using full name:  with confidence -1
+Found room using each character: 3.
+
+Full room using full name:  with confidence -1
+Found room using each character: Door 6
+
+Full room using full name:  with confidence -1
+Found room using each character: 10
+
+Full room using full name:  with confidence -1
+Found room using each character: .0
+
+Full room using full name: Boller with confidence 95.93956
+Found room using each character: ......
+
+Full room using full name: eur with confidence 92.063759
+Found room using each character: ...
+
+Full room using full name:  with confidence -1
+Found room using each character: .5
+
+Full room using full name:  with confidence -1
+Found room using each character: 37
+
+Full room using full name:  with confidence -1
+Found room using each character: 39
+
+Full room using full name: Ocean with confidence 96.589905
+Found room using each character: 0....
+
+Full room using full name:  with confidence -1
+Found room using each character: 16
+
+Full room using full name:  with confidence -1
+Found room using each character: 25
+
+Full room using full name:  with confidence -1
+Found room using each character: 36
+
+Full room using full name:  with confidence -1
+Found room using each character: .2
+
+Full room using full name:  with confidence -1
+Found room using each character: 26
+
+Full room using full name:  with confidence -1
+Found room using each character: 34
+
+Full room using full name:  with confidence -1
+Found room using each character: ..
+
+Full room using full name:  with confidence -1
+Found room using each character: 17
+
+Full room using full name: Turin with confidence 96.552414
+Found room using each character: .....
+
+Full room using full name:  with confidence -1
+Found room using each character: 27
+
+Full room using full name:  with confidence -1
+Found room using each character: Door 3
+
+Full room using full name: Cafeteria with confidence 96.375298
+Found room using each character: C........
+
+Full room using full name:  with confidence -1
+Found room using each character: 2s
+
+Full room using full name:  with confidence -1
+Found room using each character: 33
+
+Full room using full name:  with confidence -1
+Found room using each character: ..
+
+Full room using full name:  with confidence -1
+Found room using each character: 29
+
+Full room using full name:  with confidence -1
+Found room using each character: 31
+
+Full room using full name:  with confidence -1
+Found room using each character: ..
+
+Full room using full name:  with confidence -1
+Found room using each character: Door .
+
+Full room using full name: Sta with confidence 96.487587
+Found room using each character: 5..
+
+Full room using full name:  with confidence -1
+Found room using each character: 5.
+
+Full room using full name: TW with confidence 15.714798
+Found room using each character: .door 
+
+Full room using full name:  with confidence -1
+Found room using each character: ..
+
+Full room using full name: Ele with confidence 96.584747
+Found room using each character: ...

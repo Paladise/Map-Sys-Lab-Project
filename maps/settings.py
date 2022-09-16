@@ -158,7 +158,7 @@ LOGGING = {
         'file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': 'tropics.log',
+            'filename': 'maps.log',
             'formatter': 'verbose'
         },
     },

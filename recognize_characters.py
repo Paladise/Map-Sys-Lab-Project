@@ -347,12 +347,14 @@ boxes = draw_boxes(boxes_pixels)
 print("Processing image...")
 process_image(boxes)    
 
+print("Saving updated boxes...")
 with open('boxes.pickle', 'wb') as handle:
     pickle.dump(box_stats, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-"""
-Maybe ask user to take another picture of key if applicable?
+# A very long to-do list :(
 
+"""
+Maybe ask user to take another picture of key and then
 BEFORE identifying boxes for characters, go through key
 In example image, this includes:
 - Restroom
@@ -360,38 +362,23 @@ In example image, this includes:
 - Signage
 - Door
 
-Save coordinates of each box identified to be a character
-Go through each set of coordinates
+Find complete room names / door numbers that are not text-wrapped and combine them
+- Instead of just checking right, check below also and make sure there are no pixels between two boxes
 
-    PERHAPS DO THIS AS PART OF THE LOOP BEFORE?
+Try to differentiate between signular room numbers like "8" and actual misclassified pixels
 
-    Check if there are any coordinates to the right within a few pixels,
-    and approximately on the same y-level:
+Try to remove dots above i's
 
-    These should be part of the same word / room number
-    Combine these to form room tag
+Check pixels in between letters and pixels along the side, if not connected?
 
-    Find complete room names / door numbers that are not text-wrapped and combine them
-    - Instead of just checking right, check below also and make sure there are no pixels between two boxes
+For example, in practice image:
+- Doesn't identify the first "i" in Einstein
+- Doesn't identify "N" and "o" in Neuro since those letters are connected to walls
+- Doesn't identify "h" in Chem since h is connected to wall
 
-    TRY TO DIFFERENTIATE BETWEEN SINGULAR ROOM NUMBERS LIKE 8 AND MISCLASSIFIED PIXELS
-
-    TRY TO REMOVE DOTS ABOVE I's
-
-    If it is a word
-        Check if it is actually a word, if it isn't a word
-            Check pixels in between letters and pixels along the side, if not connected?
-
-            For example, in practice image:
-            - Doesn't identify the first "i" in Einstein
-            - Doesn't identify "N" and "o" in Neuro since those letters are connected to walls
-            - Doesn't identify "h" in Chem since h is connected to wall
-
-            POSSSIBLY CREATE A LIST OF "OFFICE" WORDS TO COMPARE WITH? may not be feasible for non-office buildings
+Possibly create list of "office" words? - may not be feasible for non-office buildings
              
-            For example, in practice image:
-            - Doesn't identify "A" and "d" in Admin, but catches "min"
-"""
-
-    
+For example, in practice image:
+- Doesn't identify "A" and "d" in Admin, but catches "min"
+"""   
                     

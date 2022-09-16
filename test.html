@@ -10,7 +10,8 @@
 		</script>
 	</head>
 	<body>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r83/three.js"></script>
+        <script src='https://threejs.org/build/three.js'></script>
+        <script src='https://threejs.org/examples/js/controls/OrbitControls.js'></script>
         <script type="module">
 			const scene = new THREE.Scene();
 			const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
@@ -20,23 +21,6 @@
 			document.body.appendChild( renderer.domElement );
 			const loader = new THREE.FileLoader();
 			THREE.Cache.enabled = true;
-			loader.load(
-				// resource URL
-				'list_of_points.txt',
-			);
-			const contents = FileReader("list_of_points.txt");
-			const rows = contents.split('\n');
-			console.log(contents)
-			var list_of_points = new Array();
-			for (let i = 0; i < rows.length; i++){
-				const temp = rows[i].split(' ');
-				var point = new Array()
-				for (let j = 0; j < temp.length; j++){
-					point[j] = (parseInt(temp[j]))
-				}
-				list_of_points[i] = point
-			}
-			console.log(list_of_points)
 			const list_of_points = [[1, 2, 0], [0, 0, 0], [1, 0, 0], [2, 0, 0], [2, 2, 0], [2, 1, 0], [0, 1, 0], [0, 2, 0]];
 			for (let i = 0; i < list_of_points.length; i++){
 				const geometry = new THREE.BoxGeometry( 1, 1, 1 );
@@ -54,6 +38,18 @@
 				requestAnimationFrame( animate );
 				renderer.render( scene, camera );
 			};
+
+			animate();
+			var controls = new THREE.OrbitControls( camera, renderer.domElement );
+			controls.rotateSpeed = .5;
+			controls.enableDamping = true;
+			controls.dampingFactor = .05;
+
+			window.addEventListener( 'resize', function () {
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+			}, false )
 
 			animate();
 		</script>

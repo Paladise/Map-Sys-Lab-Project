@@ -170,7 +170,7 @@ LOGGING = {
             'propagate': True,
             'level':'DEBUG',
         },
-        'tropics': {
+        'maps': {
             'handlers': ['file'],
             'level': 'DEBUG',
         },

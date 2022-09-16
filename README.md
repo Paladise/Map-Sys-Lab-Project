@@ -1,3 +1,3 @@
-# Changing-Dimensionality-of-Map-for-Indoor-Navigation
+# Changing Dimensionality of Map for Indoor Navigation
 
-Senior Research Lab Project
+Our 2022-2023 Senior Research Lab Project

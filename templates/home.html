@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block title %}Maps{% endblock %}
+ 
+{% block head %}
+<link href = "https://fonts.googleapis.com/icon?family=Material+Icons" rel = "stylesheet">
+{% endblock %}
+
+{% block body %}
+
+<div class="navbar">
+    <div class="navlink">
+        Link 1
+    </div>
+
+    <div class="navlink">
+        Link 1
+    </div>
+
+    <div class="navlink">
+        Link 1
+    </div>
+</div>
+
+<section class = "header-canvas">
+    <canvas id = "particleCanvas"></canvas>
+    <div class = "container">
+        <div class = "left">
+            <h1 class = "name">Create striking maps, with Atlas</h1>
+            <p class = "description">Changing dimensionality of maps for indoor navigation.</p>
+        </div>
+        <div class = "right">
+            <div class = "drop-zone">
+                <span class = "prompt">Drop file here or click to upload</span>
+                <input type="file">
+            </div>
+        </div>        
+    </div>   
+</section>
+
+<div id = "main">
+    <div class = "section divider"></div>
+
+    <div class = "section">
+        <h1>About Atlas</h1>
+        <p>Hello this is some text</p>
+    </div>
+
+    <div class = "section divider"></div>
+
+    <div class = "section">
+        <h1>What can it do?</h1>
+        <p>Hello this is some text</p>
+    </div>
+
+    <div class = "section divider"></div>
+</div>
+
+<script src="{% static 'js/particle.js' %}"></script>
+
+{% endblock %}

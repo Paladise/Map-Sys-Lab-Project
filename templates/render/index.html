@@ -1,3 +1,4 @@
+<!-- use a loop to plot point on 3.js given a list of points -->
 <!DOCTYPE html>
 <html>
 	<head>
@@ -9,7 +10,8 @@
 		</script>
 	</head>
 	<body>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r83/three.js"></script>
+        <script src='https://threejs.org/build/three.js'></script>
+        <script src='https://threejs.org/examples/js/controls/OrbitControls.js'></script>
         <script type="module">
 			const scene = new THREE.Scene();
 			const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
@@ -18,10 +20,9 @@
 			renderer.setSize( window.innerWidth, window.innerHeight );
 			document.body.appendChild( renderer.domElement );
 			const loader = new THREE.FileLoader();
+			loader.load('list_of_points.txt')
 			THREE.Cache.enabled = true;
-			loader.load('list_of_points.txt', function(data){console.log(data)});
-            const list_of_points = [[1, 2, 0], [0, 0, 0], [1, 0, 0], [2, 0, 0], [2, 2, 0], [2, 1, 0], [0, 1, 0], [0, 2, 0]];
-
+			const list_of_points = [[1, 2, 0], [0, 0, 0], [1, 0, 0], [2, 0, 0], [2, 2, 0], [2, 1, 0], [0, 1, 0], [0, 2, 0]];
 			for (let i = 0; i < list_of_points.length; i++){
 				const geometry = new THREE.BoxGeometry( 1, 1, 1 );
 				geometry.translate(list_of_points[i][0], list_of_points[i][1], list_of_points[i][2]);
@@ -38,6 +39,18 @@
 				requestAnimationFrame( animate );
 				renderer.render( scene, camera );
 			};
+
+			animate();
+			var controls = new THREE.OrbitControls( camera, renderer.domElement );
+			controls.rotateSpeed = .5;
+			controls.enableDamping = true;
+			controls.dampingFactor = .05;
+
+			window.addEventListener( 'resize', function () {
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+			}, false )
 
 			animate();
 		</script>

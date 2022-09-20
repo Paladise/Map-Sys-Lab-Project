@@ -1,43 +1,44 @@
-html, body{
-    font-family: "Open Sans";
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    width: 100%;
+html,
+body {
+  font-family: "Open Sans";
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
 }
 
-a{
-    text-decoration: inherit;
-    color: inherit;
+a {
+  text-decoration: inherit;
+  color: inherit;
 }
 
 .navbar {
-    user-select: none;
-    position: fixed;
-    top: 0;
-    width: 100%;
-    height: 75px;
-    overflow: hidden;
-    z-index: 1;
+  user-select: none;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  height: 75px;
+  overflow: hidden;
+  z-index: 1;
 }
 
 .navlink {
-    float: left;
-    display: block;
-    height: 40px;
-    text-align: center;
-    margin: 0px 10px;
-    font-size: 25px;
-    color: white;
-    text-decoration: none;
-    position: relative;
-    padding: 2px 20px;
-    top: 50%;
-    border-radius: 25px;
-    background-color: rgba(255,255,255,0.5);
-    -webkit-transform: translateY(-50%);
-    -ms-transform: translateY(-50%);
-    transform: translateY(-50%);
+  float: left;
+  display: block;
+  height: 40px;
+  text-align: center;
+  margin: 0px 10px;
+  font-size: 25px;
+  color: white;
+  text-decoration: none;
+  position: relative;
+  padding: 2px 20px;
+  top: 50%;
+  border-radius: 25px;
+  background-color: rgba(255, 255, 255, 0.5);
+  -webkit-transform: translateY(-50%);
+  -ms-transform: translateY(-50%);
+  transform: translateY(-50%);
 }
 
 .active-page {
@@ -50,95 +51,74 @@ a{
   background: white;
 }
 
-.header-canvas{
-    position: relative;
-    height: 100%;
-    width: 100%;
-    color: white;
+.header-canvas {
+  position: relative;
+  width: 100%;
+  color: white;
 }
 
 #particleCanvas {
-  position: absolute;
   display: block;
   background-color: #045de9;
   background-image: linear-gradient(315deg, #045de9 0%, #09c6f9 74%);
+  position: absolute;
 }
 
 .container {
-    position: absolute;
-    max-width: 1000px;
-    margin: 0 auto;
-    left: 0;
-    right: 0;
-    margin-top: 100px;
-    display: flex;
-    flex-wrap: wrap;
-    min-width: 900px;
+  position: absolute;
+  margin: 0px auto;
+  left: 0;
+  right: 0;
+  top: 0;
+  padding: 200px 0px;
+  display: inline-flex;
+  flex-wrap: wrap;
+  min-width: 200px;
+  gap: 25px;
+  justify-content: center;
+}
+
+.container>div {
+  width: 75%;
+  max-width: 600px;
 }
 
 .left {
-    width: 50%;
-    text-align: left;
-}
-
-.right {
-    width: 50%;
+  text-align: left;
 }
 
 .drop-zone {
-    border: 2px dashed white;
-    width: 100%;
-    height: 300px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    cursor: pointer;
+  border: 2px dashed white;
+  width: 100%;
+  height: 300px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  cursor: pointer;
 }
 
 .drop-zone .prompt {
-    font-style: italic;
-    font-weight: bold;
-    font-size: 24px;
+  font-style: italic;
+  font-weight: bold;
+  font-size: 24px;
 }
 
 .drop-zone input {
-    display: none;
+  display: none;
 }
 
-.name{
-    font-size: 50px;
+.name {
+  font-size: 60px;
 }
 
-.description{
-    font-size: 24px;
-    top: calc(50% + 100px);
-
+.description {
+  font-size: 28px;
+  top: calc(50% + 100px);
 }
 
-@keyframes bouncing{
-    0% {bottom: 0;}
-    50% {bottom: 20px;}
-    100% {bottom: 0;}
-}
-
-i.arrow{
-    animation: bouncing 1s infinite ease-in-out;
-    bottom: 0;
-    display: block;
-    width: 75px;
-    height: 75px;
-    left: 50%;
-    margin: 0 auto;
-    transform: translateX(-50%);
-    position: absolute;
-    font-size: 50px;
-    text-align: center;
-    color: white;
-}
-
-.section{
+.section {
   width: 100%;
   text-align: center;
   padding-top: 20px;
@@ -148,11 +128,11 @@ i.arrow{
   transform: translateX(-50%);
 }
 
-.divider{
+.divider {
   height: 75px;
 }
 
-.section h1{
+.section h1 {
   margin: 0;
   font-size: 40px;
   background: -webkit-linear-gradient(right, #045de9 0%, #09c6f9 74%);
@@ -160,14 +140,14 @@ i.arrow{
   -webkit-text-fill-color: transparent;
 }
 
-.section h2{
+.section h2 {
   font-size: 30px;
   background: -webkit-linear-gradient(right, #045de9 0%, #09c6f9 74%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-.section p{
+.section p {
   width: 60%;
   margin: 0 auto;
   position: relative;

@@ -33,13 +33,13 @@ else:
     DEBUG = True
 
 ALLOWED_HOSTS = [
-    "https://maps.sites.tjhsst.edu",
-    "maps.sites.tjhsst.edu",
+    "https://atlas.sites.tjhsst.edu",
+    "atlas.sites.tjhsst.edu",
     "127.0.0.1",
     "localhost",
 ]
 
-CSRF_TRUSTED_ORIGINS = ['https://*.maps.sites.tjhsst.edu','https://*.127.0.0.1']
+CSRF_TRUSTED_ORIGINS = ['https://*.atlas.sites.tjhsst.edu','https://*.127.0.0.1']
 
 # Application definition
 

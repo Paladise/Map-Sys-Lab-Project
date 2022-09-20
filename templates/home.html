@@ -12,15 +12,7 @@
 
 <div class="navbar">
     <div class="navlink">
-        Link 1
-    </div>
-
-    <div class="navlink">
-        Link 1
-    </div>
-
-    <div class="navlink">
-        Link 1
+        <img class = "logo" src = "{% static 'images/tjcsl.png' %}" alt = "Logo"/>
     </div>
 </div>
 
@@ -32,32 +24,39 @@
             <p class = "description">Changing dimensionality of maps for indoor navigation.</p>
         </div>
         <div class = "right">
-            <div class = "drop-zone">
+            <div class = "drop-zone" id = "dropZone">
                 <span class = "prompt">Drop file here or click to upload</span>
-                <input type="file">
+                <input type="file" id = "dropZoneInput">
             </div>
         </div>        
     </div>   
 </section>
 
-<div id = "main">
-    <div class = "section divider"></div>
+<main id = "main">
+    <section class = "info-section divider"></section>
 
-    <div class = "section">
+    <section class = "info-section">
         <h1>About Atlas</h1>
         <p>what is the meaning of life</p>
-    </div>
+    </section>
 
-    <div class = "section divider"></div>
+    <section class = "info-section divider"></section>
 
-    <div class = "section">
+    <section class = "info-section">
         <h1>What can it do?</h1>
         <p>not much yet :(</p>
-    </div>
+    </section>
 
-    <div class = "section divider"></div>
-</div>
+    <section class = "info-section divider"></section>
+</main>
+
+<footer>
+    <p>Developed  by Andrei Basto and Sean Su (2023)</p>
+</footer>
+
+
 
 <script src="{% static 'js/particle.js' %}"></script>
+<script src="{% static 'js/file_upload.js' %}"></script>
 
 {% endblock %}

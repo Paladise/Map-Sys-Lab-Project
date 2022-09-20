@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block title %}Maps{% endblock %}
+ 
+{% block head %}
+<link href = "https://fonts.googleapis.com/icon?family=Material+Icons" rel = "stylesheet">
+{% endblock %}
+
+{% block body %}
+
+<div class="navbar">
+    <div class="navlink">
+        <img class = "logo" src = "{% static 'images/tjcsl.png' %}" alt = "Logo"/>
+    </div>
+</div>
+
+<section class = "header-canvas">
+    <canvas id = "particleCanvas"></canvas>
+    <div class = "container" id = "particleContainerContent">
+        <div class = "left">
+            <h1 class = "name">Create striking maps, with Atlas</h1>
+            <p class = "description">Changing dimensionality of maps for indoor navigation.</p>
+        </div>
+        <div class = "right">
+            <div class = "drop-zone" id = "dropZone">
+                <span class = "prompt">Drop file here or click to upload</span>
+                <input type="file" id = "dropZoneInput">
+            </div>
+        </div>        
+    </div>   
+</section>
+
+<main id = "main">
+    <section class = "info-section divider"></section>
+
+    <section class = "info-section">
+        <h1>About Atlas</h1>
+        <p>what is the meaning of life</p>
+    </section>
+
+    <section class = "info-section divider"></section>
+
+    <section class = "info-section">
+        <h1>What can it do?</h1>
+        <p>not much yet :(</p>
+    </section>
+
+    <section class = "info-section divider"></section>
+</main>
+
+<footer>
+    <p>Developed  by Andrei Basto and Sean Su (2023)</p>
+</footer>
+
+
+
+<script src="{% static 'js/particle.js' %}"></script>
+<script src="{% static 'js/file_upload.js' %}"></script>
+
+{% endblock %}

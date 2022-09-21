@@ -25,7 +25,7 @@ a {
 .navlink {
   float: left;
   display: block;
-  height: 40px;
+  height: 30px;
   text-align: center;
   margin: 0px 10px;
   text-decoration: none;
@@ -33,7 +33,7 @@ a {
   padding: 2px 10px;
   top: 50%;
   border-radius: 18px;
-  background-color: rgba(4,93,233, 0.1);
+  background-color: rgba(4,93,233, 0.2);
   -webkit-transform: translateY(-50%);
   -ms-transform: translateY(-50%);
   transform: translateY(-50%);

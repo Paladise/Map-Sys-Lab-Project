@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block title %}Atlas | Take picture{% endblock %}
+ 
+{% block head %}
+<link href = "https://fonts.googleapis.com/icon?family=Material+Icons" rel = "stylesheet">
+{% endblock %}
+
+{% block body %}
+<video id="webcam" autoplay playsinline class = "camera"></video>
+<main>
+    <div class = "camera-interface">
+        <div class = "tool-bar">
+            <a id = "takePicture" download="image.png">Take picture</a>
+            <a>Finish</a>
+        </div>        
+    </div>    
+</main>
+
+<script src="{% static 'js/camera.js' %}"></script>
+
+{% endblock %}

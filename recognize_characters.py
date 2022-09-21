@@ -365,8 +365,6 @@ In example image, this includes:
 Find complete room names / door numbers that are not text-wrapped and combine them
 - Instead of just checking right, check below also and make sure there are no pixels between two boxes
 
-Try to differentiate between signular room numbers like "8" and actual misclassified pixels
-
 Try to remove dots above i's
 
 Check pixels in between letters and pixels along the side, if not connected?
@@ -375,10 +373,6 @@ For example, in practice image:
 - Doesn't identify the first "i" in Einstein
 - Doesn't identify "N" and "o" in Neuro since those letters are connected to walls
 - Doesn't identify "h" in Chem since h is connected to wall
-
-Possibly create list of "office" words? - may not be feasible for non-office buildings
-             
-For example, in practice image:
 - Doesn't identify "A" and "d" in Admin, but catches "min"
 """   
                     

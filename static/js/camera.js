@@ -62,7 +62,7 @@ class Webcam {
     selectCamera() {
         for (let webcam of this._webcamList) {
             if ((this._facingMode == 'user' && webcam.label.toLowerCase().includes('front')) ||
-                (this._facingMode == 'enviroment' && webcam.label.toLowerCase().includes('back'))
+                (this._facingMode == 'environment' && webcam.label.toLowerCase().includes('back'))
             ) {
                 this._selectedDeviceId = webcam.deviceId;
                 break;
@@ -72,7 +72,7 @@ class Webcam {
 
     /* Change Facing mode and selected camera */
     flip() {
-        this._facingMode = (this._facingMode == 'user') ? 'enviroment' : 'user';
+        this._facingMode = (this._facingMode == 'user') ? 'environment' : 'user';
         this._webcamElement.style.transform = "";
         this.selectCamera();
     }
@@ -179,6 +179,7 @@ class Webcam {
 const webcamElement = document.getElementById('webcam');
 const webcam = new Webcam(webcamElement, 'user');
 const pictureButton = document.getElementById('takePicture');
+const flipButton = document.getElementById('flipCamera');
 webcam.start()
     .then(result => {
         console.log("webcam started");
@@ -192,3 +193,9 @@ pictureButton.addEventListener("click", function() {
     let picture = webcam.snap();
     pictureButton.href = picture;
 });
+
+flipButton.addEventListener("click", function() {
+    console.log("Flipped camera");
+    webcam.flip();
+    webcam.start();
+})

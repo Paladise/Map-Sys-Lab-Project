@@ -106,6 +106,7 @@ def draw_boxes(pixels):
 
     loaded_pixels = set()
     boxes = set()
+    walls = set()
     for x in range(WIDTH):
         for y in range(HEIGHT):
             if (x, y) in loaded_pixels or pixels[x, y] == (255, 255, 255): # Skip over looked-at pixels or white pixels
@@ -130,8 +131,10 @@ def draw_boxes(pixels):
                 draw_line(pixels, max_x, max_x, min_y, max_y, rgb)
                 draw_line(pixels, min_x, max_x, max_y, max_y, rgb)
                 draw_line(pixels, min_x, min_x, min_y, max_y, rgb)
+            else:
+                walls.update(found)
 
-    return sorted(list(boxes), key = lambda b: (b[0], b[3]))
+    return sorted(list(boxes), key = lambda b: (b[0], b[3])), list(walls)
 
 def predict_char(box, single_char = True):
     """
@@ -341,7 +344,10 @@ image_to_black_and_white(pixels)
 print("Drawing boxes...")
 boxes_image = image.copy()
 boxes_pixels = boxes_image.load()
-boxes = draw_boxes(boxes_pixels)  
+boxes, walls = draw_boxes(boxes_pixels) 
+with open("list_of_points.txt", "w") as f:
+    f.write("[" + ", ".join([f'[{i[0]}, {i[1]}, 0]' for i in walls]) + "]")
+
 # image.save(IMAGE_SAVE_PATH + "custom_boxes.png")
 
 print("Processing image...")

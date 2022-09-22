@@ -19,7 +19,7 @@ DIST_BETWEEN_LETTERS = 15
 Y_THRESHOLD = 4
 
 USING_TESSERACT = False
-SHOW_IMAGES = False
+SHOW_IMAGES = True
 
 sys.setrecursionlimit(10000) # We don't talk about this line
 
@@ -118,7 +118,7 @@ def draw_boxes(pixels):
 
             loaded_pixels.update(found)
 
-            if 10 < len(found) and len(found) < 500 and x_len < 30 and y_len > 5 and y_len < 30: # Is appropriate size for character
+            if 5 < len(found) and len(found) < 500 and x_len < 30 and y_len > 3 and y_len < 30: # Is appropriate size for character
                 # print(f"Drawing box, {x_len} by {y_len} ==> {len(found)}")
                 min_x -= 1
                 max_x += 1
@@ -132,6 +132,8 @@ def draw_boxes(pixels):
                 draw_line(pixels, min_x, max_x, max_y, max_y, rgb)
                 draw_line(pixels, min_x, min_x, min_y, max_y, rgb)
             else:
+                # if len(found) != 0:
+                #     print(len(found), x_len, y_len)
                 walls.update(found)
 
     return sorted(list(boxes), key = lambda b: (b[0], b[3])), list(walls)
@@ -272,9 +274,14 @@ def process_image(boxes):
         if confidence >= CONFIDENCE_LEVEL:
             print("Full name:", full_word)
 
-        if confidence < CONFIDENCE_LEVEL: # Go individually
-
-            label = "".join([pred[0] if (pred := predict_char(b))[1] >= CONFIDENCE_LEVEL else "." for b in detected_name])
+            for word in full_word.split(" "):
+                if word == "":
+                    continue
+                if not d.check(word):
+                    suggestions = [i for i in d.suggest(word) if len(i) == len(word)]
+                    print("Suggestions:", suggestions)
+        else: # Go individually
+            label = "".join([pred[0] if (pred := predict_char(b))[1] >= CONFIDENCE_LEVEL else "*" for b in detected_name])
 
             # Change lowercase L's to 1's in room names
             change = True
@@ -291,24 +298,16 @@ def process_image(boxes):
 
             # Change 0's to O's in room names
 
-            if all(i == "0" or i.isalpha() for i in label) and len(label) > 1:
+            if all(i == "0" or i.isalpha() or i == "*" for i in label) and len(label) > 1:
                 label = "".join([i if i != "0" else "o" for i in label])
 
             label = label.capitalize() 
-            if any(i != "." for i in label):   
+            if any(i != "*" for i in label):   
                 print("Each character:", label)
-        else:
-            for word in full_word.split(" "):
-                if word == "":
-                    continue
-
-                if not d.check(word):
-                    suggestions = [i for i in d.suggest(word) if len(i) == len(word)]
-                    print("Suggestions:", suggestions)
         
         if SHOW_IMAGES:
             if confidence < CONFIDENCE_LEVEL:
-                if all(i == "." for i in label):
+                if all(i == "*" for i in label):
                     continue
                 text = f"Each: {label}"
             else:
@@ -346,18 +345,18 @@ boxes_image = image.copy()
 boxes_pixels = boxes_image.load()
 boxes, walls = draw_boxes(boxes_pixels) 
 with open("list_of_points.txt", "w") as f:
-    f.write("[" + ", ".join([f'[{i[0]}, {i[1]}, 0]' for i in walls]) + "]")
+    for i in walls:
+        f.write(f"{i[0]} {i[1]} 0\n")
 
-# image.save(IMAGE_SAVE_PATH + "custom_boxes.png")
+boxes_image.save(IMAGE_SAVE_PATH + "custom_boxes.png")
 
 print("Processing image...")
 process_image(boxes)    
 
-print("Saving updated boxes...")
-with open('boxes.pickle', 'wb') as handle:
-    pickle.dump(box_stats, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-# A very long to-do list :(
+if USING_TESSERACT:
+    print("Saving updated boxes...")
+    with open('boxes.pickle', 'wb') as handle:
+        pickle.dump(box_stats, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 """
 Maybe ask user to take another picture of key and then

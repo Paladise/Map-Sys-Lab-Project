@@ -3,8 +3,7 @@ import cv2 as cv
 import enchant
 import numpy as np
 import pickle
-import pytesseract
-import re 
+import pytesseract 
 import sys
 import time
 import tkinter as tk
@@ -132,8 +131,6 @@ def draw_boxes(pixels):
                 draw_line(pixels, min_x, max_x, max_y, max_y, rgb)
                 draw_line(pixels, min_x, min_x, min_y, max_y, rgb)
             else:
-                # if len(found) != 0:
-                #     print(len(found), x_len, y_len)
                 walls.update(found)
 
     return sorted(list(boxes), key = lambda b: (b[0], b[3])), list(walls)
@@ -179,7 +176,6 @@ def predict_char(box, single_char = True):
         if single_char:
             predict = pytesseract.image_to_data(
             image2, config=("-c tessedit"
-                            "_char_whitelist=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
                             " --psm 10"
                             " -l osd"
                             " "), output_type="data.frame")        
@@ -192,8 +188,7 @@ def predict_char(box, single_char = True):
                 confidence = -1 
         else: # Full word
             predict = pytesseract.image_to_data(
-                image2, config=("-c tessedit"
-                                "_char_whitelist=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"),
+                image2, config=("-c tessedit"),
                                 output_type="data.frame")
             predict = predict[predict.conf != -1]
             try:

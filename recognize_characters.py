@@ -17,8 +17,8 @@ FILE_NAME = IMAGE_SAVE_PATH + "practice_map.jpg"
 DIST_BETWEEN_LETTERS = 15
 Y_THRESHOLD = 4
 
-USING_TESSERACT = False
-SHOW_IMAGES = True
+USING_TESSERACT = True
+SHOW_IMAGES = False
 
 sys.setrecursionlimit(10000) # We don't talk about this line
 
@@ -176,9 +176,9 @@ def predict_char(box, single_char = True):
         if single_char:
             predict = pytesseract.image_to_data(
             image2, config=("-c tessedit"
+                            "_char_whitelist=|-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
                             " --psm 10"
-                            " -l osd"
-                            " "), output_type="data.frame")        
+                            " -l osd"), output_type="data.frame")        
             predict = predict[predict.conf != -1]
             try:
                 detected_char = str(predict["text"].iloc[0])[0]
@@ -188,8 +188,7 @@ def predict_char(box, single_char = True):
                 confidence = -1 
         else: # Full word
             predict = pytesseract.image_to_data(
-                image2, config=("-c tessedit"),
-                                output_type="data.frame")
+                image2, output_type="data.frame")
             predict = predict[predict.conf != -1]
             try:
                 detected_char = " ".join(predict["text"].tolist())
@@ -204,7 +203,8 @@ def predict_char(box, single_char = True):
     box_stats[(x1, x2, y1, y2)] = (detected_char, confidence)
 
     if confidence > CONFIDENCE_LEVEL:
-        image2.save(f"extras/{detected_char}_{confidence}.png")
+        name = detected_char.replace("|", " pipe ")
+        image2.save(f"extras/{name}_{confidence}.png")
 
     return detected_char, confidence
 

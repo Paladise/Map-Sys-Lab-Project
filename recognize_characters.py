@@ -1,4 +1,4 @@
-import colorsys 
+import colorsys
 import cv2 as cv
 import enchant
 import numpy as np
@@ -15,9 +15,10 @@ CONFIDENCE_LEVEL = 65
 IMAGE_SAVE_PATH = "images/"
 FILE_NAME = IMAGE_SAVE_PATH + "practice_map.jpg"
 DIST_BETWEEN_LETTERS = 15
+DIST_FOR_SPACE = 4
 Y_THRESHOLD = 4
 
-USING_TESSERACT = True
+USING_TESSERACT = False
 SHOW_IMAGES = False
 
 sys.setrecursionlimit(10000) # We don't talk about this line
@@ -135,7 +136,8 @@ def draw_boxes(pixels):
 
     return sorted(list(boxes), key = lambda b: (b[0], b[3])), list(walls)
 
-def predict_char(box, single_char = True):
+
+def predict_char(box, single_char = True, has_spaces = False):
     """
     Uses box coordinates to create a gray-scale PIL image specifically of that region (with padding)
     And checks if that image is of a door, and if not uses pytesseract to 
@@ -177,8 +179,8 @@ def predict_char(box, single_char = True):
             predict = pytesseract.image_to_data(
             image2, config=("-c tessedit"
                             "_char_whitelist=|-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-                            " --psm 10"
-                            " -l osd"), output_type="data.frame")        
+                            "--psm 10"
+                            "-l osd"), output_type="data.frame")        
             predict = predict[predict.conf != -1]
             try:
                 detected_char = str(predict["text"].iloc[0])[0]
@@ -187,8 +189,12 @@ def predict_char(box, single_char = True):
                 detected_char = ""
                 confidence = -1 
         else: # Full word
+            if has_spaces:
+                config = ("-c tessedit" "--psm 7") # 7 = Treat the image as a single text line.
+            else:
+                config = ("-c tessedit" "--psm 8") # 8 = Treat the image as a single word.
             predict = pytesseract.image_to_data(
-                image2, output_type="data.frame")
+                image2, config = config, output_type="data.frame")
             predict = predict[predict.conf != -1]
             try:
                 detected_char = " ".join(predict["text"].tolist())
@@ -209,7 +215,7 @@ def predict_char(box, single_char = True):
     return detected_char, confidence
 
 
-def generate_names(cur_box, used_boxes, detected_name):
+def generate_names(cur_box, used_boxes, detected_name, has_spaces = False):
     """
     Recursive function using the current box, used boxes, and detected name
     so far to check neighboring pixels and try to construct the full room name.
@@ -226,12 +232,26 @@ def generate_names(cur_box, used_boxes, detected_name):
         bx1, _, _, by2 = box
 
         if abs(ay2 - by2) <= Y_THRESHOLD and abs(ax2 - bx1) <= DIST_BETWEEN_LETTERS and all(pixels[x, ay2] != (0, 0, 0) for x in range(ax2, bx1)): # Part of same word
-            used_boxes, detected_name = generate_names(box, used_boxes, detected_name)
+            if abs(ax2 - bx1) >= DIST_FOR_SPACE: 
+                has_spaces = True               
+            
+            used_boxes, detected_name, has_spaces = generate_names(box, used_boxes, detected_name, has_spaces)
             break
 
-    return used_boxes, detected_name
+    return used_boxes, detected_name, has_spaces
 
-def process_image(boxes):
+
+def remove_box(pixels, box):
+    """
+    Replaces all pixels with white within a certain box region
+    """
+
+    for x in range(box[0], box[1]):
+        for y in range(box[2], box[3]):
+            pixels[x, y] = (255, 255, 255)
+
+
+def process_image(boxes, pixels):
     """
     Process the entire image to identify all integral parts using already-identified boxes.
     """
@@ -254,7 +274,7 @@ def process_image(boxes):
         if box in used_boxes:
             continue
 
-        used_boxes, detected_name = generate_names(box, used_boxes, [])
+        used_boxes, detected_name, has_spaces = generate_names(box, used_boxes, [])
         label = ""
 
         # Use full word
@@ -265,31 +285,40 @@ def process_image(boxes):
         for i in detected_name:
             y1 = min(y1, i[2])
             y2 = max(y2, i[3])
-        full_word, confidence = predict_char((first[0], last[1], y1, y2), False)
+        full_word_box = (first[0], last[1], y1, y2)
+        full_word, confidence = predict_char(full_word_box, False, has_spaces)
+        full_word.replace(",", "")
         if confidence >= CONFIDENCE_LEVEL:
             print("Full name:", full_word)
+            remove_box(pixels, full_word_box)
 
             for word in full_word.split(" "):
                 if word == "":
                     continue
                 if not d.check(word):
                     suggestions = [i for i in d.suggest(word) if len(i) == len(word)]
-                    print("Suggestions:", suggestions)
+                    if len(suggestions) == 1:
+                        print("Suggestion:", suggestions)
+                    # else:
+                    #     print("Too many suggestions")
         else: # Go individually
             label = "".join([pred[0] if (pred := predict_char(b))[1] >= CONFIDENCE_LEVEL else "*" for b in detected_name])
 
-            # Change lowercase L's to 1's in room names
+            for b in detected_name:
+                remove_box(pixels, b)
+
+            # Change lowercase L's and capital I's to 1's in room names
             change = True
             is_start = True
             for i in range(len(label)):
-                if label[i] == "l":
+                if label[i] in "lI":
                     continue
                 elif label[i].isnumeric() and is_start:
                     is_start = False
                 elif not is_start and not label[i].isnumeric():
                     change = False
             if change:
-                label = "".join([i if i != "l" else "1" for i in label])
+                label = "".join([i for i in label if i not in "lI"])
 
             # Change 0's to O's in room names
 
@@ -319,6 +348,8 @@ def process_image(boxes):
                 draw_line(pixels3, x1, x2, y2, y2, color)
                 draw_line(pixels3, x1, x1, y1, y2, color)
             
+            if x1 + 200 > WIDTH:
+                x1-= 200
             ImageDraw.Draw(image3).text((x1, y1), text, color, font = font)
 
             tk_image = ImageTk.PhotoImage(image3.resize((1000, 600)))
@@ -326,6 +357,7 @@ def process_image(boxes):
             image_label.pack()
             root.update()
             time.sleep(1.5)
+
 
 image = Image.open(FILE_NAME)
 pixels = image.load()
@@ -337,7 +369,9 @@ image_to_black_and_white(pixels)
 
 print("Drawing boxes...")
 boxes_image = image.copy()
+blank_image = image.copy()
 boxes_pixels = boxes_image.load()
+blank_pixels = blank_image.load()
 boxes, walls = draw_boxes(boxes_pixels) 
 with open("list_of_points.txt", "w") as f:
     for i in walls:
@@ -346,7 +380,9 @@ with open("list_of_points.txt", "w") as f:
 boxes_image.save(IMAGE_SAVE_PATH + "custom_boxes.png")
 
 print("Processing image...")
-process_image(boxes)    
+process_image(boxes, blank_pixels)    
+blank_image.show()
+blank_image.save(IMAGE_SAVE_PATH + "blank_map.png")
 
 if USING_TESSERACT:
     print("Saving updated boxes...")
@@ -362,15 +398,16 @@ In example image, this includes:
 - Signage
 - Door
 
+Not detecting 1s?
+
 Find complete room names / door numbers that are not text-wrapped and combine them
 - Instead of just checking right, check below also and make sure there are no pixels between two boxes
-
-Try to remove dots above i's
+For example, in practice image:
+- Detects Door and 1 separately
+- Detects 9 and like Neuro or something separately
 
 Check pixels in between letters and pixels along the side, if not connected?
-
 For example, in practice image:
-- Doesn't identify the first "i" in Einstein
 - Doesn't identify "N" and "o" in Neuro since those letters are connected to walls
 - Doesn't identify "h" in Chem since h is connected to wall
 - Doesn't identify "A" and "d" in Admin, but catches "min"

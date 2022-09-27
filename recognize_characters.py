@@ -22,7 +22,7 @@ Y_THRESHOLD = 4
 RESIZE = 2
 
 USING_TESSERACT = False
-SHOW_IMAGES = False
+SHOW_IMAGES = True
 
 sys.setrecursionlimit(10000) # We don't talk about this line
 
@@ -384,6 +384,9 @@ def process_image(boxes, pixels):
             else:
                 text = f"Full: {full_word}"
 
+                if confidence == 100.0:
+                    text += " But 100"
+
             text += f" {has_spaces}"[:2]
             
             image3 = Image.open(FILE_NAME)
@@ -428,7 +431,7 @@ with open("list_of_points.txt", "w") as f:
     for i in walls:
         f.write(f"{i[0]} {i[1]} 0\n")
 
-boxes_image.save(IMAGE_SAVE_PATH + "custom_boxes.png")
+# boxes_image.save(IMAGE_SAVE_PATH + "custom_boxes.png")
 
 print("Processing image...")
 process_image(boxes, blank_pixels)    

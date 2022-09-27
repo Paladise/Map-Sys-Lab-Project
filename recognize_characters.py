@@ -1,9 +1,9 @@
-import colorsys
+import colorsys 
 import cv2 as cv
 import enchant
 import numpy as np
 import pickle
-import pytesseract 
+import pytesseract
 import sys
 import time
 import tkinter as tk
@@ -11,12 +11,15 @@ from image_similarity_measures.quality_metrics import rmse
 from PIL import Image, ImageTk, ImageDraw, ImageFont
 from random import random
 
+start_time = time.perf_counter()
+
 CONFIDENCE_LEVEL = 65
 IMAGE_SAVE_PATH = "images/"
 FILE_NAME = IMAGE_SAVE_PATH + "practice_map.jpg"
 DIST_BETWEEN_LETTERS = 15
 DIST_FOR_SPACE = 4
 Y_THRESHOLD = 4
+RESIZE = 2
 
 USING_TESSERACT = False
 SHOW_IMAGES = False
@@ -104,9 +107,7 @@ def draw_boxes(pixels):
     for characters (using approximate size / shape).
     """
 
-    loaded_pixels = set()
-    boxes = set()
-    walls = set()
+    loaded_pixels, boxes, walls = set(), set(), set()
     for x in range(WIDTH):
         for y in range(HEIGHT):
             if (x, y) in loaded_pixels or pixels[x, y] == (255, 255, 255): # Skip over looked-at pixels or white pixels
@@ -136,7 +137,6 @@ def draw_boxes(pixels):
 
     return sorted(list(boxes), key = lambda b: (b[0], b[3])), list(walls)
 
-
 def predict_char(box, single_char = True, has_spaces = False):
     """
     Uses box coordinates to create a gray-scale PIL image specifically of that region (with padding)
@@ -156,6 +156,7 @@ def predict_char(box, single_char = True, has_spaces = False):
         for y in range(y1 + 1, y2):
             pixels2[x - x1 + padding, y - y1 + padding] = pixels[x, y]
     image2 = image2.convert("L")
+    image3 = image2.resize((image2.size[0]*RESIZE,image2.size[1]*RESIZE), Image.Resampling.LANCZOS)
     
     # Check if the image is of a door
 
@@ -178,35 +179,74 @@ def predict_char(box, single_char = True, has_spaces = False):
         if single_char:
             predict = pytesseract.image_to_data(
             image2, config=("-c tessedit"
-                            "_char_whitelist=|-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-                            "--psm 10"
-                            "-l osd"), output_type="data.frame")        
-            predict = predict[predict.conf != -1]
+                            "_char_whitelist=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+                            " --psm 10"
+                            " -l osd"
+                            " "), output_type="data.frame")        
+            predict1 = pytesseract.image_to_data(
+            image3, config=("-c tessedit"
+                            "_char_whitelist=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+                            " --psm 10"
+                            " -l osd"
+                            " "), output_type="data.frame")    
+
+            predict = predict[predict["conf"] != -1]
+            predict1 = predict1[predict1["conf"] != -1]
             try:
                 detected_char = str(predict["text"].iloc[0])[0]
                 confidence = predict["conf"].iloc[0]   
             except:
                 detected_char = ""
                 confidence = -1 
-        else: # Full word
-            if has_spaces:
-                config = ("-c tessedit" "--psm 7") # 7 = Treat the image as a single text line.
-            else:
-                config = ("-c tessedit" "--psm 8") # 8 = Treat the image as a single word.
-            predict = pytesseract.image_to_data(
-                image2, config = config, output_type="data.frame")
-            predict = predict[predict.conf != -1]
+
             try:
-                detected_char = " ".join(predict["text"].tolist())
-                confidence = predict["conf"].iloc[0]   
+                detected_char1 = str(predict1["text"].iloc[0])[0]
+                confidence1 = predict1["conf"].iloc[0]   
+            except:
+                detected_char1 = ""
+                confidence1 = -1 
+        else: # Full word
+
+            if has_spaces:
+                config = "--oem 3 -l eng --psm 7"
+            else:
+                config = "--oem 3 -l eng --psm 8 -c tessedit_char_whitelist=|-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+            predict = pytesseract.image_to_data(
+                image2, config = config, output_type="data.frame")            
+            predict1 = pytesseract.image_to_data(
+                image3, config = config, output_type="data.frame")
+
+            predict = predict[predict["conf"] != -1]
+            predict1 = predict1[predict1["conf"] != -1]
+
+            try:
+                detected_char = predict["text"].tolist()
+                detected_char1 = predict1["text"].tolist()
+                detected_char = " ".join([str(int(a)) if isinstance(a, float) else str(a) for a in detected_char])
+                detected_char1 = " ".join([str(int(a)) if isinstance(a, float) else str(a) for a in detected_char1])
+                confidence = predict["conf"].iloc[0]
+                confidence1 = predict1["conf"].iloc[0]                  
             except:
                 detected_char = ""
-                confidence = -1 
-    else:
-        detected_char = box_stats[(x1, x2, y1, y2)][0]
-        confidence = box_stats[(x1, x2, y1, y2)][1]
+                confidence = -1
+                detected_char1 = ""
+                confidence1 = -1 
 
-    box_stats[(x1, x2, y1, y2)] = (detected_char, confidence)
+            if confidence == 0:
+                confidence = 100.0
+            if confidence1 == 0:
+                confidence1 = 100.0
+    else:
+        detected_char = box_stats[(x1, x2, y1, y2, 0)][0]
+        confidence = box_stats[(x1, x2, y1, y2, 0)][1]
+        detected_char1 = box_stats[(x1, x2, y1, y2, 1)][0]
+        confidence1 = box_stats[(x1, x2, y1, y2, 1)][1]
+
+    print(detected_char, "   ", detected_char1, "   ", confidence, "   ", confidence1) 
+
+    box_stats[(x1, x2, y1, y2, 0)] = (detected_char, confidence)
+    box_stats[(x1, x2, y1, y2, 1)] = (detected_char1, confidence1)
 
     if confidence > CONFIDENCE_LEVEL:
         name = detected_char.replace("|", " pipe ")
@@ -223,15 +263,15 @@ def generate_names(cur_box, used_boxes, detected_name, has_spaces = False):
 
     used_boxes.append(cur_box)
     detected_name.append(cur_box)
-    _, ax2, _, ay2 = cur_box
+    _, ax2, ay1, ay2 = cur_box
 
     for box in boxes:
         if box in used_boxes:
             continue
-            
-        bx1, _, _, by2 = box
 
-        if abs(ay2 - by2) <= Y_THRESHOLD and abs(ax2 - bx1) <= DIST_BETWEEN_LETTERS and all(pixels[x, ay2] != (0, 0, 0) for x in range(ax2, bx1)): # Part of same word
+        bx1, _, by1, by2 = box
+            
+        if abs((ay1+ay2)/2 - (by1+by2)/2) <= Y_THRESHOLD and abs(ax2 - bx1) <= DIST_BETWEEN_LETTERS and all(pixels[x, ay2] != (0, 0, 0) for x in range(ax2, bx1)): # Part of same word
             if abs(ax2 - bx1) >= DIST_FOR_SPACE: 
                 has_spaces = True               
             
@@ -245,7 +285,6 @@ def remove_box(pixels, box):
     """
     Replaces all pixels with white within a certain box region
     """
-
     for x in range(box[0], box[1]):
         for y in range(box[2], box[3]):
             pixels[x, y] = (255, 255, 255)
@@ -295,39 +334,47 @@ def process_image(boxes, pixels):
             for word in full_word.split(" "):
                 if word == "":
                     continue
+
                 if not d.check(word):
                     suggestions = [i for i in d.suggest(word) if len(i) == len(word)]
                     if len(suggestions) == 1:
-                        print("Suggestion:", suggestions)
-                    # else:
-                    #     print("Too many suggestions")
+                        print("Suggestions:", suggestions)
+                    elif len(suggestions) > 1:
+                        print(f"{len(suggestions)} suggestions, not displaying them...")
         else: # Go individually
+
             label = "".join([pred[0] if (pred := predict_char(b))[1] >= CONFIDENCE_LEVEL else "*" for b in detected_name])
 
             for b in detected_name:
                 remove_box(pixels, b)
 
-            # Change lowercase L's and capital I's to 1's in room names
+            # Change l's and i's to 1's in room names
             change = True
             is_start = True
             for i in range(len(label)):
-                if label[i] in "lI":
+                if label[i] in "lIi":
                     continue
                 elif label[i].isnumeric() and is_start:
                     is_start = False
                 elif not is_start and not label[i].isnumeric():
                     change = False
+
             if change:
-                label = "".join([i for i in label if i not in "lI"])
+                label = "".join([i if i not in "lIi" else "1" for i in label])
 
             # Change 0's to O's in room names
 
             if all(i == "0" or i.isalpha() or i == "*" for i in label) and len(label) > 1:
                 label = "".join([i if i != "0" else "o" for i in label])
 
+            # Change O's to 0's in room names
+
+            if all(i in "oO" or i.isnumeric() or i == "*" for i in label) and len(label) > 1:
+                label = "".join([i if i not in "oO" else "0" for i in label])
+
             label = label.capitalize() 
             if any(i != "*" for i in label):   
-                print("Each character:", label)
+                print("Each character:", label)            
         
         if SHOW_IMAGES:
             if confidence < CONFIDENCE_LEVEL:
@@ -336,6 +383,8 @@ def process_image(boxes, pixels):
                 text = f"Each: {label}"
             else:
                 text = f"Full: {full_word}"
+
+            text += f" {has_spaces}"[:2]
             
             image3 = Image.open(FILE_NAME)
             pixels3 = image3.load()
@@ -347,9 +396,10 @@ def process_image(boxes, pixels):
                 draw_line(pixels3, x2, x2, y1, y2, color)
                 draw_line(pixels3, x1, x2, y2, y2, color)
                 draw_line(pixels3, x1, x1, y1, y2, color)
-            
+
             if x1 + 200 > WIDTH:
-                x1-= 200
+                x1 -= 200
+            
             ImageDraw.Draw(image3).text((x1, y1), text, color, font = font)
 
             tk_image = ImageTk.PhotoImage(image3.resize((1000, 600)))
@@ -367,6 +417,7 @@ print("Converting to black and white...")
 image_to_black_and_white(pixels)
 # image.save(IMAGE_SAVE_PATH + "black_and_white.png")
 
+	
 print("Drawing boxes...")
 boxes_image = image.copy()
 blank_image = image.copy()
@@ -381,35 +432,13 @@ boxes_image.save(IMAGE_SAVE_PATH + "custom_boxes.png")
 
 print("Processing image...")
 process_image(boxes, blank_pixels)    
-blank_image.show()
-blank_image.save(IMAGE_SAVE_PATH + "blank_map.png")
+# blank_image.show()
+# blank_image.save(IMAGE_SAVE_PATH + "blank_map.png")
 
 if USING_TESSERACT:
     print("Saving updated boxes...")
     with open('boxes.pickle', 'wb') as handle:
         pickle.dump(box_stats, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-"""
-Maybe ask user to take another picture of key and then
-BEFORE identifying boxes for characters, go through key
-In example image, this includes:
-- Restroom
-- Elevator
-- Signage
-- Door
-
-Not detecting 1s?
-
-Find complete room names / door numbers that are not text-wrapped and combine them
-- Instead of just checking right, check below also and make sure there are no pixels between two boxes
-For example, in practice image:
-- Detects Door and 1 separately
-- Detects 9 and like Neuro or something separately
-
-Check pixels in between letters and pixels along the side, if not connected?
-For example, in practice image:
-- Doesn't identify "N" and "o" in Neuro since those letters are connected to walls
-- Doesn't identify "h" in Chem since h is connected to wall
-- Doesn't identify "A" and "d" in Admin, but catches "min"
-"""   
-                    
+    if not SHOW_IMAGES:
+        print("Entire program took", round(time.perf_counter() - start_time, 3), "seconds.")

@@ -13,16 +13,17 @@ from random import random
 
 start_time = time.perf_counter()
 
-CONFIDENCE_LEVEL = 65
+CONFIDENCE_LEVEL = 69
+UPPER_CONFIDENCE_LEVEL = 90
 IMAGE_SAVE_PATH = "images/"
 FILE_NAME = IMAGE_SAVE_PATH + "practice_map.jpg"
 DIST_BETWEEN_LETTERS = 15
 DIST_FOR_SPACE = 4
-Y_THRESHOLD = 4
+Y_THRESHOLD = 6
 RESIZE = 2
 
 USING_TESSERACT = False
-SHOW_IMAGES = True
+SHOW_IMAGES = False
 
 sys.setrecursionlimit(10000) # We don't talk about this line
 
@@ -166,14 +167,16 @@ def predict_char(box, single_char = True, has_spaces = False):
 
     opencv_image = cv.cvtColor(np.array(image2), cv.COLOR_GRAY2RGB)
     resized_image = cv.resize(opencv_image, dim, interpolation = cv.INTER_AREA)
-    measure = rmse(door_image, resized_image).item()
-    m = round(measure, 3)
+    m = rmse(door_image, resized_image).item()
 
     if m < 0.02:
         image2.save(f"extras/DOOR_{x1}{x2}{y1}{y2}_{m}.png")
         return "Door ", 100.0
 
-    # Run pytesseract (or saved data) on image        
+    # Run pytesseract (or saved data) on image    
+
+    detected_char1 = ""
+    confidence1 = -2   
 
     if USING_TESSERACT:
         if single_char:
@@ -182,29 +185,34 @@ def predict_char(box, single_char = True, has_spaces = False):
                             "_char_whitelist=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
                             " --psm 10"
                             " -l osd"
-                            " "), output_type="data.frame")        
-            predict1 = pytesseract.image_to_data(
-            image3, config=("-c tessedit"
-                            "_char_whitelist=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-                            " --psm 10"
-                            " -l osd"
-                            " "), output_type="data.frame")    
+                            " "), output_type="data.frame")   
 
             predict = predict[predict["conf"] != -1]
-            predict1 = predict1[predict1["conf"] != -1]
+            
             try:
                 detected_char = str(predict["text"].iloc[0])[0]
                 confidence = predict["conf"].iloc[0]   
             except:
                 detected_char = ""
-                confidence = -1 
+                confidence = -1
 
-            try:
-                detected_char1 = str(predict1["text"].iloc[0])[0]
-                confidence1 = predict1["conf"].iloc[0]   
-            except:
-                detected_char1 = ""
-                confidence1 = -1 
+            if confidence < CONFIDENCE_LEVEL: 
+
+                predict1 = pytesseract.image_to_data(
+                image3, config=("-c tessedit"
+                                "_char_whitelist=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+                                " --psm 10"
+                                " -l osd"
+                                " "), output_type="data.frame")    
+
+                predict1 = predict1[predict1["conf"] != -1]
+
+                try:
+                    detected_char1 = str(predict1["text"].iloc[0])[0]
+                    confidence1 = predict1["conf"].iloc[0]   
+                except:
+                    detected_char1 = ""
+                    confidence1 = -1 
         else: # Full word
 
             if has_spaces:
@@ -213,40 +221,46 @@ def predict_char(box, single_char = True, has_spaces = False):
                 config = "--oem 3 -l eng --psm 8 -c tessedit_char_whitelist=|-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
             predict = pytesseract.image_to_data(
-                image2, config = config, output_type="data.frame")            
-            predict1 = pytesseract.image_to_data(
-                image3, config = config, output_type="data.frame")
-
+                image2, config = config, output_type="data.frame")          
             predict = predict[predict["conf"] != -1]
-            predict1 = predict1[predict1["conf"] != -1]
 
             try:
                 detected_char = predict["text"].tolist()
-                detected_char1 = predict1["text"].tolist()
                 detected_char = " ".join([str(int(a)) if isinstance(a, float) else str(a) for a in detected_char])
-                detected_char1 = " ".join([str(int(a)) if isinstance(a, float) else str(a) for a in detected_char1])
-                confidence = predict["conf"].iloc[0]
-                confidence1 = predict1["conf"].iloc[0]                  
+                confidence = predict["conf"].iloc[0]                  
             except:
                 detected_char = ""
                 confidence = -1
-                detected_char1 = ""
-                confidence1 = -1 
+            
+            if confidence < CONFIDENCE_LEVEL:
+                predict1 = pytesseract.image_to_data(
+                    image3, config = config, output_type="data.frame")
+                predict1 = predict1[predict1["conf"] != -1]
+
+                try:
+                    detected_char1 = predict1["text"].tolist()                
+                    detected_char1 = " ".join([str(int(a)) if isinstance(a, float) else str(a) for a in detected_char1])
+                    confidence1 = predict1["conf"].iloc[0]                  
+                except:
+                    detected_char1 = ""
+                    confidence1 = -1 
 
             if confidence == 0:
-                confidence = 100.0
+                confidence = 89.0
             if confidence1 == 0:
-                confidence1 = 100.0
+                confidence1 = 89.0
     else:
         detected_char = box_stats[(x1, x2, y1, y2, 0)][0]
         confidence = box_stats[(x1, x2, y1, y2, 0)][1]
         detected_char1 = box_stats[(x1, x2, y1, y2, 1)][0]
         confidence1 = box_stats[(x1, x2, y1, y2, 1)][1]
 
-    print(detected_char, "   ", detected_char1, "   ", confidence, "   ", confidence1) 
-
     box_stats[(x1, x2, y1, y2, 0)] = (detected_char, confidence)
     box_stats[(x1, x2, y1, y2, 1)] = (detected_char1, confidence1)
+
+    if confidence1 > confidence1:
+        confidence = confidence1
+        detected_char = detected_char1
 
     if confidence > CONFIDENCE_LEVEL:
         name = detected_char.replace("|", " pipe ")
@@ -308,6 +322,7 @@ def process_image(boxes, pixels):
         root.update()
 
     used_boxes = []    
+    room_names = []
 
     for box in boxes:    
         if box in used_boxes:
@@ -328,7 +343,11 @@ def process_image(boxes, pixels):
         full_word, confidence = predict_char(full_word_box, False, has_spaces)
         full_word.replace(",", "")
         if confidence >= CONFIDENCE_LEVEL:
+            if len(full_word) == 1 and confidence < UPPER_CONFIDENCE_LEVEL: # Mis-identified character
+                continue
+
             print("Full name:", full_word)
+            room_names.append(full_word)
             remove_box(pixels, full_word_box)
 
             for word in full_word.split(" "):
@@ -372,9 +391,15 @@ def process_image(boxes, pixels):
             if all(i in "oO" or i.isnumeric() or i == "*" for i in label) and len(label) > 1:
                 label = "".join([i if i not in "oO" else "0" for i in label])
 
+            if len(label) > 1 and label[0] == "*" and label[1] != "*":
+                label = label[1:]
+            if len(label) > 1 and label[-2] != "*" and label[-1] == "*":
+                label = label[:-1]            
+
             label = label.capitalize() 
             if any(i != "*" for i in label):   
-                print("Each character:", label)            
+                print("Each character:", label)   
+                room_names.append(label)         
         
         if SHOW_IMAGES:
             if confidence < CONFIDENCE_LEVEL:
@@ -384,7 +409,7 @@ def process_image(boxes, pixels):
             else:
                 text = f"Full: {full_word}"
 
-                if confidence == 100.0:
+                if confidence == 89.0:
                     text += " But 100"
 
             text += f" {has_spaces}"[:2]
@@ -411,6 +436,8 @@ def process_image(boxes, pixels):
             root.update()
             time.sleep(1.5)
 
+    return sorted(room_names, key = lambda i: int(i) if i.isnumeric() else 0)
+
 
 image = Image.open(FILE_NAME)
 pixels = image.load()
@@ -434,9 +461,10 @@ with open("list_of_points.txt", "w") as f:
 # boxes_image.save(IMAGE_SAVE_PATH + "custom_boxes.png")
 
 print("Processing image...")
-process_image(boxes, blank_pixels)    
-# blank_image.show()
-# blank_image.save(IMAGE_SAVE_PATH + "blank_map.png")
+room_names = process_image(boxes, blank_pixels) 
+print("\n\n\n", room_names)   
+blank_image.show()
+blank_image.save(IMAGE_SAVE_PATH + "blank_map.png")
 
 if USING_TESSERACT:
     print("Saving updated boxes...")

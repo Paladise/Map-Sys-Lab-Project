@@ -342,13 +342,23 @@ def process_image(boxes, pixels):
         full_word_box = (first[0], last[1], y1, y2)
         full_word, confidence = predict_char(full_word_box, False, has_spaces)
         full_word.replace(",", "")
+
+        if "|" in full_word:
+            pipe = full_word.index("|")
+            full_word1 = full_word[:pipe]
+            full_word2 = full_word[pipe + 1:]
+            print("Full word:", full_word1)
+            print("Full word:", full_word2)
+
+            room_names.append(full_word1)
+            room_names.append(full_word2)
+            continue
+
+            # TODO: Remove box here
+
         if confidence >= CONFIDENCE_LEVEL:
             if len(full_word) == 1 and confidence < UPPER_CONFIDENCE_LEVEL: # Mis-identified character
                 continue
-
-            print("Full name:", full_word)
-            room_names.append(full_word)
-            remove_box(pixels, full_word_box)
 
             for word in full_word.split(" "):
                 if word == "":
@@ -357,9 +367,15 @@ def process_image(boxes, pixels):
                 if not d.check(word):
                     suggestions = [i for i in d.suggest(word) if len(i) == len(word)]
                     if len(suggestions) == 1:
-                        print("Suggestions:", suggestions)
-                    elif len(suggestions) > 1:
-                        print(f"{len(suggestions)} suggestions, not displaying them...")
+                        full_word = suggestions[0]
+                    #     print("Suggestions:", suggestions)
+                    # elif len(suggestions) > 1:
+                    #     print(f"{len(suggestions)} suggestions, not displaying them...")
+
+            print("Full name:", full_word)
+            room_names.append(full_word)
+            remove_box(pixels, full_word_box)
+
         else: # Go individually
 
             label = "".join([pred[0] if (pred := predict_char(b))[1] >= CONFIDENCE_LEVEL else "*" for b in detected_name])
@@ -463,7 +479,7 @@ with open("list_of_points.txt", "w") as f:
 print("Processing image...")
 room_names = process_image(boxes, blank_pixels) 
 print("\n\n\n", room_names)   
-blank_image.show()
+# blank_image.show()
 blank_image.save(IMAGE_SAVE_PATH + "blank_map.png")
 
 if USING_TESSERACT:

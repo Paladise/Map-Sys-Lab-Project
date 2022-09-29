@@ -21,6 +21,7 @@ DIST_BETWEEN_LETTERS = 15
 DIST_FOR_SPACE = 4
 Y_THRESHOLD = 6
 RESIZE = 2
+PADDING = 3
 
 USING_TESSERACT = False
 SHOW_IMAGES = False
@@ -72,6 +73,16 @@ def flood(x, y, found, min_x, max_x, min_y, max_y):
                 found, min_x, max_x, min_y, max_y = flood(x + x1, y + y1, found, min_x, max_x, min_y, max_y)
 
     return found, min_x, max_x, min_y, max_y
+
+def draw_square(pixels, min_x, max_x, min_y, max_y, rgb):
+    """
+    Draws a square by calling draw_line(), because too lazy to integrate :D
+    """
+
+    draw_line(pixels, min_x, max_x, min_y, min_y, rgb)
+    draw_line(pixels, max_x, max_x, min_y, max_y, rgb)
+    draw_line(pixels, min_x, max_x, max_y, max_y, rgb)
+    draw_line(pixels, min_x, min_x, min_y, max_y, rgb)
 
 
 def draw_line(pixels, x1, x2, y1, y2, rgb):
@@ -128,17 +139,48 @@ def draw_boxes(pixels):
                 max_y += 1
                 boxes.add((min_x, max_x, min_y, max_y))
                 h,s,l = random(), 0.5 + random()/2.0, 0.4 + random()/5.0
-                rgb = tuple([int(256*i) for i in colorsys.hls_to_rgb(h,l,s)])            
-                draw_line(pixels, min_x, max_x, min_y, min_y, rgb)
-                draw_line(pixels, max_x, max_x, min_y, max_y, rgb)
-                draw_line(pixels, min_x, max_x, max_y, max_y, rgb)
-                draw_line(pixels, min_x, min_x, min_y, max_y, rgb)
+                rgb = tuple([int(256*i) for i in colorsys.hls_to_rgb(h,l,s)])    
+                draw_square(pixels, min_x, max_x, min_y, max_y, rgb)  
             else:
                 walls.update(found)
 
     return sorted(list(boxes), key = lambda b: (b[0], b[3])), list(walls)
 
-def predict_char(box, single_char = True, has_spaces = False):
+
+def detect_if_symbol(x1, x2, y1, y2):
+    """
+    Given box of potential symbol, determine whether that image
+    is indeed a symbol and return which symbol it is (according to key)
+    """
+
+    image = create_image_from_box(x1, x2, y1, y2, 0)
+    door_image = cv.imread(IMAGE_SAVE_PATH + "door.png")
+    width, height = door_image.shape[1], door_image.shape[0]
+    dim = (width, height)
+
+    opencv_image = cv.cvtColor(np.array(image), cv.COLOR_GRAY2RGB)
+    resized_image = cv.resize(opencv_image, dim, interpolation = cv.INTER_AREA)
+    m = rmse(door_image, resized_image).item()
+
+    if m < 0.02:
+        return "Door"
+
+    return ""
+
+
+def create_image_from_box(x1, x2, y1, y2, padding):
+    """
+    Given box coordinates, return image generated around that box with or without padding
+    """
+
+    image2 = Image.new("L", (x2 - x1 + 1 + 2*padding, y2 - y1 + 1 + 2*padding), color = "white")
+    pixels2 = image2.load()
+    for x in range(x1 + 1, x2):
+        for y in range(y1 + 1, y2):
+            pixels2[x - x1 + padding, y - y1 + padding] = pixels[x, y]
+
+
+def predict_char(x1, x2, y1, y2, single_char = True, has_spaces = False):
     """
     Uses box coordinates to create a gray-scale PIL image specifically of that region (with padding)
     And checks if that image is of a door, and if not uses pytesseract to 
@@ -146,19 +188,23 @@ def predict_char(box, single_char = True, has_spaces = False):
     """
 
     global box_stats
-    x1, x2, y1, y2 = box
 
     # Creating image of that specific area
 
-    padding = 3
-    image2 = Image.new("RGB", (x2 - x1 + 1 + 2*padding, y2 - y1 + 1 + 2*padding), color = "white")
-    pixels2 = image2.load()
-    for x in range(x1 + 1, x2):
-        for y in range(y1 + 1, y2):
-            pixels2[x - x1 + padding, y - y1 + padding] = pixels[x, y]
-    image2 = image2.convert("L")
+    image2 = create_image_from_box(x1, x2, y1, y2, PADDING)
     image3 = image2.resize((image2.size[0]*RESIZE,image2.size[1]*RESIZE), Image.Resampling.LANCZOS)
-    
+
+    # display_image = image.copy()
+    # p = display_image.load()
+    # draw_square(p, x1, x2, y1, y2, (255, 0, 0))
+    # display_image = display_image.crop((max(0, x1 - 50),  max(0, y1 - 50), min(WIDTH, x2 + 50), min(HEIGHT, y2 + 50)))
+    # display_image = display_image.resize((display_image.size[0] * RESIZE, display_image.size[1] * RESIZE), Image.Resampling.LANCZOS)
+
+    # cv_image = np.array(display_image)
+    # cv.imshow("Window", cv_image)
+    # cv.waitKey(1250)
+    # cv.destroyAllWindows()
+
     # Check if the image is of a door
 
     door_image = cv.imread(IMAGE_SAVE_PATH + "door.png")
@@ -295,12 +341,12 @@ def generate_names(cur_box, used_boxes, detected_name, has_spaces = False):
     return used_boxes, detected_name, has_spaces
 
 
-def remove_box(pixels, box):
+def remove_box(pixels, x1, x2, y1, y2):
     """
     Replaces all pixels with white within a certain box region
     """
-    for x in range(box[0], box[1]):
-        for y in range(box[2], box[3]):
+    for x in range(x1, x2):
+        for y in range(y1, y2):
             pixels[x, y] = (255, 255, 255)
 
 
@@ -339,8 +385,7 @@ def process_image(boxes, pixels):
         for i in detected_name:
             y1 = min(y1, i[2])
             y2 = max(y2, i[3])
-        full_word_box = (first[0], last[1], y1, y2)
-        full_word, confidence = predict_char(full_word_box, False, has_spaces)
+        full_word, confidence = predict_char(first[0], last[1], y1, y2, False, has_spaces)
         full_word.replace(",", "")
 
         if "|" in full_word:
@@ -358,6 +403,7 @@ def process_image(boxes, pixels):
 
         if confidence >= CONFIDENCE_LEVEL:
             if len(full_word) == 1 and confidence < UPPER_CONFIDENCE_LEVEL: # Mis-identified character
+                print("mis identified")
                 continue
 
             for word in full_word.split(" "):
@@ -374,14 +420,14 @@ def process_image(boxes, pixels):
 
             print("Full name:", full_word)
             room_names.append(full_word)
-            remove_box(pixels, full_word_box)
+            remove_box(pixels, first[0], last[1], y1, y2)
 
-        else: # Go individually
+        elif len(detected_name) > 1: # Go individually
 
             label = "".join([pred[0] if (pred := predict_char(b))[1] >= CONFIDENCE_LEVEL else "*" for b in detected_name])
 
             for b in detected_name:
-                remove_box(pixels, b)
+                remove_box(pixels, b[0], b[1], b[2], b[3])
 
             # Change l's and i's to 1's in room names
             change = True
@@ -435,11 +481,7 @@ def process_image(boxes, pixels):
             for i in detected_name:
                 x1, x2, y1, y2 = i
                 font = ImageFont.truetype("arial", 45)
-                color = (255, 0, 0)
-                draw_line(pixels3, x1, x2, y1, y1, color)
-                draw_line(pixels3, x2, x2, y1, y2, color)
-                draw_line(pixels3, x1, x2, y2, y2, color)
-                draw_line(pixels3, x1, x1, y1, y2, color)
+                draw_square(pixels3, x1, x2, y1, y2, (255, 0, 0))
 
             if x1 + 200 > WIDTH:
                 x1 -= 200

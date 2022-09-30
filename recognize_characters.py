@@ -157,7 +157,7 @@ def detect_if_symbol(x1, x2, y1, y2):
 
     image = create_image_from_box(x1, x2, y1, y2, 0)
 
-    for symbol in SYMBOLs:
+    for symbol in SYMBOLS:
         symbol_image = cv.imread(IMAGE_SAVE_PATH + symbol + ".png")
         width, height = symbol_image.shape[1], symbol_image.shape[0]
         dim = (width, height)
@@ -178,11 +178,14 @@ def create_image_from_box(x1, x2, y1, y2, padding):
     (from initial map) with or without padding
     """
 
-    image2 = Image.new("L", (x2 - x1 + 1 + 2*padding, y2 - y1 + 1 + 2*padding), color = "white")
+    image2 = Image.new("RGB", (x2 - x1 + 1 + 2*padding, y2 - y1 + 1 + 2*padding), color = "white")
     pixels2 = image2.load()
     for x in range(x1 + 1, x2):
         for y in range(y1 + 1, y2):
             pixels2[x - x1 + padding, y - y1 + padding] = pixels[x, y]
+
+    image2 = image2.convert("L")
+    return image2
 
 
 def predict_char(x1, x2, y1, y2, single_char = True, has_spaces = False, symbols = {}):
@@ -197,8 +200,17 @@ def predict_char(x1, x2, y1, y2, single_char = True, has_spaces = False, symbols
     # Creating image of that specific area
 
     image2 = create_image_from_box(x1, x2, y1, y2, PADDING)
+    pixels2 = image2.load()
 
     # TODO: Remove symbols from image
+
+    for box, s in symbols.items():
+        symbol, index = s
+        bx1, bx2, by1, by2 = box
+
+        for x in range(bx1, bx2):
+            for y in range(by1, by2):
+                pixels2[x - x1, y - y1] = 0
 
     image3 = image2.resize((image2.size[0]*RESIZE,image2.size[1]*RESIZE), Image.Resampling.LANCZOS)
 

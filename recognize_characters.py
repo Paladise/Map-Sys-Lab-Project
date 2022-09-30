@@ -22,6 +22,8 @@ DIST_FOR_SPACE = 4
 Y_THRESHOLD = 6
 RESIZE = 2
 PADDING = 3
+RMSE_THRESHOLD = 0.02
+SYMBOLS = ["door"]
 
 USING_TESSERACT = False
 SHOW_IMAGES = False
@@ -76,7 +78,7 @@ def flood(x, y, found, min_x, max_x, min_y, max_y):
 
 def draw_square(pixels, min_x, max_x, min_y, max_y, rgb):
     """
-    Draws a square by calling draw_line(), because too lazy to integrate :D
+    Draws a square by calling draw_line() for each side, because too lazy to integrate :D
     """
 
     draw_line(pixels, min_x, max_x, min_y, min_y, rgb)
@@ -141,7 +143,7 @@ def draw_boxes(pixels):
                 h,s,l = random(), 0.5 + random()/2.0, 0.4 + random()/5.0
                 rgb = tuple([int(256*i) for i in colorsys.hls_to_rgb(h,l,s)])    
                 draw_square(pixels, min_x, max_x, min_y, max_y, rgb)  
-            else:
+            else: # Should be part of walls
                 walls.update(found)
 
     return sorted(list(boxes), key = lambda b: (b[0], b[3])), list(walls)
@@ -154,23 +156,26 @@ def detect_if_symbol(x1, x2, y1, y2):
     """
 
     image = create_image_from_box(x1, x2, y1, y2, 0)
-    door_image = cv.imread(IMAGE_SAVE_PATH + "door.png")
-    width, height = door_image.shape[1], door_image.shape[0]
-    dim = (width, height)
 
-    opencv_image = cv.cvtColor(np.array(image), cv.COLOR_GRAY2RGB)
-    resized_image = cv.resize(opencv_image, dim, interpolation = cv.INTER_AREA)
-    m = rmse(door_image, resized_image).item()
+    for symbol in SYMBOLs:
+        symbol_image = cv.imread(IMAGE_SAVE_PATH + symbol + ".png")
+        width, height = symbol_image.shape[1], symbol_image.shape[0]
+        dim = (width, height)
 
-    if m < 0.02:
-        return "Door"
+        opencv_image = cv.cvtColor(np.array(image), cv.COLOR_GRAY2RGB)
+        resized_image = cv.resize(opencv_image, dim, interpolation = cv.INTER_AREA)
+        m = rmse(symbol_image, resized_image).item()
+
+        if m < RMSE_THRESHOLD:
+            return symbol
 
     return ""
 
 
 def create_image_from_box(x1, x2, y1, y2, padding):
     """
-    Given box coordinates, return image generated around that box with or without padding
+    Given box coordinates, return image generated around that box 
+    (from initial map) with or without padding
     """
 
     image2 = Image.new("L", (x2 - x1 + 1 + 2*padding, y2 - y1 + 1 + 2*padding), color = "white")
@@ -180,10 +185,10 @@ def create_image_from_box(x1, x2, y1, y2, padding):
             pixels2[x - x1 + padding, y - y1 + padding] = pixels[x, y]
 
 
-def predict_char(x1, x2, y1, y2, single_char = True, has_spaces = False):
+def predict_char(x1, x2, y1, y2, single_char = True, has_spaces = False, symbols = {}):
     """
     Uses box coordinates to create a gray-scale PIL image specifically of that region (with padding)
-    And checks if that image is of a door, and if not uses pytesseract to 
+    And checks if that image is a symbol from key, and if not uses pytesseract to 
     determine what character(s) are in it along with their respective confidences.
     """
 
@@ -192,6 +197,9 @@ def predict_char(x1, x2, y1, y2, single_char = True, has_spaces = False):
     # Creating image of that specific area
 
     image2 = create_image_from_box(x1, x2, y1, y2, PADDING)
+
+    # TODO: Remove symbols from image
+
     image3 = image2.resize((image2.size[0]*RESIZE,image2.size[1]*RESIZE), Image.Resampling.LANCZOS)
 
     # display_image = image.copy()
@@ -207,17 +215,10 @@ def predict_char(x1, x2, y1, y2, single_char = True, has_spaces = False):
 
     # Check if the image is of a door
 
-    door_image = cv.imread(IMAGE_SAVE_PATH + "door.png")
-    width, height = door_image.shape[1], door_image.shape[0]
-    dim = (width, height)
+    symbol = detect_if_symbol(x1, x2, y1, y2)
 
-    opencv_image = cv.cvtColor(np.array(image2), cv.COLOR_GRAY2RGB)
-    resized_image = cv.resize(opencv_image, dim, interpolation = cv.INTER_AREA)
-    m = rmse(door_image, resized_image).item()
-
-    if m < 0.02:
-        image2.save(f"extras/DOOR_{x1}{x2}{y1}{y2}_{m}.png")
-        return "Door ", 100.0
+    if symbol:
+        return symbol  + " ", 100.0
 
     # Run pytesseract (or saved data) on image    
 
@@ -315,15 +316,19 @@ def predict_char(x1, x2, y1, y2, single_char = True, has_spaces = False):
     return detected_char, confidence
 
 
-def generate_names(cur_box, used_boxes, detected_name, has_spaces = False):
+def generate_name(cur_box, used_boxes, detected_name, has_spaces = False):
     """
     Recursive function using the current box, used boxes, and detected name
     so far to check neighboring pixels and try to construct the full room name.
     """
 
+    ax1, ax2, ay1, ay2 = cur_box
+    symbols = {}
     used_boxes.append(cur_box)
     detected_name.append(cur_box)
-    _, ax2, ay1, ay2 = cur_box
+    symbol = detect_if_symbol(ax1, ax2, ay1, ay2)
+    if symbol:
+        symbols[cur_box] = (symbol, len(used_boxes))
 
     for box in boxes:
         if box in used_boxes:
@@ -335,10 +340,10 @@ def generate_names(cur_box, used_boxes, detected_name, has_spaces = False):
             if abs(ax2 - bx1) >= DIST_FOR_SPACE: 
                 has_spaces = True               
             
-            used_boxes, detected_name, has_spaces = generate_names(box, used_boxes, detected_name, has_spaces)
+            used_boxes, detected_name, has_spaces, symbols = generate_name(box, used_boxes, detected_name, has_spaces)
             break
 
-    return used_boxes, detected_name, has_spaces
+    return used_boxes, detected_name, has_spaces, symbols
 
 
 def remove_box(pixels, x1, x2, y1, y2):
@@ -374,7 +379,7 @@ def process_image(boxes, pixels):
         if box in used_boxes:
             continue
 
-        used_boxes, detected_name, has_spaces = generate_names(box, used_boxes, [])
+        used_boxes, detected_name, has_spaces, symbols = generate_name(box, used_boxes, [])
         label = ""
 
         # Use full word
@@ -385,7 +390,8 @@ def process_image(boxes, pixels):
         for i in detected_name:
             y1 = min(y1, i[2])
             y2 = max(y2, i[3])
-        full_word, confidence = predict_char(first[0], last[1], y1, y2, False, has_spaces)
+
+        full_word, confidence = predict_char(first[0], last[1], y1, y2, False, has_spaces, symbols)
         full_word.replace(",", "")
 
         if "|" in full_word:

@@ -22,7 +22,7 @@ DIST_FOR_SPACE = 4
 Y_THRESHOLD = 6
 RESIZE = 2
 PADDING = 3
-RMSE_THRESHOLD = 0.02
+RMSE_THRESHOLD = 0.035
 SYMBOLS = ["door"]
 
 USING_TESSERACT = False
@@ -166,6 +166,8 @@ def detect_if_symbol(x1, x2, y1, y2):
         resized_image = cv.resize(opencv_image, dim, interpolation = cv.INTER_AREA)
         m = rmse(symbol_image, resized_image).item()
 
+        # print("M is:", m)
+
         if m < RMSE_THRESHOLD:
             return symbol
 
@@ -199,148 +201,106 @@ def predict_char(x1, x2, y1, y2, single_char = True, has_spaces = False, symbols
 
     # Creating image of that specific area
 
-    image2 = create_image_from_box(x1, x2, y1, y2, PADDING)
-    pixels2 = image2.load()
+    potential_image = create_image_from_box(x1, x2, y1, y2, PADDING)
+    potential_pixels = potential_image.load()
 
-    # TODO: Remove symbols from image
+    # display_image = image.copy()
+    # p = display_image.load()
 
-    for box, s in symbols.items():
-        symbol, index = s
+    # Remove symbols from image before running pytesseract on it
+
+    for box in symbols.keys():
         bx1, bx2, by1, by2 = box
 
         for x in range(bx1, bx2):
             for y in range(by1, by2):
-                pixels2[x - x1, y - y1] = 0
+                potential_pixels[x - x1 + PADDING, y - y1 + PADDING] = 255
+                # p[x, y] = (255, 255, 255)
 
-    image3 = image2.resize((image2.size[0]*RESIZE,image2.size[1]*RESIZE), Image.Resampling.LANCZOS)
-
-    # display_image = image.copy()
-    # p = display_image.load()
-    # draw_square(p, x1, x2, y1, y2, (255, 0, 0))
+    # draw_square(p, x1, x2, y1, y2, (0, 0, 255))
     # display_image = display_image.crop((max(0, x1 - 50),  max(0, y1 - 50), min(WIDTH, x2 + 50), min(HEIGHT, y2 + 50)))
     # display_image = display_image.resize((display_image.size[0] * RESIZE, display_image.size[1] * RESIZE), Image.Resampling.LANCZOS)
-
     # cv_image = np.array(display_image)
     # cv.imshow("Window", cv_image)
-    # cv.waitKey(1250)
+    # cv.waitKey(2000)
     # cv.destroyAllWindows()
-
-    # Check if the image is of a door
-
-    symbol = detect_if_symbol(x1, x2, y1, y2)
-
-    if symbol:
-        return symbol  + " ", 100.0
 
     # Run pytesseract (or saved data) on image    
 
-    detected_char1 = ""
-    confidence1 = -2   
+    detected = ""
+    confidence = -1
 
     if USING_TESSERACT:
         if single_char:
             predict = pytesseract.image_to_data(
-            image2, config=("-c tessedit"
-                            "_char_whitelist=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-                            " --psm 10"
-                            " -l osd"
-                            " "), output_type="data.frame")   
+                potential_image, 
+                config=("-c tessedit"
+                        "_char_whitelist=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+                        " --psm 10"
+                        " -l osd"), 
+                output_type="data.frame")   
 
             predict = predict[predict["conf"] != -1]
             
             try:
-                detected_char = str(predict["text"].iloc[0])[0]
-                confidence = predict["conf"].iloc[0]   
+                detected = str(predict["text"].iloc[0])[0]
+                confidence = predict["conf"].iloc[0]
             except:
-                detected_char = ""
-                confidence = -1
+                pass   
 
-            if confidence < CONFIDENCE_LEVEL: 
-
-                predict1 = pytesseract.image_to_data(
-                image3, config=("-c tessedit"
-                                "_char_whitelist=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-                                " --psm 10"
-                                " -l osd"
-                                " "), output_type="data.frame")    
-
-                predict1 = predict1[predict1["conf"] != -1]
-
-                try:
-                    detected_char1 = str(predict1["text"].iloc[0])[0]
-                    confidence1 = predict1["conf"].iloc[0]   
-                except:
-                    detected_char1 = ""
-                    confidence1 = -1 
         else: # Full word
-
             if has_spaces:
                 config = "--oem 3 -l eng --psm 7"
             else:
-                config = "--oem 3 -l eng --psm 8 -c tessedit_char_whitelist=|-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+                config = "--oem 3 -l eng --psm 7 -c tessedit_char_whitelist=|-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
             predict = pytesseract.image_to_data(
-                image2, config = config, output_type="data.frame")          
+                potential_image, config = config, output_type="data.frame")          
             predict = predict[predict["conf"] != -1]
 
             try:
-                detected_char = predict["text"].tolist()
-                detected_char = " ".join([str(int(a)) if isinstance(a, float) else str(a) for a in detected_char])
+                detected = " ".join([str(int(a)) if isinstance(a, float) else str(a) for a in predict["text"].tolist()])
                 confidence = predict["conf"].iloc[0]                  
             except:
-                detected_char = ""
-                confidence = -1
-            
-            if confidence < CONFIDENCE_LEVEL:
-                predict1 = pytesseract.image_to_data(
-                    image3, config = config, output_type="data.frame")
-                predict1 = predict1[predict1["conf"] != -1]
+                pass
 
-                try:
-                    detected_char1 = predict1["text"].tolist()                
-                    detected_char1 = " ".join([str(int(a)) if isinstance(a, float) else str(a) for a in detected_char1])
-                    confidence1 = predict1["conf"].iloc[0]                  
-                except:
-                    detected_char1 = ""
-                    confidence1 = -1 
+            print("Detected within predict_char:", detected, "with confidence:", confidence)
 
             if confidence == 0:
                 confidence = 89.0
-            if confidence1 == 0:
-                confidence1 = 89.0
-    else:
-        detected_char = box_stats[(x1, x2, y1, y2, 0)][0]
-        confidence = box_stats[(x1, x2, y1, y2, 0)][1]
-        detected_char1 = box_stats[(x1, x2, y1, y2, 1)][0]
-        confidence1 = box_stats[(x1, x2, y1, y2, 1)][1]
 
-    box_stats[(x1, x2, y1, y2, 0)] = (detected_char, confidence)
-    box_stats[(x1, x2, y1, y2, 1)] = (detected_char1, confidence1)
+            # "Reinsert" symbols into detected string
 
-    if confidence1 > confidence1:
-        confidence = confidence1
-        detected_char = detected_char1
+            for s in symbols.values():
+                symbol, index = s
+                detected = detected[:index] + symbol + detected[index:] 
+
+    else: # Use pickle file for efficiency & since pytesseract doesn't work on school laptop
+        detected = box_stats[(x1, x2, y1, y2)][0]
+        confidence = box_stats[(x1, x2, y1, y2)][1]
+
+    box_stats[(x1, x2, y1, y2)] = (detected, confidence)
 
     if confidence > CONFIDENCE_LEVEL:
-        name = detected_char.replace("|", " pipe ")
-        image2.save(f"extras/{name}_{confidence}.png")
+        name = detected.replace("|", " pipe ")
+        potential_image.save(f"extras/{name}_{confidence}.png")
 
-    return detected_char, confidence
+    return detected, confidence
 
 
-def generate_name(cur_box, used_boxes, detected_name, has_spaces = False):
+def generate_name(cur_box, used_boxes, detected_name, has_spaces, symbols):
     """
     Recursive function using the current box, used boxes, and detected name
     so far to check neighboring pixels and try to construct the full room name.
     """
 
     ax1, ax2, ay1, ay2 = cur_box
-    symbols = {}
-    used_boxes.append(cur_box)
-    detected_name.append(cur_box)
-    symbol = detect_if_symbol(ax1, ax2, ay1, ay2)
+    symbol = detect_if_symbol(ax1, ax2, ay1, ay2)    
     if symbol:
-        symbols[cur_box] = (symbol, len(used_boxes))
+        symbols[cur_box] = (symbol, len(detected_name))
+
+    used_boxes.append(cur_box)
+    detected_name.append(cur_box)   
 
     for box in boxes:
         if box in used_boxes:
@@ -352,7 +312,7 @@ def generate_name(cur_box, used_boxes, detected_name, has_spaces = False):
             if abs(ax2 - bx1) >= DIST_FOR_SPACE: 
                 has_spaces = True               
             
-            used_boxes, detected_name, has_spaces, symbols = generate_name(box, used_boxes, detected_name, has_spaces)
+            used_boxes, detected_name, has_spaces, symbols = generate_name(box, used_boxes, detected_name, has_spaces, symbols)
             break
 
     return used_boxes, detected_name, has_spaces, symbols
@@ -391,8 +351,17 @@ def process_image(boxes, pixels):
         if box in used_boxes:
             continue
 
-        used_boxes, detected_name, has_spaces, symbols = generate_name(box, used_boxes, [])
+        # print("Starting to look at new word...")
+
+        used_boxes, detected_name, has_spaces, symbols = generate_name(box, used_boxes, detected_name = [], has_spaces = False, symbols = {})
         label = ""
+
+        # print("After generated named, detected_name:", detected_name)
+        # print("After generated name symbols:", symbols)
+
+        if len(detected_name) == 1 and symbols: # Is a singular symbol
+            print("Symbol:", list(symbols.values())[0][0])
+            continue
 
         # Use full word
 
@@ -442,7 +411,7 @@ def process_image(boxes, pixels):
 
         elif len(detected_name) > 1: # Go individually
 
-            label = "".join([pred[0] if (pred := predict_char(b))[1] >= CONFIDENCE_LEVEL else "*" for b in detected_name])
+            label = "".join([pred[0] if (pred := predict_char(b[0], b[1], b[2], b[3]))[1] >= CONFIDENCE_LEVEL else "*" for b in detected_name])
 
             for b in detected_name:
                 remove_box(pixels, b[0], b[1], b[2], b[3])
@@ -504,7 +473,7 @@ def process_image(boxes, pixels):
             if x1 + 200 > WIDTH:
                 x1 -= 200
             
-            ImageDraw.Draw(image3).text((x1, y1), text, color, font = font)
+            ImageDraw.Draw(image3).text((x1, y1), text, (255, 0, 0), font = font)
 
             tk_image = ImageTk.PhotoImage(image3.resize((1000, 600)))
             image_label.configure(image = tk_image)

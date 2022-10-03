@@ -13,6 +13,9 @@ from random import random
 
 start_time = time.perf_counter()
 
+USING_TESSERACT = False
+SHOW_IMAGES = False
+
 CONFIDENCE_LEVEL = 69
 UPPER_CONFIDENCE_LEVEL = 90
 IMAGE_SAVE_PATH = "images/"
@@ -20,13 +23,11 @@ FILE_NAME = IMAGE_SAVE_PATH + "practice_map.jpg"
 DIST_BETWEEN_LETTERS = 15
 DIST_FOR_SPACE = 4
 Y_THRESHOLD = 6
+BW_THRESHOLD = 126 # Values less than this will become black, 150
 RESIZE = 2
 PADDING = 3
 RMSE_THRESHOLD = 0.035
 SYMBOLS = ["door"]
-
-USING_TESSERACT = False
-SHOW_IMAGES = False
 
 sys.setrecursionlimit(10000) # We don't talk about this line
 
@@ -76,6 +77,7 @@ def flood(x, y, found, min_x, max_x, min_y, max_y):
 
     return found, min_x, max_x, min_y, max_y
 
+
 def draw_square(pixels, min_x, max_x, min_y, max_y, rgb):
     """
     Draws a square by calling draw_line() for each side, because too lazy to integrate :D
@@ -109,7 +111,7 @@ def image_to_black_and_white(pixels):
     for x in range(WIDTH):
         for y in range(HEIGHT):
             r, g, b = pixels[x, y]
-            if 0.2126*r + 0.7152*g + 0.0722*b < 150: # Check if pixel is relatively dark
+            if 0.2126*r + 0.7152*g + 0.0722*b < BW_THRESHOLD: # Check if pixel is relatively dark
                 pixels[x, y] = (0, 0, 0)
             else:
                 pixels[x, y] = (255, 255, 255)
@@ -221,7 +223,7 @@ def predict_char(x1, x2, y1, y2, single_char = True, has_spaces = False, symbols
     # display_image = display_image.crop((max(0, x1 - 50),  max(0, y1 - 50), min(WIDTH, x2 + 50), min(HEIGHT, y2 + 50)))
     # display_image = display_image.resize((display_image.size[0] * RESIZE, display_image.size[1] * RESIZE), Image.Resampling.LANCZOS)
     # cv_image = np.array(display_image)
-    # cv.imshow("Window", cv_image)
+    # cv.imshow("Looking at image:", cv_image)
     # cv.waitKey(2000)
     # cv.destroyAllWindows()
 
@@ -354,13 +356,14 @@ def process_image(boxes, pixels):
         # print("Starting to look at new word...")
 
         used_boxes, detected_name, has_spaces, symbols = generate_name(box, used_boxes, detected_name = [], has_spaces = False, symbols = {})
-        label = ""
 
         # print("After generated named, detected_name:", detected_name)
         # print("After generated name symbols:", symbols)
 
         if len(detected_name) == 1 and symbols: # Is a singular symbol
-            print("Symbol:", list(symbols.values())[0][0])
+            s = list(symbols.values())[0][0]
+            print("Symbol:", s)
+            room_names.append(s)
             continue
 
         # Use full word
@@ -384,9 +387,14 @@ def process_image(boxes, pixels):
 
             room_names.append(full_word1)
             room_names.append(full_word2)
-            continue
 
-            # TODO: Remove box here
+            for i, b in enumerate(detected_name):
+                if i != pipe:
+                    remove_box(pixels, b[0], b[1], b[2], b[3])
+
+            continue
+        if not full_word:
+            continue
 
         if confidence >= CONFIDENCE_LEVEL:
             if len(full_word) == 1 and confidence < UPPER_CONFIDENCE_LEVEL: # Mis-identified character
@@ -411,7 +419,19 @@ def process_image(boxes, pixels):
 
         elif len(detected_name) > 1: # Go individually
 
-            label = "".join([pred[0] if (pred := predict_char(b[0], b[1], b[2], b[3]))[1] >= CONFIDENCE_LEVEL else "*" for b in detected_name])
+            label = []
+
+            for b in detected_name:
+                if b in symbols:
+                    label.append(symbols[b][0])
+                elif (pred := predict_char(b[0], b[1], b[2], b[3]))[1] >= CONFIDENCE_LEVEL:
+                    label.append(pred[0])
+                else:
+                    label.append("*")
+
+            label = "".join(label)
+
+            # label = "".join([pred[0] if (pred := predict_char(b[0], b[1], b[2], b[3]))[1] >= CONFIDENCE_LEVEL else "*" for b in detected_name])
 
             for b in detected_name:
                 remove_box(pixels, b[0], b[1], b[2], b[3])
@@ -460,8 +480,6 @@ def process_image(boxes, pixels):
 
                 if confidence == 89.0:
                     text += " But 100"
-
-            text += f" {has_spaces}"[:2]
             
             image3 = Image.open(FILE_NAME)
             pixels3 = image3.load()
@@ -475,7 +493,7 @@ def process_image(boxes, pixels):
             
             ImageDraw.Draw(image3).text((x1, y1), text, (255, 0, 0), font = font)
 
-            tk_image = ImageTk.PhotoImage(image3.resize((1000, 600)))
+            tk_image = ImageTk.PhotoImage(image3.resize((1200, 700)))
             image_label.configure(image = tk_image)
             image_label.pack()
             root.update()
@@ -490,7 +508,7 @@ WIDTH, HEIGHT = image.width, image.height
 
 print("Converting to black and white...")
 image_to_black_and_white(pixels)
-# image.save(IMAGE_SAVE_PATH + "black_and_white.png")
+image.save(IMAGE_SAVE_PATH + "black_and_white.png")
 
 	
 print("Drawing boxes...")

@@ -23,7 +23,7 @@ FILE_NAME = IMAGE_SAVE_PATH + "practice_map.jpg"
 DIST_BETWEEN_LETTERS = 15
 DIST_FOR_SPACE = 4
 Y_THRESHOLD = 6
-BW_THRESHOLD = 126 # Values less than this will become black, 150
+BW_THRESHOLD = 150 # Values less than this will become black
 RESIZE = 2
 PADDING = 3
 RMSE_THRESHOLD = 0.035
@@ -364,6 +364,7 @@ def process_image(boxes, pixels):
             s = list(symbols.values())[0][0]
             print("Symbol:", s)
             room_names.append(s)
+            remove_box(pixels, detected_name[0][0], detected_name[0][1], detected_name[0][2], detected_name[0][3])
             continue
 
         # Use full word
@@ -379,6 +380,9 @@ def process_image(boxes, pixels):
         full_word.replace(",", "")
 
         if "|" in full_word:
+            if len(full_word) == 1:
+                continue
+
             pipe = full_word.index("|")
             full_word1 = full_word[:pipe]
             full_word2 = full_word[pipe + 1:]
@@ -392,8 +396,6 @@ def process_image(boxes, pixels):
                 if i != pipe:
                     remove_box(pixels, b[0], b[1], b[2], b[3])
 
-            continue
-        if not full_word:
             continue
 
         if confidence >= CONFIDENCE_LEVEL:
@@ -508,8 +510,7 @@ WIDTH, HEIGHT = image.width, image.height
 
 print("Converting to black and white...")
 image_to_black_and_white(pixels)
-image.save(IMAGE_SAVE_PATH + "black_and_white.png")
-
+# image.save(IMAGE_SAVE_PATH + "black_and_white.png")
 	
 print("Drawing boxes...")
 boxes_image = image.copy()
@@ -536,3 +537,24 @@ if USING_TESSERACT:
 
     if not SHOW_IMAGES:
         print("Entire program took", round(time.perf_counter() - start_time, 3), "seconds.")
+
+"""
+To-do list:
+
+Repeat symbol detection for all symbols (right now only doing doors)
+Detect text wrapping
+Detect symbols that are next to walls
+- If found full name box that is not a real word, check left and right side
+    - Try to go all the way down that direction (allowing to go up and down)
+    - If vertical distance is greater than certain threshold, assume
+    that distance is a vertical wall and ignore all pixels with the same x-coord
+    - Splice the rest and create a bounding box on that region, then retry with full word
+    including that new box
+
+    - Make sure to add precaution to combine all letters that the wall may have interfered with
+    - For example, Chem might only be Ch + em
+
+At the end go throughout the entire image and try to pick up any extra symbols of that specific size
+(may be time-consuming, so might not do it)
+
+"""

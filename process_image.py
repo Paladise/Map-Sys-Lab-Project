@@ -1,15 +1,14 @@
-import colorsys 
 import cv2 as cv
 import enchant
+import imagehash
 import numpy as np
 import pickle
 import pytesseract
-import sys
 import time
 import tkinter as tk
+from drawing import draw_boxes, draw_square, image_to_bw, remove_box
 from image_similarity_measures.quality_metrics import rmse
 from PIL import Image, ImageTk, ImageDraw, ImageFont
-from random import random
 
 start_time = time.perf_counter()
 
@@ -27,9 +26,8 @@ BW_THRESHOLD = 150 # Values less than this will become black
 RESIZE = 2
 PADDING = 3
 RMSE_THRESHOLD = 0.035
+# SYMBOLS = ["door", "signage", "stairs"]
 SYMBOLS = ["door"]
-
-sys.setrecursionlimit(10000) # We don't talk about this line
 
 if USING_TESSERACT:
     pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract"
@@ -37,119 +35,6 @@ if USING_TESSERACT:
 else:
     with open('boxes.pickle', 'rb') as handle:
         box_stats = pickle.load(handle)
-
-d = enchant.Dict("en_US")
-
-print("Loading text file of english words...")
-
-with open("words_alpha.txt") as file:
-    ENGLISH_WORDS = set(file.read().split())
-
-
-def flood(x, y, found, min_x, max_x, min_y, max_y):
-    """
-    Recursively go through image to check neighboring pixels to form blobs
-    of connected pixels as well as min & max for x & y.
-    """
-
-    try: # Crude way of making sure pixel is not outside of image
-        pixels[x, y]
-    except:
-        return found, min_x, max_x, min_y, max_y
-
-    if pixels[x, y] == (0, 0, 0) and (x, y) not in found: # Found unvisited black pixel
-        found.add((x, y))
-
-        if x < min_x:
-            min_x = x
-        elif x > max_x:
-            max_x = x
-
-        if y < min_y:
-            min_y = y
-        elif y > max_y:
-            max_y = y
-
-        for x1 in range(-1, 2):
-            for y1 in range(-1, 2):
-                # print(f"({x}, {y}) calling:", (x + x1, y + y1))
-                found, min_x, max_x, min_y, max_y = flood(x + x1, y + y1, found, min_x, max_x, min_y, max_y)
-
-    return found, min_x, max_x, min_y, max_y
-
-
-def draw_square(pixels, min_x, max_x, min_y, max_y, rgb):
-    """
-    Draws a square by calling draw_line() for each side, because too lazy to integrate :D
-    """
-
-    draw_line(pixels, min_x, max_x, min_y, min_y, rgb)
-    draw_line(pixels, max_x, max_x, min_y, max_y, rgb)
-    draw_line(pixels, min_x, max_x, max_y, max_y, rgb)
-    draw_line(pixels, min_x, min_x, min_y, max_y, rgb)
-
-
-def draw_line(pixels, x1, x2, y1, y2, rgb):
-    """
-    Draws a line on the PIL image given the start and end coordinates,
-    as well as the rgb color.
-    """
-    
-    for x in range(x1, x2 + 1):
-        for y in range(y1, y2 + 1):
-            try: # Crude way of making sure pixel is not outside of image
-                pixels[x, y] = rgb
-            except:
-                pass
-
-
-def image_to_black_and_white(pixels):
-    """
-    Converts a PIL image to only black and white pixels.
-    """
-
-    for x in range(WIDTH):
-        for y in range(HEIGHT):
-            r, g, b = pixels[x, y]
-            if 0.2126*r + 0.7152*g + 0.0722*b < BW_THRESHOLD: # Check if pixel is relatively dark
-                pixels[x, y] = (0, 0, 0)
-            else:
-                pixels[x, y] = (255, 255, 255)
-
-
-def draw_boxes(pixels):
-    """
-    Goes throughout a PIL image to draw boxes around potential candidates 
-    for characters (using approximate size / shape).
-    """
-
-    loaded_pixels, boxes, walls = set(), set(), set()
-    for x in range(WIDTH):
-        for y in range(HEIGHT):
-            if (x, y) in loaded_pixels or pixels[x, y] == (255, 255, 255): # Skip over looked-at pixels or white pixels
-                continue
-
-            found, min_x, max_x, min_y, max_y = flood(x, y, set(), x, x, y, y)
-            x_len = max_x - min_x
-            y_len = max_y - min_y
-
-            loaded_pixels.update(found)
-
-            if 5 < len(found) and len(found) < 500 and x_len < 30 and y_len > 3 and y_len < 30: # Is appropriate size for character
-                # print(f"Drawing box, {x_len} by {y_len} ==> {len(found)}")
-                min_x -= 1
-                max_x += 1
-                min_y -= 1 
-                max_y += 1
-                boxes.add((min_x, max_x, min_y, max_y))
-                h,s,l = random(), 0.5 + random()/2.0, 0.4 + random()/5.0
-                rgb = tuple([int(256*i) for i in colorsys.hls_to_rgb(h,l,s)])    
-                draw_square(pixels, min_x, max_x, min_y, max_y, rgb)  
-            else: # Should be part of walls
-                walls.update(found)
-
-    return sorted(list(boxes), key = lambda b: (b[0], b[3])), list(walls)
-
 
 def detect_if_symbol(x1, x2, y1, y2):
     """
@@ -166,9 +51,18 @@ def detect_if_symbol(x1, x2, y1, y2):
 
         opencv_image = cv.cvtColor(np.array(image), cv.COLOR_GRAY2RGB)
         resized_image = cv.resize(opencv_image, dim, interpolation = cv.INTER_AREA)
+
+        # hash0 = imagehash.average_hash(Image.fromarray(symbol_image))
+        # hash1 = imagehash.average_hash(Image.fromarray(resized_image))
+
+        # m = abs(hash0 - hash1)
+
+        # if m < 5:
+        #     return symbol
+
         m = rmse(symbol_image, resized_image).item()
 
-        # print("M is:", m)
+        print("M is:", m)
 
         if m < RMSE_THRESHOLD:
             return symbol
@@ -192,7 +86,7 @@ def create_image_from_box(x1, x2, y1, y2, padding):
     return image2
 
 
-def predict_char(x1, x2, y1, y2, single_char = True, has_spaces = False, symbols = {}):
+def predict_name(x1, x2, y1, y2, single_char = True, has_spaces = False, symbols = {}):
     """
     Uses box coordinates to create a gray-scale PIL image specifically of that region (with padding)
     And checks if that image is a symbol from key, and if not uses pytesseract to 
@@ -266,7 +160,7 @@ def predict_char(x1, x2, y1, y2, single_char = True, has_spaces = False, symbols
             except:
                 pass
 
-            print("Detected within predict_char:", detected, "with confidence:", confidence)
+            print("Detected within predict_name:", detected, "with confidence:", confidence)
 
             if confidence == 0:
                 confidence = 89.0
@@ -277,15 +171,11 @@ def predict_char(x1, x2, y1, y2, single_char = True, has_spaces = False, symbols
                 symbol, index = s
                 detected = detected[:index] + symbol + detected[index:] 
 
+        box_stats[(x1, x2, y1, y2)] = (detected, confidence)
+
     else: # Use pickle file for efficiency & since pytesseract doesn't work on school laptop
         detected = box_stats[(x1, x2, y1, y2)][0]
-        confidence = box_stats[(x1, x2, y1, y2)][1]
-
-    box_stats[(x1, x2, y1, y2)] = (detected, confidence)
-
-    if confidence > CONFIDENCE_LEVEL:
-        name = detected.replace("|", " pipe ")
-        potential_image.save(f"extras/{name}_{confidence}.png")
+        confidence = box_stats[(x1, x2, y1, y2)][1]  
 
     return detected, confidence
 
@@ -320,19 +210,12 @@ def generate_name(cur_box, used_boxes, detected_name, has_spaces, symbols):
     return used_boxes, detected_name, has_spaces, symbols
 
 
-def remove_box(pixels, x1, x2, y1, y2):
-    """
-    Replaces all pixels with white within a certain box region
-    """
-    for x in range(x1, x2):
-        for y in range(y1, y2):
-            pixels[x, y] = (255, 255, 255)
-
-
 def process_image(boxes, pixels):
     """
     Process the entire image to identify all integral parts using already-identified boxes.
     """
+
+    d = enchant.Dict("en_US")
 
     if SHOW_IMAGES:
         root = tk.Tk()
@@ -347,131 +230,133 @@ def process_image(boxes, pixels):
         root.update()
 
     used_boxes = []    
-    room_names = []
+    rooms = []
 
     for box in boxes:    
         if box in used_boxes:
             continue
 
-        # print("Starting to look at new word...")
+        print("Starting to look at new word...")
 
         used_boxes, detected_name, has_spaces, symbols = generate_name(box, used_boxes, detected_name = [], has_spaces = False, symbols = {})
 
-        # print("After generated named, detected_name:", detected_name)
-        # print("After generated name symbols:", symbols)
+        print("After generated named, detected_name:", detected_name)
+        print("After generated name symbols:", symbols)
 
-        if len(detected_name) == 1 and symbols: # Is a singular symbol
+        if len(detected_name) == 1 and symbols: # If it's a singular symbol
             s = list(symbols.values())[0][0]
             print("Symbol:", s)
-            room_names.append(s)
+            rooms.append((s, (detected_name[0][0], detected_name[0][3])))
             remove_box(pixels, detected_name[0][0], detected_name[0][1], detected_name[0][2], detected_name[0][3])
-            continue
+        else: # Predict full room name
 
-        # Use full word
+            # Get bounding box of entire room name
 
-        first = detected_name[0]
-        last = detected_name[-1]
-        y1, y2 = float("inf"), float("-inf")        
-        for i in detected_name:
-            y1 = min(y1, i[2])
-            y2 = max(y2, i[3])
+            first = detected_name[0]
+            last = detected_name[-1]
+            y1, y2 = float("inf"), float("-inf")        
+            for i in detected_name:
+                y1 = min(y1, i[2])
+                y2 = max(y2, i[3])
 
-        full_word, confidence = predict_char(first[0], last[1], y1, y2, False, has_spaces, symbols)
-        full_word.replace(",", "")
+            # Try to predict room name
 
-        if "|" in full_word:
-            if len(full_word) == 1:
-                continue
+            if len(detected_name) == 1:
+                single_char = True
+            else:
+                single_char = False
 
-            pipe = full_word.index("|")
-            full_word1 = full_word[:pipe]
-            full_word2 = full_word[pipe + 1:]
-            print("Full word:", full_word1)
-            print("Full word:", full_word2)
+            full_word, confidence = predict_name(first[0], last[1], y1, y2, single_char, has_spaces, symbols)
+            full_word.replace(",", "")
 
-            room_names.append(full_word1)
-            room_names.append(full_word2)
+            if "|" in full_word: # If mistook a wall for a "|", split it along there
+                if len(full_word) == 1:
+                    continue
 
-            for i, b in enumerate(detected_name):
-                if i != pipe:
+                pipe = full_word.index("|")
+                full_word1 = full_word[:pipe]
+                full_word2 = full_word[pipe + 1:]
+                print("Full word:", full_word1)
+                print("Full word:", full_word2)
+
+                for i, b in enumerate(detected_name):
+                    if i != pipe:
+                        remove_box(pixels, b[0], b[1], b[2], b[3])
+                        if i == 0:
+                            rooms.append((full_word1, (b[0], b[3])))
+                        elif i == pipe + 1:
+                            rooms.append((full_word2, (b[0], b[3])))
+            elif confidence >= CONFIDENCE_LEVEL:
+                if len(full_word) == 1 and confidence < UPPER_CONFIDENCE_LEVEL: # Mis-identified character
+                    print("mis identified")
+                    continue
+
+                for word in full_word.split(" "):
+                    if word == "":
+                        continue
+
+                    if not d.check(word):
+                        suggestions = [i for i in d.suggest(word) if len(i) == len(word)]
+                        if len(suggestions) == 1:
+                            full_word = suggestions[0]                        
+
+                print("Full name:", full_word)
+                rooms.append((full_word, (first[0], y2)))
+                remove_box(pixels, first[0], last[1], y1, y2)
+
+            elif len(detected_name) > 1: # Go individually
+
+                label = []
+
+                for b in detected_name:
+                    if b in symbols:
+                        label.append(symbols[b][0])
+                    elif (pred := predict_name(b[0], b[1], b[2], b[3]))[1] >= CONFIDENCE_LEVEL:
+                        label.append(pred[0])
+                    else:
+                        label.append("*")
+
+                label = "".join(label)
+
+                for b in detected_name:
                     remove_box(pixels, b[0], b[1], b[2], b[3])
 
-            continue
+                # Change l's and i's to 1's in room names
+                change = True
+                is_start = True
+                for i in range(len(label)):
+                    if label[i] in "lIi":
+                        continue
+                    elif label[i].isnumeric() and is_start:
+                        is_start = False
+                    elif not is_start and not label[i].isnumeric():
+                        change = False
 
-        if confidence >= CONFIDENCE_LEVEL:
-            if len(full_word) == 1 and confidence < UPPER_CONFIDENCE_LEVEL: # Mis-identified character
-                print("mis identified")
-                continue
+                if change:
+                    label = "".join([i if i not in "lIi" else "1" for i in label])
 
-            for word in full_word.split(" "):
-                if word == "":
-                    continue
+                # Change 0's to O's in room names
 
-                if not d.check(word):
-                    suggestions = [i for i in d.suggest(word) if len(i) == len(word)]
-                    if len(suggestions) == 1:
-                        full_word = suggestions[0]
-                    #     print("Suggestions:", suggestions)
-                    # elif len(suggestions) > 1:
-                    #     print(f"{len(suggestions)} suggestions, not displaying them...")
+                if all(i == "0" or i.isalpha() or i == "*" for i in label) and len(label) > 1:
+                    label = "".join([i if i != "0" else "o" for i in label])
 
-            print("Full name:", full_word)
-            room_names.append(full_word)
-            remove_box(pixels, first[0], last[1], y1, y2)
+                # Change O's to 0's in room names
 
-        elif len(detected_name) > 1: # Go individually
+                if all(i in "oO" or i.isnumeric() or i == "*" for i in label) and len(label) > 1:
+                    label = "".join([i if i not in "oO" else "0" for i in label])
 
-            label = []
+                # Remove extra *'s which are most probably walls
 
-            for b in detected_name:
-                if b in symbols:
-                    label.append(symbols[b][0])
-                elif (pred := predict_char(b[0], b[1], b[2], b[3]))[1] >= CONFIDENCE_LEVEL:
-                    label.append(pred[0])
-                else:
-                    label.append("*")
+                if len(label) > 1 and label[0] == "*" and label[1] != "*":
+                    label = label[1:]
+                if len(label) > 1 and label[-2] != "*" and label[-1] == "*":
+                    label = label[:-1]            
 
-            label = "".join(label)
-
-            # label = "".join([pred[0] if (pred := predict_char(b[0], b[1], b[2], b[3]))[1] >= CONFIDENCE_LEVEL else "*" for b in detected_name])
-
-            for b in detected_name:
-                remove_box(pixels, b[0], b[1], b[2], b[3])
-
-            # Change l's and i's to 1's in room names
-            change = True
-            is_start = True
-            for i in range(len(label)):
-                if label[i] in "lIi":
-                    continue
-                elif label[i].isnumeric() and is_start:
-                    is_start = False
-                elif not is_start and not label[i].isnumeric():
-                    change = False
-
-            if change:
-                label = "".join([i if i not in "lIi" else "1" for i in label])
-
-            # Change 0's to O's in room names
-
-            if all(i == "0" or i.isalpha() or i == "*" for i in label) and len(label) > 1:
-                label = "".join([i if i != "0" else "o" for i in label])
-
-            # Change O's to 0's in room names
-
-            if all(i in "oO" or i.isnumeric() or i == "*" for i in label) and len(label) > 1:
-                label = "".join([i if i not in "oO" else "0" for i in label])
-
-            if len(label) > 1 and label[0] == "*" and label[1] != "*":
-                label = label[1:]
-            if len(label) > 1 and label[-2] != "*" and label[-1] == "*":
-                label = label[:-1]            
-
-            label = label.capitalize() 
-            if any(i != "*" for i in label):   
-                print("Each character:", label)   
-                room_names.append(label)         
-        
+                label = label.capitalize() 
+                if all(i != "*" for i in label):   
+                    print("Each character:", label)   
+                    rooms.append((label, (first[0], y2)))         
+            
         if SHOW_IMAGES:
             if confidence < CONFIDENCE_LEVEL:
                 if all(i == "*" for i in label):
@@ -501,32 +386,28 @@ def process_image(boxes, pixels):
             root.update()
             time.sleep(1.5)
 
-    return sorted(room_names, key = lambda i: int(i) if i.isnumeric() else 0)
+    a = sorted(rooms, key = lambda i: int(i[0]) if i[0].isnumeric() else 0)
+    return [[i[0], i[1][0], i[1][1]] for i in a]
 
 
 image = Image.open(FILE_NAME)
-pixels = image.load()
-WIDTH, HEIGHT = image.width, image.height
 
 print("Converting to black and white...")
-image_to_black_and_white(pixels)
+image = image_to_bw(image, BW_THRESHOLD)
+pixels = image.load()
+WIDTH, HEIGHT = image.size[0], image.size[1]
 # image.save(IMAGE_SAVE_PATH + "black_and_white.png")
 	
 print("Drawing boxes...")
-boxes_image = image.copy()
-blank_image = image.copy()
-boxes_pixels = boxes_image.load()
-blank_pixels = blank_image.load()
-boxes, walls = draw_boxes(boxes_pixels) 
-with open("list_of_points.txt", "w") as f:
-    for i in walls:
-        f.write(f"{i[0]} {i[1]} 0\n")
+boxes_image, boxes, walls = draw_boxes(image) 
+boxes_image.save(IMAGE_SAVE_PATH + "custom_boxes.png")
 
-# boxes_image.save(IMAGE_SAVE_PATH + "custom_boxes.png")
+blank_image = image.copy()
+blank_pixels = blank_image.load()
 
 print("Processing image...")
-room_names = process_image(boxes, blank_pixels) 
-print("\n\n\n", room_names)   
+rooms = process_image(boxes, blank_pixels) 
+print("\n\n\n", rooms)   
 # blank_image.show()
 blank_image.save(IMAGE_SAVE_PATH + "blank_map.png")
 
@@ -540,6 +421,8 @@ if USING_TESSERACT:
 
 """
 To-do list:
+
+Combine pixels into lines
 
 Repeat symbol detection for all symbols (right now only doing doors)
 Detect text wrapping
@@ -557,4 +440,10 @@ Detect symbols that are next to walls
 At the end go throughout the entire image and try to pick up any extra symbols of that specific size
 (may be time-consuming, so might not do it)
 
+Form outer walls, and walls of classrooms
+- Maybe navigate based on the fact you can't go near region of certain room name (full of numbers)
+to try to avoid navigating through classrooms
+
+Check all floors to see where images match up
+- Match up through stairs
 """

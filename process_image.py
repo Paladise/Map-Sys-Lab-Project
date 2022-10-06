@@ -12,7 +12,7 @@ from PIL import Image, ImageTk, ImageDraw, ImageFont
 
 start_time = time.perf_counter()
 
-USING_TESSERACT = False
+USING_TESSERACT = True
 SHOW_IMAGES = False
 
 CONFIDENCE_LEVEL = 69
@@ -26,8 +26,8 @@ BW_THRESHOLD = 150 # Values less than this will become black
 RESIZE = 2
 PADDING = 3
 RMSE_THRESHOLD = 0.035
-# SYMBOLS = ["door", "signage", "stairs"]
 SYMBOLS = ["door"]
+# SYMBOLS = ["door", "signage", "stairs"]
 
 if USING_TESSERACT:
     pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract"
@@ -47,18 +47,20 @@ def detect_if_symbol(x1, x2, y1, y2):
     for symbol in SYMBOLS:
         symbol_image = cv.imread(IMAGE_SAVE_PATH + symbol + ".png")
         width, height = symbol_image.shape[1], symbol_image.shape[0]
-        dim = (width, height)
-
-        opencv_image = cv.cvtColor(np.array(image), cv.COLOR_GRAY2RGB)
-        resized_image = cv.resize(opencv_image, dim, interpolation = cv.INTER_AREA)
-
-        # hash0 = imagehash.average_hash(Image.fromarray(symbol_image))
-        # hash1 = imagehash.average_hash(Image.fromarray(resized_image))
-
+        
+        # hash0 = imagehash.average_hash(Image.fromarray(symbol_image), hash_size = max(width, height))
+        # hash1 = imagehash.average_hash(image, hash_size = max(width, height))
         # m = abs(hash0 - hash1)
 
-        # if m < 5:
+        # print("M is:", m, abs(width - image.size[0]), abs(height - image.size[1]))
+
+        # if m <= 90 and abs(width - image.size[0]) <= 3 and abs(height - image.size[1]) <= 3:
+        #     print("FOUND: ", symbol)            
         #     return symbol
+
+        dim = (width, height)
+        opencv_image = cv.cvtColor(np.array(image), cv.COLOR_GRAY2RGB)
+        resized_image = cv.resize(opencv_image, dim, interpolation = cv.INTER_AREA)
 
         m = rmse(symbol_image, resized_image).item()
 
@@ -399,13 +401,12 @@ WIDTH, HEIGHT = image.size[0], image.size[1]
 # image.save(IMAGE_SAVE_PATH + "black_and_white.png")
 	
 print("Drawing boxes...")
-boxes_image, boxes, walls = draw_boxes(image) 
+boxes_image, boxes, walls = draw_boxes(image.copy()) 
 boxes_image.save(IMAGE_SAVE_PATH + "custom_boxes.png")
 
+print("Processing image...")
 blank_image = image.copy()
 blank_pixels = blank_image.load()
-
-print("Processing image...")
 rooms = process_image(boxes, blank_pixels) 
 print("\n\n\n", rooms)   
 # blank_image.show()

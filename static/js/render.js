@@ -1,70 +1,74 @@
-
 var scene, renderer, camera, controls;
 renderer = new THREE.WebGLRenderer();
 //this is to get the correct pixel detail on portable devices
-renderer.setPixelRatio( window.devicePixelRatio );
+renderer.setPixelRatio(window.devicePixelRatio);
 
 //and this sets the canvas' size.
-renderer.setSize( window.innerWidth, window.innerHeight );
-renderer.setClearColor( 0xffffff, 0);
-document.body.appendChild( renderer.domElement );
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setClearColor(0xefebd9, 1);
+document.body.appendChild(renderer.domElement);
 
 scene = new THREE.Scene();
 
 
-camera = new THREE.PerspectiveCamera( 
-80,                                         //FOV
-window.innerWidth / window.innerHeight,     //aspect
-1,                                          //near clipping plane
-2500                                         //far clipping plane
+camera = new THREE.PerspectiveCamera(
+    80, //FOV
+    window.innerWidth / window.innerHeight, //aspect
+    1, //near clipping plane
+    2500 //far clipping plane
 );
 camera.position.set(0, 0, 1000)
 camera.rotation.set(0, 0, 1)
-const axesHelper = new THREE.AxesHelper( 5 );
-scene.add( axesHelper );
-function addText(text, x, y, multiplier){
-var loader = new THREE.FontLoader();
-loader.load( 'https://threejs.org/examples/fonts/optimer_regular.typeface.json', function ( font ) {
+const axesHelper = new THREE.AxesHelper(5);
+scene.add(axesHelper);
 
-var textGeo = new THREE.TextGeometry( text, {
-    font: font,
-    size: 20,
-    height: 2,
-});
-var textMaterial = new THREE.MeshBasicMaterial( 
-    { color: 0x000000, visible: true }
-);
-var mesh = new THREE.Mesh( textGeo, textMaterial );
-mesh.position.set((x-578)*multiplier, (425-y)*multiplier, 0)
-mesh.lookAt(camera.position);
-scene.add( mesh );
-})
+function addText(text, x, y, multiplier) {
+    var loader = new THREE.FontLoader();
+    loader.load('https://threejs.org/examples/fonts/optimer_regular.typeface.json', function(font) {
+
+        var textGeo = new THREE.TextGeometry(text, {
+            font: font,
+            size: 20,
+            height: 2,
+        });
+        var textMaterial = new THREE.MeshBasicMaterial({
+            color: 0x000000,
+            visible: true
+        });
+        var mesh = new THREE.Mesh(textGeo, textMaterial);
+        mesh.position.set((x - 578) * multiplier, (425 - y) * multiplier, 0);
+        mesh.name = "text";
+        scene.add(mesh);
+    })
 }
 const extrudeSettings = {
-steps: 2,
-depth: 16,
-bevelEnabled: true
+    steps: 2,
+    depth: 16,
+    bevelEnabled: true
 };
-function addLines(points, multiplier){
-let x1, y1, x2, y2, w 
-x1 = points[0];
-y1 = points[1];
-x2 = points[2];
-y2 = points[3];
-w = points[4]+1;
-console.log(x1, y1, x2, y2, w)
-const shape = new THREE.Shape();
-shape.moveTo( (x1-578)*multiplier, (425-y1)*multiplier);
-shape.lineTo( (x2-578)*multiplier, (425-y2)*multiplier);
-shape.lineTo( (x2-578+w)*multiplier, (425-y2)*multiplier);
-shape.lineTo( (x1-578+w)*multiplier, (425-y1)*multiplier);
-shape.lineTo( (x1-578)*multiplier, (425-y1)*multiplier);
 
-const geometry = new THREE.ExtrudeGeometry( shape, extrudeSettings );
-const material = new THREE.MeshBasicMaterial( { color: 0xaaaaaa } );
-const mesh = new THREE.Mesh( geometry, material ) ;
-// mesh.rotation.set(-1, 0, 0)
-scene.add( mesh );
+function addLines(points, multiplier) {
+    let x1, y1, x2, y2, w
+    x1 = points[0];
+    y1 = points[1];
+    x2 = points[2];
+    y2 = points[3] + 1;
+    w = points[4] + 1;
+    console.log(x1, y1, x2, y2, w)
+    const shape = new THREE.Shape();
+    shape.moveTo((x1 - 578) * multiplier, (425 - y1) * multiplier);
+    shape.lineTo((x2 - 578) * multiplier, (425 - y2) * multiplier);
+    shape.lineTo((x2 - 578 + w) * multiplier, (425 - y2) * multiplier);
+    shape.lineTo((x1 - 578 + w) * multiplier, (425 - y1) * multiplier);
+    shape.lineTo((x1 - 578) * multiplier, (425 - y1) * multiplier);
+
+    const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+    const material = new THREE.MeshBasicMaterial({
+        color: 0xffffff
+    });
+    const mesh = new THREE.Mesh(geometry, material);
+    // mesh.rotation.set(-1, 0, 0)
+    scene.add(mesh);
 }
 const list_of_text = [['door', 1, 451], ['door', 2, 332], ['door10', 67, 631], ['Auditorium', 118, 203], ['Aud Lob', 128, 309], ['Gym 1', 130, 416], ['Storage', 134, 646], ['Weight', 145, 591], ['door14', 215, 64], ['Gym 2', 227, 725], ['N', 271, 469], ['PCR', 308, 245], ['fol', 325, 519], ['Gandhi', 339, 505], ['Gallery', 342, 314], ['door15', 350, 82], ['min', 352, 183], ['Front', 410, 194], ['Office', 410, 210], ['Faraday', 424, 609], ['Nobel', 452, 243], ['Dome', 458, 144], ['door1', 466, 109], ['door8', 531, 706], ['Planetarium', 547, 738], ['door20', 573, 172], ['Energy', 618, 101], ['7-Optics', 623, 204], ['Galileo', 646, 299], ['Einstein', 679, 762], ['door7', 698, 838], ['8-Proto', 704, 89], ['Cafe', 775, 526], ['DaVinci', 785, 195], ['door6', 820, 756], ['Boller', 853, 422], ['eur', 854, 104], ['Ocean', 869, 229], ['em', 935, 105], ['Turing', 962, 529], ['door3', 974, 70], ['Cafeteria', 994, 329], ['door4', 1097, 277], ['Door5', 1099, 526], ['2', 951, 213], ['3', 924, 81], ['4', 890, 203], ['6', 810, 116], ['6', 818, 721], ['8', 765, 146], ['9', 649, 146], ['10', 835, 240], ['11', 1, 472], ['11', 751, 243], ['12', 0, 351], ['12', 683, 244], ['14', 723, 305], ['15', 785, 305], ['16', 870, 305], ['17', 940, 305], ['18', 785, 342], ['22', 785, 405], ['23', 785, 480], ['25', 880,
 486], ['26', 917, 473], ['27', 963, 461], ['28', 1005, 461], ['29', 1052, 473], ['30', 1095, 497], ['31', 1055, 558], ['33', 1039, 603], ['34', 933, 603], ['36', 913, 558], ['37', 863, 557], ['38', 799, 573], ['39', 863, 592], ['40',
@@ -72,8 +76,9 @@ const list_of_text = [['door', 1, 451], ['door', 2, 332], ['door10', 67, 631], [
 638, 668], ['60', 592, 570], ['61', 593, 528], ['62', 592, 470], ['64', 592, 431], ['65', 592, 388], ['66', 592, 348], ['67', 598, 305], ['68', 562, 305], ['69', 552, 348], ['70', 552, 388], ['71', 552, 431], ['73', 552, 470], ['74',
 552, 528], ['75', 552, 570], ['77', 607, 673], ['80', 546, 667], ['81', 555, 610], ['82', 508, 668], ['83', 482, 610], ['84', 464, 668], ['85', 421, 668], ['86', 385, 610], ['87', 376, 668], ['88', 350, 741], ['89', 350, 786], ['98',
 27, 437], ['104', 295, 469], ['105', 347, 571], ['106', 346, 537], ['107', 369, 462], ['109', 276, 431], ['110', 276, 380], ['111', 359, 364], ['113', 292, 337], ['115', 531, 242], ['118', 353, 245], ['131', 30, 288], ['134', 30, 169], ['135', 30, 101]]
+
 for (let i = 0; i < list_of_text.length; i++){
-addText(list_of_text[i][0], list_of_text[i][1], list_of_text[i][2], 2)
+    addText(list_of_text[i][0], list_of_text[i][1], list_of_text[i][2], 2)
 }
 const list_of_points = [[5, 66, 5, 114, 1], [5, 128, 5, 219, 1], [5, 230, 5, 308, 1], [5, 66, 5, 67, 223], [5, 81, 5, 82, 20], [5, 96, 5, 96, 20], [5, 112, 5, 114, 2], [5, 128, 5, 130, 6], [5, 168, 5, 168, 20], [5, 207, 5, 207, 20], [5, 218, 5, 219, 6], [5, 230, 5, 231, 6], [5, 243, 5, 243, 20], [5, 256, 5, 256, 13], [5, 267, 5, 268, 2], [5, 288, 5, 288, 19], [5, 307, 5,
 308, 95], [7, 307, 7, 309, 0], [8, 95, 8, 96, 16], [5, 113, 5, 114, 6], [8, 206, 8, 207, 17], [5, 267, 5, 267, 20], [10, 113, 10, 116, 1], [10, 126, 10, 130, 1], [10, 218, 10, 220, 1], [12, 112, 12, 113, 1], [5, 129, 5, 130, 36], [5,
@@ -254,20 +259,30 @@ const list_of_points = [[5, 66, 5, 114, 1], [5, 128, 5, 219, 1], [5, 230, 5, 308
 [1043, 531, 1043, 566, 1], [1045, 100, 1045, 111, 0], [1045, 254, 1045, 255, 0], [1048, 116, 1048, 127, 1], [1049, 531, 1049, 531, 44], [1032, 117, 1032, 117, 28], [1048, 126, 1048, 127, 15], [1050, 431, 1050, 432, 44], [1051, 116, 1051, 117, 5], [1058, 116, 1058, 120, 1], [1063, 133, 1063, 144, 0], [1048, 127, 1048, 127, 16], [1064, 127, 1064, 128, 0], [1063, 133, 1063, 143, 1], [1066, 93, 1066, 96, 0], [1066, 102, 1066, 120, 1], [1066, 254, 1066, 254, 1], [1066, 96, 1066, 96, 1], [1066, 110, 1066, 110, 13], [1066, 120, 1066, 120, 2], [1073, 120, 1073, 120, 6], [1077, 254, 1077, 254, 0], [1078, 93, 1078, 120, 1], [1078, 127, 1078, 144, 1], [1078, 152, 1078, 187, 1], [1078, 193, 1078, 196, 1], [1079, 126, 1079, 145, 0], [1078, 118, 1078, 119, 3], [1078, 128, 1078, 129, 2], [1078, 143, 1078, 144, 15], [1078,
 195, 1078, 196, 17], [1078, 129, 1078, 129, 6], [1078, 118, 1078, 118, 10], [1083, 118, 1083, 119, 5], [1083, 254, 1083, 254, 12], [1083, 498, 1083, 499, 2], [1084, 254, 1084, 255, 0], [1084, 494, 1084, 499, 1], [1089, 254, 1089, 255, 6], [1090, 129, 1090, 129, 4], [1090, 254, 1090, 260, 1], [1090, 270, 1090, 275, 1], [1090, 375, 1090, 375, 5], [1091, 93, 1091, 96, 1], [1091, 106, 1091, 107, 1], [1091, 374, 1091, 375, 4], [1090, 274, 1090, 275, 4], [1092, 431, 1092, 499, 1], [1092, 517, 1092, 621, 1], [1091, 107, 1091, 107, 3], [1093, 129, 1093, 132, 1], [1093, 134, 1093, 144, 0], [1093, 200, 1093, 247, 2], [1093, 249, 1093, 249, 2], [1093, 251, 1093, 251, 2], [1093, 274, 1093, 276, 1], [1093, 280, 1093, 311, 2], [1093, 318, 1093, 319, 2], [1093, 323, 1093, 323, 2], [1093, 331, 1093, 331, 2], [1093, 336, 1093, 370, 2], [1093, 373, 1093, 375, 2], [1093, 516, 1093, 621, 0], [1094, 107, 1094, 119, 0], [1094, 129, 1094, 143, 0], [1094, 195, 1094, 255, 1], [1094, 274, 1094, 375, 0], [1092, 431, 1092, 480, 2], [1092, 482, 1092, 484, 2], [1092, 499, 1092, 499, 2], [1092, 526, 1092, 528, 7], [1092, 551, 1092, 620, 2], [1090, 275, 1090, 275, 5], [1093, 275, 1093, 276, 2], [1094, 275, 1094, 375, 1], [1092, 483, 1092, 484, 20], [1092, 551, 1092, 552, 20], [1097, 526, 1097, 531, 2], [1098, 526, 1098, 532, 1], [1100, 499, 1100, 499, 12], [1097, 530, 1097, 531, 6], [1098, 530, 1098, 532, 5], [1101, 530, 1101, 535, 2], [1103, 530, 1103, 536, 0], [1101, 534, 1101, 535, 6], [1103, 534, 1103, 536, 4], [1105, 534,
 1105, 539, 2], [1106, 534, 1106, 540, 1], [1105, 538, 1105, 539, 7], [1106, 538, 1106, 540, 6], [1110, 498, 1110, 499, 2], [1111, 483, 1111, 507, 1], [1111, 527, 1111, 552, 1]]
-for (let i = 0; i < list_of_points.length; i++){
-addLines(list_of_points[i], 2)
+
+for (let i = 0; i < list_of_points.length; i++) {
+    addLines(list_of_points[i], 2)
 }
-controls = new THREE.ArcballControls( camera, renderer.domElement, scene );
+controls = new THREE.ArcballControls(camera, renderer.domElement, scene);
 controls.rotateSpeed = .5;
 controls.enableDamping = true;
 controls.dampingFactor = .05;
 
-window.addEventListener( 'change', function () {
-renderer.render( scene, camera );
-}, false )
+window.addEventListener('change', function() {
+    renderer.render(scene, camera);
+}, false)
+
 function animate() {
-requestAnimationFrame( animate );
-renderer.render( scene, camera );
+    requestAnimationFrame(animate);
+    scene.traverse (function (object)
+{
+    if (object instanceof THREE.Mesh) {
+        if (object.name === "text") {
+            object.quaternion.copy( camera.quaternion );
+        }
+    }
+});
+    renderer.render(scene, camera);
 };
 
 animate();

@@ -54,7 +54,6 @@ function addLines(points, multiplier) {
     x2 = points[2];
     y2 = points[3] + 1;
     w = points[4] + 1;
-    console.log(x1, y1, x2, y2, w)
     const shape = new THREE.Shape();
     shape.moveTo((x1 - 578) * multiplier, (425 - y1) * multiplier);
     shape.lineTo((x2 - 578) * multiplier, (425 - y2) * multiplier);
@@ -263,10 +262,10 @@ const list_of_points = [[5, 66, 5, 114, 1], [5, 128, 5, 219, 1], [5, 230, 5, 308
 for (let i = 0; i < list_of_points.length; i++) {
     addLines(list_of_points[i], 2)
 }
-controls = new THREE.ArcballControls(camera, renderer.domElement, scene);
-controls.rotateSpeed = .5;
-controls.enableDamping = true;
-controls.dampingFactor = .05;
+controls = new THREE.TrackballControls( camera, renderer.domElement );
+controls.rotateSpeed = 0
+camera.position.set(0, 0, 1000);
+camera.rotation.set(-200, 0, 0);
 
 window.addEventListener('change', function() {
     renderer.render(scene, camera);

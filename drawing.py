@@ -1,4 +1,5 @@
 from colorsys import hls_to_rgb
+from PIL import Image
 from random import random
 from sys import setrecursionlimit
 
@@ -129,3 +130,19 @@ def remove_box(pixels, x1, x2, y1, y2):
     for x in range(x1, x2):
         for y in range(y1, y2):
             pixels[x, y] = (255, 255, 255)
+
+
+def create_image_from_box(pixels, x1, x2, y1, y2, padding):
+    """
+    Given box coordinates, return image generated around that box 
+    (from initial map) with or without padding
+    """
+
+    image2 = Image.new("RGB", (x2 - x1 + 1 + 2*padding, y2 - y1 + 1 + 2*padding), color = "white")
+    pixels2 = image2.load()
+    for x in range(x1 + 1, x2):
+        for y in range(y1 + 1, y2):
+            pixels2[x - x1 + padding, y - y1 + padding] = pixels[x, y]
+
+    image2 = image2.convert("L")
+    return image2

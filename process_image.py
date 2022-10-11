@@ -6,13 +6,13 @@ import pickle
 import pytesseract
 import time
 import tkinter as tk
-from drawing import draw_boxes, draw_square, image_to_bw, remove_box
+from drawing import draw_boxes, draw_square, image_to_bw, remove_box, create_image_from_box
 from image_similarity_measures.quality_metrics import rmse
 from PIL import Image, ImageTk, ImageDraw, ImageFont
 
 start_time = time.perf_counter()
 
-USING_TESSERACT = True
+USING_TESSERACT = False
 SHOW_IMAGES = False
 
 CONFIDENCE_LEVEL = 69
@@ -42,7 +42,7 @@ def detect_if_symbol(x1, x2, y1, y2):
     is indeed a symbol and return which symbol it is (according to key)
     """
 
-    image = create_image_from_box(x1, x2, y1, y2, 0)
+    image = create_image_from_box(pixels, x1, x2, y1, y2, 0)
 
     for symbol in SYMBOLS:
         symbol_image = cv.imread(IMAGE_SAVE_PATH + symbol + ".png")
@@ -72,22 +72,6 @@ def detect_if_symbol(x1, x2, y1, y2):
     return ""
 
 
-def create_image_from_box(x1, x2, y1, y2, padding):
-    """
-    Given box coordinates, return image generated around that box 
-    (from initial map) with or without padding
-    """
-
-    image2 = Image.new("RGB", (x2 - x1 + 1 + 2*padding, y2 - y1 + 1 + 2*padding), color = "white")
-    pixels2 = image2.load()
-    for x in range(x1 + 1, x2):
-        for y in range(y1 + 1, y2):
-            pixels2[x - x1 + padding, y - y1 + padding] = pixels[x, y]
-
-    image2 = image2.convert("L")
-    return image2
-
-
 def predict_name(x1, x2, y1, y2, single_char = True, has_spaces = False, symbols = {}):
     """
     Uses box coordinates to create a gray-scale PIL image specifically of that region (with padding)
@@ -99,7 +83,7 @@ def predict_name(x1, x2, y1, y2, single_char = True, has_spaces = False, symbols
 
     # Creating image of that specific area
 
-    potential_image = create_image_from_box(x1, x2, y1, y2, PADDING)
+    potential_image = create_image_from_box(pixels, x1, x2, y1, y2, PADDING)
     potential_pixels = potential_image.load()
 
     # display_image = image.copy()
@@ -211,6 +195,67 @@ def generate_name(cur_box, used_boxes, detected_name, has_spaces, symbols):
 
     return used_boxes, detected_name, has_spaces, symbols
 
+def flood_y(pixels, x, prev_x):
+    """
+    Flood y-coord given the image, the x coordinate that you are filling on,
+    and the previous x coordinate's all found y-values
+    """
+
+    start_y = None
+    found = []
+
+    for y in prev_x:
+        if pixels(x, y) == (0, 0, 0):
+            start_y = y
+            break
+    
+    if start_y:
+        for i in (-1, 1):
+            y = start_y
+            while True:
+                if pixels(x, y) == (0, 0, 0):
+                    found.append(y)
+                    y += i   
+
+    return found   
+
+def find_more_chars(pixels, x1, x2, y1, y2, i):
+    """
+    Attempts to find more symbols that may be a part of room names but are currently
+    stuck to walls using current bounding box coords.
+    """
+
+    if i:
+        start_x = x2
+    else:
+        start_x = x1
+
+    y_len = y2 - y1
+
+    prev_x = [y for y in range(y1, y2) if pixels(start_x, y) == (0, 0, 0)]
+
+    x = start_x
+    space = 0
+    found = False
+
+    while True: 
+        x += i
+        prev_x = flood_y(pixels, x, prev_x)                  
+
+        if len(prev_x) > y_len * 2: # Most likely a wall
+            break
+        elif len(prev_x) == 0 and not found:
+            space += 1
+        elif not found and len(prev_x) > 0:
+            found = True 
+
+        if space == 5: # Only found empty space 
+            return None
+
+    x -= i
+
+    return x # Return updated x boundary
+ 
 
 def process_image(boxes, pixels):
     """
@@ -300,7 +345,27 @@ def process_image(boxes, pixels):
                     if not d.check(word):
                         suggestions = [i for i in d.suggest(word) if len(i) == len(word)]
                         if len(suggestions) == 1:
-                            full_word = suggestions[0]                        
+                            full_word = suggestions[0] 
+
+                        """
+                        Detect symbols that are next to walls
+                            - If found full name box that is not a real word, check left and right side
+                            - Try to go all the way down that direction (allowing to go up and down)
+                            - If vertical distance is greater than certain threshold, assume
+                            that distance is a vertical wall and ignore all pixels with the same x-coord
+                            - Splice the rest and create a bounding box on that region, then retry with full word
+                            including that new box 
+                        """                              
+
+                        if x := find_more_chars(pixels, x1, x2, y1, y2, -1):
+                            x1 = x
+
+                        if x := find_more_chars(pixels, x1, x2, y1, y2, -1):
+                            x2 = x
+
+                        full_word, confidence = predict_name(x1, x2, y1, y2, False, has_spaces, symbols) 
+
+                        # check if potential character is the correct size (big enough)                   
 
                 print("Full name:", full_word)
                 rooms.append((full_word, (first[0], y2)))
@@ -402,7 +467,7 @@ WIDTH, HEIGHT = image.size[0], image.size[1]
 	
 print("Drawing boxes...")
 boxes_image, boxes, walls = draw_boxes(image.copy()) 
-boxes_image.save(IMAGE_SAVE_PATH + "custom_boxes.png")
+# boxes_image.save(IMAGE_SAVE_PATH + "custom_boxes.png")
 
 print("Processing image...")
 blank_image = image.copy()
@@ -411,6 +476,13 @@ rooms = process_image(boxes, blank_pixels)
 print("\n\n\n", rooms)   
 # blank_image.show()
 blank_image.save(IMAGE_SAVE_PATH + "blank_map.png")
+
+with open("list_of_points.txt", "w") as f:
+    for x in range(WIDTH):
+        for y in range(HEIGHT):
+            if blank_pixels[x, y] != (255, 255, 255):
+                f.write(str(x) + " " + str(y) + "\n")
+        
 
 if USING_TESSERACT:
     print("Saving updated boxes...")
@@ -437,6 +509,9 @@ Detect symbols that are next to walls
 
     - Make sure to add precaution to combine all letters that the wall may have interfered with
     - For example, Chem might only be Ch + em
+
+    - Do same for horizontal walls
+    - Recursive?
 
 At the end go throughout the entire image and try to pick up any extra symbols of that specific size
 (may be time-consuming, so might not do it)

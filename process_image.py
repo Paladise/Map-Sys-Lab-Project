@@ -64,7 +64,7 @@ def detect_if_symbol(x1, x2, y1, y2):
 
         m = rmse(symbol_image, resized_image).item()
 
-        print("M is:", m)
+        # print("M is:", m)
 
         if m < RMSE_THRESHOLD:
             return symbol
@@ -72,7 +72,7 @@ def detect_if_symbol(x1, x2, y1, y2):
     return ""
 
 
-def predict_name(x1, x2, y1, y2, single_char = True, has_spaces = False, symbols = {}):
+def predict_name(x1, x2, y1, y2, single_char = True, has_spaces = False, symbols = {}, show = False):
     """
     Uses box coordinates to create a gray-scale PIL image specifically of that region (with padding)
     And checks if that image is a symbol from key, and if not uses pytesseract to 
@@ -83,11 +83,13 @@ def predict_name(x1, x2, y1, y2, single_char = True, has_spaces = False, symbols
 
     # Creating image of that specific area
 
-    potential_image = create_image_from_box(pixels, x1, x2, y1, y2, PADDING)
-    potential_pixels = potential_image.load()
+    if show:
 
-    # display_image = image.copy()
-    # p = display_image.load()
+        potential_image = create_image_from_box(pixels, x1, x2, y1, y2, PADDING)
+        potential_pixels = potential_image.load()
+
+    display_image = image.copy()
+    p = display_image.load()
 
     # Remove symbols from image before running pytesseract on it
 
@@ -95,17 +97,19 @@ def predict_name(x1, x2, y1, y2, single_char = True, has_spaces = False, symbols
         bx1, bx2, by1, by2 = box
 
         for x in range(bx1, bx2):
-            for y in range(by1, by2):
-                potential_pixels[x - x1 + PADDING, y - y1 + PADDING] = 255
-                # p[x, y] = (255, 255, 255)
+            for y in range(by1, by2):                
+                p[x, y] = (255, 255, 255)
+                if show:
+                    potential_pixels[x - x1 + PADDING, y - y1 + PADDING] = 255
 
-    # draw_square(p, x1, x2, y1, y2, (0, 0, 255))
-    # display_image = display_image.crop((max(0, x1 - 50),  max(0, y1 - 50), min(WIDTH, x2 + 50), min(HEIGHT, y2 + 50)))
-    # display_image = display_image.resize((display_image.size[0] * RESIZE, display_image.size[1] * RESIZE), Image.Resampling.LANCZOS)
-    # cv_image = np.array(display_image)
-    # cv.imshow("Looking at image:", cv_image)
-    # cv.waitKey(2000)
-    # cv.destroyAllWindows()
+    if show:
+        draw_square(p, x1, x2, y1, y2, (0, 0, 255))
+        display_image = display_image.crop((max(0, x1 - 50),  max(0, y1 - 50), min(WIDTH, x2 + 50), min(HEIGHT, y2 + 50)))
+        display_image = display_image.resize((display_image.size[0] * RESIZE, display_image.size[1] * RESIZE), Image.Resampling.LANCZOS)
+        cv_image = np.array(display_image)
+        cv.imshow("Looking at image:", cv_image)
+        cv.waitKey(2000)
+        cv.destroyAllWindows()
 
     # Run pytesseract (or saved data) on image    
 
@@ -195,7 +199,7 @@ def generate_name(cur_box, used_boxes, detected_name, has_spaces, symbols):
 
     return used_boxes, detected_name, has_spaces, symbols
 
-def flood_y(pixels, x, prev_x):
+def flood_y(pixels, x, prev_x, max_y_len):
     """
     Flood y-coord given the image, the x coordinate that you are filling on,
     and the previous x coordinate's all found y-values
@@ -205,7 +209,7 @@ def flood_y(pixels, x, prev_x):
     found = []
 
     for y in prev_x:
-        if pixels(x, y) == (0, 0, 0):
+        if pixels[x, y] == (0, 0, 0):
             start_y = y
             break
     
@@ -213,48 +217,79 @@ def flood_y(pixels, x, prev_x):
         for i in (-1, 1):
             y = start_y
             while True:
-                if pixels(x, y) == (0, 0, 0):
+                if pixels[x, y] == (0, 0, 0) and len(found) <= max_y_len:
                     found.append(y)
-                    y += i   
+                    y += i
+                else:
+                    break
 
     return found   
 
-def find_more_chars(pixels, x1, x2, y1, y2, i):
+def find_more_chars(pixels, x1, x2, y1, y2, i, debug = False):
     """
     Attempts to find more symbols that may be a part of room names but are currently
     stuck to walls using current bounding box coords.
-    """
+    """   
 
-    if i:
-        start_x = x2
+    if i == 1:
+        start_x = x2 - 1 # Minus 1 bc of annoying border
     else:
-        start_x = x1
+        start_x = x1 + 1 # Add 1 bc of annoying border
 
-    y_len = y2 - y1
+    max_y_len = (y2 - y1) * 2
 
-    prev_x = [y for y in range(y1, y2) if pixels(start_x, y) == (0, 0, 0)]
+    if debug:
+        print("RUNNING FIND MORE CHARS")
+        print(f"x1: {x1}, x2: {x2}, y1: {y1}, y2: {y2}, i: {i}")
+        print("start_x:", start_x)
+        print("max_y_len:", max_y_len)
+
+    prev_x = [y for y in range(y1, y2) if pixels[start_x, y] == (0, 0, 0)]
 
     x = start_x
     space = 0
     found = False
 
+    if debug:
+        print("initial prev_x:", prev_x)
+
     while True: 
         x += i
-        prev_x = flood_y(pixels, x, prev_x)                  
 
-        if len(prev_x) > y_len * 2: # Most likely a wall
+        cur_x = flood_y(pixels, x, prev_x, max_y_len)   
+
+        if found:
+            prev_x = cur_x
+
+        if debug:
+            print("Current x:", x, "with prev_x:", prev_x, "and cur_x:", cur_x)               
+
+        if len(cur_x) > max_y_len: # Most likely a wall
+            if debug:
+                print("most likely wall")
             break
-        elif len(prev_x) == 0 and not found:
+        elif len(cur_x) == 0 and not found: # Space
+            if debug:
+                print("space")
             space += 1
-        elif not found and len(prev_x) > 0:
+        elif len(cur_x) > 0: # Looking into potential char
+            if debug:
+                print("Found = true")
             found = True 
 
-        if space == 5: # Only found empty space 
+            y1 = min(y1, min(cur_x))
+            y2 = max(y2, max(cur_x))
+
+        if space == 5 or x < 0 or x > WIDTH: # Only found empty space 
+            if debug:
+                print("only found empty space")
             return None
 
     x -= i
 
-    return x # Return updated x boundary
+    print("Returning final x:", x)
+
+    return x, y1, y2 # Return updated x boundary, and y-values
  
 
 def process_image(boxes, pixels):
@@ -301,6 +336,7 @@ def process_image(boxes, pixels):
 
             first = detected_name[0]
             last = detected_name[-1]
+            x1, x2 = first[0], last[1]
             y1, y2 = float("inf"), float("-inf")        
             for i in detected_name:
                 y1 = min(y1, i[2])
@@ -313,8 +349,23 @@ def process_image(boxes, pixels):
             else:
                 single_char = False
 
-            full_word, confidence = predict_name(first[0], last[1], y1, y2, single_char, has_spaces, symbols)
+            full_word, confidence = predict_name(x1, x2, y1, y2, single_char, has_spaces, symbols)
             full_word.replace(",", "")
+
+            show = False                       
+            if res := find_more_chars(pixels, x1, x2, y1, y2, -1, show):
+                x1, y1, y2 = res[0], res[1], res[2]
+            
+            print("updated:", x1, x2, y1, y2)
+
+            if res := find_more_chars(pixels, x1, x2, y1, y2, 1, show):
+                x2, y1, y2 = res[0], res[1], res[2]        
+
+            print("updated:", x1, x2, y1, y2)      
+
+            # full_word, confidence = predict_name(x1, x2, y1, y2, False, has_spaces, symbols, show) 
+
+            # check if potential character is the correct size (big enough)         
 
             if "|" in full_word: # If mistook a wall for a "|", split it along there
                 if len(full_word) == 1:
@@ -334,8 +385,8 @@ def process_image(boxes, pixels):
                         elif i == pipe + 1:
                             rooms.append((full_word2, (b[0], b[3])))
             elif confidence >= CONFIDENCE_LEVEL:
-                if len(full_word) == 1 and confidence < UPPER_CONFIDENCE_LEVEL: # Mis-identified character
-                    print("mis identified")
+                if len(full_word) == 1 and (confidence < UPPER_CONFIDENCE_LEVEL and full_word.isalpha()): # Mis-identified character
+                    print("mis identified, since confidence is", confidence)
                     continue
 
                 for word in full_word.split(" "):
@@ -345,29 +396,9 @@ def process_image(boxes, pixels):
                     if not d.check(word):
                         suggestions = [i for i in d.suggest(word) if len(i) == len(word)]
                         if len(suggestions) == 1:
-                            full_word = suggestions[0] 
+                            full_word = suggestions[0]                                
 
-                        """
-                        Detect symbols that are next to walls
-                            - If found full name box that is not a real word, check left and right side
-                            - Try to go all the way down that direction (allowing to go up and down)
-                            - If vertical distance is greater than certain threshold, assume
-                            that distance is a vertical wall and ignore all pixels with the same x-coord
-                            - Splice the rest and create a bounding box on that region, then retry with full word
-                            including that new box 
-                        """                              
-
-                        if x := find_more_chars(pixels, x1, x2, y1, y2, -1):
-                            x1 = x
-
-                        if x := find_more_chars(pixels, x1, x2, y1, y2, -1):
-                            x2 = x
-
-                        full_word, confidence = predict_name(x1, x2, y1, y2, False, has_spaces, symbols) 
-
-                        # check if potential character is the correct size (big enough)                   
-
-                print("Full name:", full_word)
+                print("Full name:", full_word, "with confidence:", confidence)
                 rooms.append((full_word, (first[0], y2)))
                 remove_box(pixels, first[0], last[1], y1, y2)
 
@@ -510,7 +541,7 @@ Detect symbols that are next to walls
     - Make sure to add precaution to combine all letters that the wall may have interfered with
     - For example, Chem might only be Ch + em
 
-    - Do same for horizontal walls
+    - Do same for horizontal walls / vertical thing
     - Recursive?
 
 At the end go throughout the entire image and try to pick up any extra symbols of that specific size

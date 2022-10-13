@@ -18,7 +18,8 @@ SHOW_IMAGES = False
 CONFIDENCE_LEVEL = 69
 UPPER_CONFIDENCE_LEVEL = 90
 IMAGE_SAVE_PATH = "images/"
-FILE_NAME = IMAGE_SAVE_PATH + "practice_map.jpg"
+READ_FROM = "floor1"
+FILE_NAME = IMAGE_SAVE_PATH + READ_FROM + ".jpg"
 DIST_BETWEEN_LETTERS = 15
 DIST_FOR_SPACE = 4
 Y_THRESHOLD = 6
@@ -33,7 +34,7 @@ if USING_TESSERACT:
     pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract"
     box_stats = {}
 else:
-    with open('boxes.pickle', 'rb') as handle:
+    with open(f'boxes_{READ_FROM}.pickle', 'rb') as handle:
         box_stats = pickle.load(handle)
 
 def detect_if_symbol(x1, x2, y1, y2):
@@ -494,11 +495,11 @@ print("Converting to black and white...")
 image = image_to_bw(image, BW_THRESHOLD)
 pixels = image.load()
 WIDTH, HEIGHT = image.size[0], image.size[1]
-# image.save(IMAGE_SAVE_PATH + "black_and_white.png")
+image.save(IMAGE_SAVE_PATH + f"black_and_white_{READ_FROM}.png")
 	
 print("Drawing boxes...")
 boxes_image, boxes, walls = draw_boxes(image.copy()) 
-# boxes_image.save(IMAGE_SAVE_PATH + "custom_boxes.png")
+boxes_image.save(IMAGE_SAVE_PATH + f"custom_boxes_{READ_FROM}.png")
 
 print("Processing image...")
 blank_image = image.copy()
@@ -506,9 +507,9 @@ blank_pixels = blank_image.load()
 rooms = process_image(boxes, blank_pixels) 
 print("\n\n\n", rooms)   
 # blank_image.show()
-blank_image.save(IMAGE_SAVE_PATH + "blank_map.png")
+blank_image.save(IMAGE_SAVE_PATH + f"blank_map_{READ_FROM}.png")
 
-with open("list_of_points.txt", "w") as f:
+with open(f"list_of_points_{READ_FROM}.txt", "w") as f:
     for x in range(WIDTH):
         for y in range(HEIGHT):
             if blank_pixels[x, y] != (255, 255, 255):
@@ -517,7 +518,7 @@ with open("list_of_points.txt", "w") as f:
 
 if USING_TESSERACT:
     print("Saving updated boxes...")
-    with open('boxes.pickle', 'wb') as handle:
+    with open(f'boxes_{READ_FROM}.pickle', 'wb') as handle:
         pickle.dump(box_stats, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     if not SHOW_IMAGES:
@@ -531,18 +532,13 @@ Combine pixels into lines
 Repeat symbol detection for all symbols (right now only doing doors)
 Detect text wrapping
 Detect symbols that are next to walls
-- If found full name box that is not a real word, check left and right side
-    - Try to go all the way down that direction (allowing to go up and down)
-    - If vertical distance is greater than certain threshold, assume
-    that distance is a vertical wall and ignore all pixels with the same x-coord
-    - Splice the rest and create a bounding box on that region, then retry with full word
-    including that new box
-
     - Make sure to add precaution to combine all letters that the wall may have interfered with
     - For example, Chem might only be Ch + em
 
-    - Do same for horizontal walls / vertical thing
-    - Recursive?
+    - Do same for checking characters above or below?
+
+    - Wrestling g is not fully detected yet
+
 
 At the end go throughout the entire image and try to pick up any extra symbols of that specific size
 (may be time-consuming, so might not do it)

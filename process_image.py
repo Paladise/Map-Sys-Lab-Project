@@ -6,11 +6,14 @@ import pickle
 import pytesseract
 import time
 import tkinter as tk
-from drawing import draw_boxes, draw_square, image_to_bw, remove_box, create_image_from_box
+from drawing import draw_boxes, draw_square, image_to_bw, remove_box, create_image_from_box, flood
 from image_similarity_measures.quality_metrics import rmse
 from PIL import Image, ImageTk, ImageDraw, ImageFont
+from sys import setrecursionlimit
 
 start_time = time.perf_counter()
+
+setrecursionlimit(10000) # We don't talk about this line
 
 USING_TESSERACT = False
 SHOW_IMAGES = False
@@ -18,7 +21,7 @@ SHOW_IMAGES = False
 CONFIDENCE_LEVEL = 69
 UPPER_CONFIDENCE_LEVEL = 90
 IMAGE_SAVE_PATH = "images/"
-READ_FROM = "floor1"
+READ_FROM = "floor2"
 FILE_NAME = IMAGE_SAVE_PATH + READ_FROM + ".jpg"
 DIST_BETWEEN_LETTERS = 15
 DIST_FOR_SPACE = 4
@@ -36,6 +39,7 @@ if USING_TESSERACT:
 else:
     with open(f'boxes_{READ_FROM}.pickle', 'rb') as handle:
         box_stats = pickle.load(handle)
+
 
 def detect_if_symbol(x1, x2, y1, y2):
     """
@@ -84,13 +88,12 @@ def predict_name(x1, x2, y1, y2, single_char = True, has_spaces = False, symbols
 
     # Creating image of that specific area
 
+    potential_image = create_image_from_box(pixels, x1, x2, y1, y2, PADDING)
+    potential_pixels = potential_image.load()
+
     if show:
-
-        potential_image = create_image_from_box(pixels, x1, x2, y1, y2, PADDING)
-        potential_pixels = potential_image.load()
-
-    display_image = image.copy()
-    p = display_image.load()
+        display_image = image.copy()
+        p = display_image.load()
 
     # Remove symbols from image before running pytesseract on it
 
@@ -98,10 +101,10 @@ def predict_name(x1, x2, y1, y2, single_char = True, has_spaces = False, symbols
         bx1, bx2, by1, by2 = box
 
         for x in range(bx1, bx2):
-            for y in range(by1, by2):                
-                p[x, y] = (255, 255, 255)
-                if show:
-                    potential_pixels[x - x1 + PADDING, y - y1 + PADDING] = 255
+            for y in range(by1, by2):   
+                if show:             
+                    p[x, y] = (255, 255, 255)
+                potential_pixels[x - x1 + PADDING, y - y1 + PADDING] = 255
 
     if show:
         draw_square(p, x1, x2, y1, y2, (0, 0, 255))
@@ -351,7 +354,6 @@ def process_image(boxes, pixels):
                 single_char = False
 
             full_word, confidence = predict_name(x1, x2, y1, y2, single_char, has_spaces, symbols)
-            full_word.replace(",", "")
 
             show = False                       
             if res := find_more_chars(pixels, x1, x2, y1, y2, -1, show):
@@ -364,7 +366,8 @@ def process_image(boxes, pixels):
 
             print("updated:", x1, x2, y1, y2)      
 
-            # full_word, confidence = predict_name(x1, x2, y1, y2, False, has_spaces, symbols, show) 
+            full_word, confidence = predict_name(x1, x2, y1, y2, False, has_spaces, symbols, show) 
+            full_word.replace(",", "")
 
             # check if potential character is the correct size (big enough)         
 
@@ -401,7 +404,7 @@ def process_image(boxes, pixels):
 
                 print("Full name:", full_word, "with confidence:", confidence)
                 rooms.append((full_word, (first[0], y2)))
-                remove_box(pixels, first[0], last[1], y1, y2)
+                remove_box(pixels, x1, x2, y1, y2)
 
             elif len(detected_name) > 1: # Go individually
 
@@ -454,7 +457,7 @@ def process_image(boxes, pixels):
                 label = label.capitalize() 
                 if all(i != "*" for i in label):   
                     print("Each character:", label)   
-                    rooms.append((label, (first[0], y2)))         
+                    rooms.append((label, (x1, y2)))         
             
         if SHOW_IMAGES:
             if confidence < CONFIDENCE_LEVEL:
@@ -505,7 +508,7 @@ print("Processing image...")
 blank_image = image.copy()
 blank_pixels = blank_image.load()
 rooms = process_image(boxes, blank_pixels) 
-print("\n\n\n", rooms)   
+print("Rooms:\n\n\n", ", ".join([r[0] for r in rooms]))   
 # blank_image.show()
 blank_image.save(IMAGE_SAVE_PATH + f"blank_map_{READ_FROM}.png")
 

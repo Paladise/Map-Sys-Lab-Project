@@ -1,9 +1,7 @@
 from colorsys import hls_to_rgb
 from PIL import Image
 from random import random
-from sys import setrecursionlimit
 
-setrecursionlimit(10000) # We don't talk about this line
 
 def image_to_bw(image, threshold):
     """
@@ -36,7 +34,7 @@ def flood(pixels, x, y, found, min_x, max_x, min_y, max_y):
     except:
         return found, min_x, max_x, min_y, max_y
 
-    if pixels[x, y] == (0, 0, 0) and (x, y) not in found: # Found unvisited black pixel
+    if pixels[x, y] == (0, 0, 0) and (x, y) not in found and len(found) < 550: # Found unvisited black pixel
         found.add((x, y))
 
         if x < min_x:

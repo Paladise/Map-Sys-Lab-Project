@@ -12,14 +12,12 @@ scene = new THREE.Scene();
 
 
 camera = new THREE.PerspectiveCamera(
-    80, //FOV
+    90, //FOV
     window.innerWidth / window.innerHeight, //aspect
     1, //near clipping plane
     2500 //far clipping plane
 );
-camera.position.set(0, 0, 1000)
-camera.rotation.set(0, 0, 1)
-const axesHelper = new THREE.AxesHelper(5);
+const axesHelper = new THREE.AxesHelper(200);
 scene.add(axesHelper);
 
 function addText(text, x, y, multiplier) {
@@ -29,22 +27,22 @@ function addText(text, x, y, multiplier) {
         var textGeo = new THREE.TextGeometry(text, {
             font: font,
             size: 20,
-            height: 2,
+            height: 1,
         });
         var textMaterial = new THREE.MeshBasicMaterial({
             color: 0x000000,
             visible: true
         });
         var mesh = new THREE.Mesh(textGeo, textMaterial);
-        mesh.position.set((x - 578) * multiplier, (425 - y) * multiplier, 0);
+        mesh.position.set((x - 578) * multiplier, (567 - y) * multiplier, 30);
         mesh.name = "text";
         scene.add(mesh);
     })
 }
 const extrudeSettings = {
     steps: 2,
-    depth: 16,
-    bevelEnabled: true
+    depth: 30,
+    bevelEnabled: false
 };
 
 function addLines(points, multiplier) {
@@ -52,21 +50,20 @@ function addLines(points, multiplier) {
     x1 = points[0];
     y1 = points[1];
     x2 = points[2];
-    y2 = points[3] + 1;
+    y2 = points[3];
     w = points[4] + 1;
     const shape = new THREE.Shape();
-    shape.moveTo((x1 - 578) * multiplier, (425 - y1) * multiplier);
-    shape.lineTo((x2 - 578) * multiplier, (425 - y2) * multiplier);
-    shape.lineTo((x2 - 578 + w) * multiplier, (425 - y2) * multiplier);
-    shape.lineTo((x1 - 578 + w) * multiplier, (425 - y1) * multiplier);
-    shape.lineTo((x1 - 578) * multiplier, (425 - y1) * multiplier);
+    shape.moveTo((x1 - 578) * multiplier, (567 - y1) * multiplier);
+    shape.lineTo((x2 - 578) * multiplier, (567 - y2) * multiplier);
+    shape.lineTo((x2 - 578 + w) * multiplier, (567 - y2) * multiplier);
+    shape.lineTo((x1 - 578 + w) * multiplier, (567 - y1) * multiplier);
+    shape.lineTo((x1 - 578) * multiplier, (567 - y1) * multiplier);
 
     const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
     const material = new THREE.MeshBasicMaterial({
         color: 0xffffff
     });
     const mesh = new THREE.Mesh(geometry, material);
-    // mesh.rotation.set(-1, 0, 0)
     scene.add(mesh);
 }
 const list_of_text = [['door', 1, 451], ['door', 2, 332], ['door10', 67, 631], ['Auditorium', 118, 203], ['Aud Lob', 128, 309], ['Gym 1', 130, 416], ['Storage', 134, 646], ['Weight', 145, 591], ['door14', 215, 64], ['Gym 2', 227, 725], ['N', 271, 469], ['PCR', 308, 245], ['fol', 325, 519], ['Gandhi', 339, 505], ['Gallery', 342, 314], ['door15', 350, 82], ['min', 352, 183], ['Front', 410, 194], ['Office', 410, 210], ['Faraday', 424, 609], ['Nobel', 452, 243], ['Dome', 458, 144], ['door1', 466, 109], ['door8', 531, 706], ['Planetarium', 547, 738], ['door20', 573, 172], ['Energy', 618, 101], ['7-Optics', 623, 204], ['Galileo', 646, 299], ['Einstein', 679, 762], ['door7', 698, 838], ['8-Proto', 704, 89], ['Cafe', 775, 526], ['DaVinci', 785, 195], ['door6', 820, 756], ['Boller', 853, 422], ['eur', 854, 104], ['Ocean', 869, 229], ['em', 935, 105], ['Turing', 962, 529], ['door3', 974, 70], ['Cafeteria', 994, 329], ['door4', 1097, 277], ['Door5', 1099, 526], ['2', 951, 213], ['3', 924, 81], ['4', 890, 203], ['6', 810, 116], ['6', 818, 721], ['8', 765, 146], ['9', 649, 146], ['10', 835, 240], ['11', 1, 472], ['11', 751, 243], ['12', 0, 351], ['12', 683, 244], ['14', 723, 305], ['15', 785, 305], ['16', 870, 305], ['17', 940, 305], ['18', 785, 342], ['22', 785, 405], ['23', 785, 480], ['25', 880,
@@ -264,8 +261,8 @@ for (let i = 0; i < list_of_points.length; i++) {
 }
 controls = new THREE.TrackballControls( camera, renderer.domElement );
 controls.rotateSpeed = 0
-camera.position.set(0, 0, 1000);
-camera.rotation.set(-200, 0, 0);
+camera.position.set(0, -400, 800);
+
 
 window.addEventListener('change', function() {
     renderer.render(scene, camera);
@@ -273,6 +270,7 @@ window.addEventListener('change', function() {
 
 function animate() {
     requestAnimationFrame(animate);
+    controls.update()
     scene.traverse (function (object)
 {
     if (object instanceof THREE.Mesh) {

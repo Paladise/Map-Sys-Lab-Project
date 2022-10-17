@@ -18,10 +18,10 @@ setrecursionlimit(10000) # We don't talk about this line
 USING_TESSERACT = False
 SHOW_IMAGES = False
 
-CONFIDENCE_LEVEL = 69
+CONFIDENCE_LEVEL = 60
 UPPER_CONFIDENCE_LEVEL = 90
 IMAGE_SAVE_PATH = "images/"
-READ_FROM = "floor2"
+READ_FROM = "floor1"
 FILE_NAME = IMAGE_SAVE_PATH + READ_FROM + ".jpg"
 DIST_BETWEEN_LETTERS = 15
 DIST_FOR_SPACE = 4
@@ -170,6 +170,7 @@ def predict_name(x1, x2, y1, y2, single_char = True, has_spaces = False, symbols
     else: # Use pickle file for efficiency & since pytesseract doesn't work on school laptop
         detected = box_stats[(x1, x2, y1, y2)][0]
         confidence = box_stats[(x1, x2, y1, y2)][1]  
+        # print(detected, confidence)
 
     return detected, confidence
 
@@ -301,7 +302,8 @@ def process_image(boxes, pixels):
     Process the entire image to identify all integral parts using already-identified boxes.
     """
 
-    d = enchant.Dict("en_US")
+    # d = enchant.DictWithPWL("en_US","potential_room_names.txt")
+    d = enchant.request_pwl_dict("potential_room_names.txt")
 
     if SHOW_IMAGES:
         root = tk.Tk()
@@ -400,7 +402,7 @@ def process_image(boxes, pixels):
                     if not d.check(word):
                         suggestions = [i for i in d.suggest(word) if len(i) == len(word)]
                         if len(suggestions) == 1:
-                            full_word = suggestions[0]                                
+                            full_word = suggestions[0].capitalize()                                
 
                 print("Full name:", full_word, "with confidence:", confidence)
                 rooms.append((full_word, (first[0], y2)))
@@ -530,10 +532,9 @@ if USING_TESSERACT:
 """
 To-do list:
 
-Combine pixels into lines
-
 Repeat symbol detection for all symbols (right now only doing doors)
 Detect text wrapping
+Detect rotated room names
 Detect symbols that are next to walls
     - Make sure to add precaution to combine all letters that the wall may have interfered with
     - For example, Chem might only be Ch + em

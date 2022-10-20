@@ -174,7 +174,8 @@ class Webcam {
         canvasElement.remove();
         console.log(data);
         var input = document.createElement("input");
-        input.type = "file";
+        input.type = "text";
+        input.name = "floor1";
         input.value = data;
         form.appendChild(input);        
         return data;

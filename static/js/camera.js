@@ -172,6 +172,11 @@ class Webcam {
         context.drawImage(this._webcamElement, 0, 0, canvasElement.width, canvasElement.height);
         let data = canvasElement.toDataURL('image/png');
         canvasElement.remove();
+        console.log(data);
+        var input = document.createElement("input");
+        input.type = "file";
+        input.value = data;
+        form.appendChild(input);        
         return data;
     }
 }
@@ -180,6 +185,7 @@ const webcamElement = document.getElementById('webcam');
 const webcam = new Webcam(webcamElement, 'user');
 const pictureButton = document.getElementById('takePicture');
 const flipButton = document.getElementById('flipCamera');
+const form = document.getElementById("processingForm");
 webcam.start()
     .then(result => {
         console.log("webcam started");

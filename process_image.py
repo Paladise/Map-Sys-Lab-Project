@@ -1,6 +1,7 @@
 import cv2 as cv
 import enchant
 import imagehash
+import json
 import numpy as np
 import pickle
 import pytesseract
@@ -35,6 +36,7 @@ SYMBOLS = ["door"]
 
 if USING_TESSERACT:
     pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract"
+    # pytesseract.pytesseract.tesseract_cmd = r"/cluster/2023abasto/local/bin/tesseract" # Linux Directory
     box_stats = {}
 else:
     with open(f'boxes_{READ_FROM}.pickle', 'rb') as handle:
@@ -519,8 +521,10 @@ with open(f"list_of_points_{READ_FROM}.txt", "w") as f:
         for y in range(HEIGHT):
             if blank_pixels[x, y] != (255, 255, 255):
                 f.write(str(x) + " " + str(y) + "\n")
-        
 
+with open(f"rooms_{READ_FROM}.json", "w") as f:
+    json.dump(rooms, f, indent = 4)
+        
 if USING_TESSERACT:
     print("Saving updated boxes...")
     with open(f'boxes_{READ_FROM}.pickle', 'wb') as handle:

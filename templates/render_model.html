@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block title %}Atlas | Render{% endblock %}
+ 
+{% block head %}
+<script src='https://threejs.org/build/three.js'></script>
+<script src='https://threejs.org/examples/js/controls/ArcballControls.js'></script>
+<script src='https://threejs.org/examples/js/loaders/FontLoader.js'></script>
+<script src='https://threejs.org/examples/js/controls/TrackballControls.js'></script>
+<script src='https://threejs.org/examples/js/geometries/TextGeometry.js'></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+{% endblock %}
+
+{% block body %}
+<script></script>
+<script type = "text/javascript" src="{{MEDIA_URL}}/maps/{{id}}/list_of_text.txt"></script>
+<script type = "text/javascript" src="{{MEDIA_URL}}/maps/{{id}}/list_of_rooms.txt"></script>
+<script type="text/javascript" src = "{% static 'js/render.js'%}"></script>
+
+<script type="text/javascript">
+var set_delay = 5000,
+    callout = function () {
+        $.ajax({
+            url: "{% url 'render:copy' id=id %}",
+            success: function(data) {
+                alert(data);
+            },
+            failure: function(data) { 
+                alert('Got an error dude');
+            }
+        })
+        .done(function (response) {
+            // update the page
+        })
+        .always(function () {
+            setTimeout(callout, set_delay);
+        });
+    };
+
+// initial call
+callout();
+</script>
+{% endblock %}

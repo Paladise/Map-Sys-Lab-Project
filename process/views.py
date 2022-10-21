@@ -1,8 +1,11 @@
 import base64
+import secrets
 from django.core.files.base import ContentFile
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.urls import reverse
 from process.models import MapImage
 
+ID_LENGTH = 11
 
 def base64_file(data, name=None):
     _format, _img_str = data.split(';base64,')
@@ -18,9 +21,14 @@ def index(request):
 def atlas(request):
     if request.method == "POST":
         data = request.POST.dict()
+        id = secrets.token_urlsafe(ID_LENGTH)
         for label, val in data.items():
-            print(label, val)
-            # image = MapImage(label = label, image = base64_file(val))
-            # image.save()
+            if label == "csrfmiddlewaretoken":
+                continue            
+            image = MapImage(id, label, base64_file(val, label))
+            image.save()
 
-    return render(request, "atlas.html")
+        redirect_url = reverse("render:model", args=(id,))
+        return redirect(redirect_url)
+
+    return render(request, "atlas.html") 

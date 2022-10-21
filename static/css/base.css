@@ -210,7 +210,7 @@ footer {
   gap: 25px;
 }
 
-.tool-bar a {
+.tool-bar a, input {
   height: 50px;
   border-radius: 8px;
   border: 2px solid white;
@@ -222,7 +222,7 @@ footer {
   padding: 0px 10px;
 }
 
-.tool-bar a:hover {
+.tool-bar a:hover,input:hover {
   cursor: pointer;
   box-shadow: 0 0 10px 5px rgba(255,255,255,0.75);
 }

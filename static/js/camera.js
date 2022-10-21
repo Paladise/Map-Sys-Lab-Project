@@ -174,10 +174,11 @@ class Webcam {
         canvasElement.remove();
         console.log(data);
         var input = document.createElement("input");
-        input.type = "text";
-        input.name = "floor1";
+        
+        input.type = "hidden";
+        input.name = "floor" + (form.children.length - 1);
         input.value = data;
-        form.appendChild(input);        
+        form.insertBefore(input, form.children[form.children.length - 1]);        
         return data;
     }
 }
@@ -198,7 +199,7 @@ webcam.start()
 pictureButton.addEventListener("click", function() {
     console.log("Took picture");
     let picture = webcam.snap();
-    pictureButton.href = picture;
+    // pictureButton.href = picture;
 });
 
 flipButton.addEventListener("click", function() {

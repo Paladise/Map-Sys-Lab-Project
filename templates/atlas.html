@@ -15,15 +15,13 @@
         <div class = "tool-bar">
             <a id = "takePicture" download="image.png">Capture</a>
             <a id ="flipCamera">Flip</a>
-            <a>Finish</a>
+            <form action="" method="POST" id = "processingForm">
+                {% csrf_token %}
+                <input type="submit" value="Finish">
+            </form>
         </div>        
     </div>    
 </main>
-
-<form action="" method="POST" id = "processingForm">
-    {% csrf_token %}
-    <input type="submit" value="Submit">
-</form>
 
 <script src="{% static 'js/camera.js' %}"></script>
 

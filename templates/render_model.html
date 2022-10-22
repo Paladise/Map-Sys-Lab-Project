@@ -14,32 +14,65 @@
 {% endblock %}
 
 {% block body %}
-<script></script>
-<script type = "text/javascript" src="{{MEDIA_URL}}/maps/{{id}}/list_of_text.txt"></script>
-<script type = "text/javascript" src="{{MEDIA_URL}}/maps/{{id}}/list_of_rooms.txt"></script>
-<script type="text/javascript" src = "{% static 'js/render.js'%}"></script>
+
+<section id = "loadingScreen">
+    <p id = "loadingText"></p>
+    <p id = "recentOutput"></p>
+</section>
+
+<script type="text/javascript" src = "{% static 'js/render_model.js'%}"></script>
 
 <script type="text/javascript">
-var set_delay = 5000,
-    callout = function () {
-        $.ajax({
-            url: "{% url 'render:copy' id=id %}",
-            success: function(data) {
-                alert(data);
-            },
-            failure: function(data) { 
-                alert('Got an error dude');
-            }
-        })
-        .done(function (response) {
-            // update the page
-        })
-        .always(function () {
-            setTimeout(callout, set_delay);
-        });
-    };
 
-// initial call
-callout();
+copy = function () {
+    $('#loadingText').html("Copying images...");
+    $.ajax({
+        url: "{% url 'render:copy' id=id %}",
+        success: function(data) {
+            $('#recentOutput').html(JSON.stringify(data));
+            create_bash_script(); 
+            
+        },
+        failure: function(data) { 
+            alert('Got an error dude');
+        }
+    })
+},
+
+create_bash_script = function () {
+    $('#loadingText').html("Creating bash script...");
+    $.ajax({
+        url: "{% url 'render:create' id=id %}",
+        success: function(data) {
+            $('#recentOutput').html(JSON.stringify(data));
+            process_images(data);
+        },
+        failure: function(data) { 
+            alert('Got an error dude');
+        }
+    })
+};
+
+process_images = function () {
+    $('#loadingText').html("Processing images...");
+    $.ajax({
+        url: "{% url 'render:process' id=id %}",
+        success: function(data) {
+            $('#loadingText').html("Finished processing images...");
+            // $('#recentOutput').html(JSON.stringify(data));
+            render_model(data);
+        },
+        error: function(xmlhttprequest, textstatus, message) {
+            if(textstatus==="timeout") {
+                alert("got timeout");
+            } else {
+                alert("status: " + textstatus + "message: " + message);
+            }
+        },
+        timeout: 300000 // 5 minutes
+    })
+};
+
+copy();
 </script>
 {% endblock %}

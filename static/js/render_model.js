@@ -29,7 +29,7 @@ function addText(text, x, y, multiplier) {
 
         var textGeo = new THREE.TextGeometry(text, {
             font: font,
-            size: 20,
+            size: 24,
             height: 1,
         });
         var textMaterial = new THREE.MeshBasicMaterial({
@@ -95,8 +95,10 @@ function addLines(points, multiplier) {
 }
 
 function render_model(model) {
-    const list_of_text = model.rooms;
-    const list_of_points = model.points;
+    const num_floors = model["num_floors"];
+    
+    const list_of_text = model["1"]["rooms"];
+    const list_of_points = model["1"]["points"];
     
     for (let i = 0; i < list_of_text.length; i++) {
         addText(list_of_text[i][0], list_of_text[i][1], list_of_text[i][2], 2)

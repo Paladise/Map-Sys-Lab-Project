@@ -24,12 +24,12 @@
 
 <script type="text/javascript">
 
-copy = function () {
+function copy() {
     $('#loadingText').html("Copying images...");
     $.ajax({
         url: "{% url 'render:copy' id=id %}",
         success: function(data) {
-            $('#recentOutput').html(JSON.stringify(data));
+            // $('#recentOutput').html(JSON.stringify(data));
             create_bash_script(); 
             
         },
@@ -37,30 +37,31 @@ copy = function () {
             alert('Got an error dude');
         }
     })
-},
+}
 
-create_bash_script = function () {
+function create_bash_script() {
     $('#loadingText').html("Creating bash script...");
     $.ajax({
         url: "{% url 'render:create' id=id %}",
         success: function(data) {
-            $('#recentOutput').html(JSON.stringify(data));
+            // $('#recentOutput').html(JSON.stringify(data));
             process_images(data);
         },
         failure: function(data) { 
             alert('Got an error dude');
         }
     })
-};
+}
 
-process_images = function () {
+function process_images () {
     $('#loadingText').html("Processing images...");
+    console.log("Starting to process images...");
     $.ajax({
         url: "{% url 'render:process' id=id %}",
         success: function(data) {
-            $('#loadingText').html("Finished processing images...");
+            $('#loadingText').html("Sent images to server...");
             // $('#recentOutput').html(JSON.stringify(data));
-            render_model(data);
+            check_if_finished_processing();
         },
         error: function(xmlhttprequest, textstatus, message) {
             if(textstatus==="timeout") {
@@ -71,8 +72,34 @@ process_images = function () {
         },
         timeout: 300000 // 5 minutes
     })
-};
+}
+
+function check_if_finished_processing() {
+    $.ajax({
+        url: "{% url 'render:check' id=id %}",
+        success: function(data) {
+            if(data.processed) {
+                $('#loadingText').html("Finished processing images...");
+                $('#recentOutput').html(JSON.stringify(data));
+                render_model(data);    
+            }else {
+                $('#loadingText').html("Still processing images...");
+                $('#recentOutput').html(JSON.stringify(data));
+                setTimeout(check_if_finished_processing, 2500);
+            }
+        },
+        error: function(xmlhttprequest, textstatus, message) {
+            if(textstatus==="timeout") {
+                alert("got timeout");
+            } else {
+                alert("status: " + textstatus + "message: " + message);
+            }
+        }
+    })
+ 
+}
 
 copy();
+
 </script>
 {% endblock %}

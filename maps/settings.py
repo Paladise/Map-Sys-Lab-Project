@@ -51,7 +51,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'render.apps.RenderConfig',
-    'process.apps.ProcessConfig'
+    'process.apps.ProcessConfig',
+    'access_logs'
 ]
 
 MIDDLEWARE = [
@@ -63,6 +64,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'access_logs.logging_middleware.AccessLogsMiddleware'
 ]
 
 ROOT_URLCONF = 'maps.urls'
@@ -124,7 +126,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "America/New_York"
 
 USE_I18N = True
 
@@ -152,7 +154,7 @@ LOGGING = {
     'formatters': {
         'verbose': {
             'format' : "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
-            'datefmt' : "%d/%b/%Y %H:%M:%S"
+            'datefmt' : "%b %e, %Y %I:%M:%S %p"
         },
         'simple': {
             'format': '%(levelname)s %(message)s'
@@ -176,6 +178,10 @@ LOGGING = {
             'handlers': ['file'],
             'level': 'DEBUG',
         },
+        'render.views': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+        }
     }
 }
 

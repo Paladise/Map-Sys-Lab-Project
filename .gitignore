@@ -154,3 +154,6 @@ cython_debug/
 # Static assets
 assets/
 static/videos/
+
+# Private MEDIA files
+media/

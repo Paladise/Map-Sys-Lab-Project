@@ -1,29 +1,29 @@
 import cv2 as cv
 import enchant
-import imagehash
 import json
 import numpy as np
 import pickle
 import pytesseract
+import sys
 import time
-import tkinter as tk
 from drawing import draw_boxes, draw_square, image_to_bw, remove_box, create_image_from_box, flood
 from image_similarity_measures.quality_metrics import rmse
-from PIL import Image, ImageTk, ImageDraw, ImageFont
-from sys import setrecursionlimit
+from PIL import Image
 
 start_time = time.perf_counter()
 
-setrecursionlimit(10000) # We don't talk about this line
+id = sys.argv[1]
+READ_FROM = sys.argv[2]
 
-USING_TESSERACT = False
+sys.setrecursionlimit(10000) # We don't talk about this line
+
+USING_TESSERACT = True
 SHOW_IMAGES = False
 
 CONFIDENCE_LEVEL = 60
 UPPER_CONFIDENCE_LEVEL = 90
-IMAGE_SAVE_PATH = "images/"
-READ_FROM = "floor1"
-FILE_NAME = IMAGE_SAVE_PATH + READ_FROM + ".jpg"
+IMAGE_SAVE_PATH = f"media/{id}/"
+FILE_NAME = IMAGE_SAVE_PATH + READ_FROM
 DIST_BETWEEN_LETTERS = 15
 DIST_FOR_SPACE = 4
 Y_THRESHOLD = 6
@@ -35,8 +35,8 @@ SYMBOLS = ["door"]
 # SYMBOLS = ["door", "signage", "stairs"]
 
 if USING_TESSERACT:
-    pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract"
-    # pytesseract.pytesseract.tesseract_cmd = r"/cluster/2023abasto/local/bin/tesseract" # Linux Directory
+    # pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract" # Windows
+    pytesseract.pytesseract.tesseract_cmd = r"/cluster/2023abasto/local/bin/tesseract"
     box_stats = {}
 else:
     with open(f'boxes_{READ_FROM}.pickle', 'rb') as handle:
@@ -52,26 +52,14 @@ def detect_if_symbol(x1, x2, y1, y2):
     image = create_image_from_box(pixels, x1, x2, y1, y2, 0)
 
     for symbol in SYMBOLS:
-        symbol_image = cv.imread(IMAGE_SAVE_PATH + symbol + ".png")
+        symbol_image = cv.imread("images/" + symbol + ".png")
         width, height = symbol_image.shape[1], symbol_image.shape[0]
-        
-        # hash0 = imagehash.average_hash(Image.fromarray(symbol_image), hash_size = max(width, height))
-        # hash1 = imagehash.average_hash(image, hash_size = max(width, height))
-        # m = abs(hash0 - hash1)
-
-        # print("M is:", m, abs(width - image.size[0]), abs(height - image.size[1]))
-
-        # if m <= 90 and abs(width - image.size[0]) <= 3 and abs(height - image.size[1]) <= 3:
-        #     print("FOUND: ", symbol)            
-        #     return symbol
 
         dim = (width, height)
         opencv_image = cv.cvtColor(np.array(image), cv.COLOR_GRAY2RGB)
         resized_image = cv.resize(opencv_image, dim, interpolation = cv.INTER_AREA)
 
         m = rmse(symbol_image, resized_image).item()
-
-        # print("M is:", m)
 
         if m < RMSE_THRESHOLD:
             return symbol
@@ -146,17 +134,23 @@ def predict_name(x1, x2, y1, y2, single_char = True, has_spaces = False, symbols
             else:
                 config = "--oem 3 -l eng --psm 7 -c tessedit_char_whitelist=|-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-            predict = pytesseract.image_to_data(
-                potential_image, config = config, output_type="data.frame")          
-            predict = predict[predict["conf"] != -1]
-
+            print("Running with x1", x1, "x2", x2, "y1", y1, "y2", y2)
+            
             try:
-                detected = " ".join([str(int(a)) if isinstance(a, float) else str(a) for a in predict["text"].tolist()])
-                confidence = predict["conf"].iloc[0]                  
-            except:
-                pass
+                predict = pytesseract.image_to_data(
+                    potential_image, config = config, output_type="data.frame")          
+                predict = predict[predict["conf"] != -1]
 
-            print("Detected within predict_name:", detected, "with confidence:", confidence)
+                try:
+                    detected = " ".join([str(int(a)) if isinstance(a, float) else str(a) for a in predict["text"].tolist()])
+                    confidence = predict["conf"].iloc[0]                  
+                except:
+                    pass
+            except pytesseract.pytesseract.TesseractError:
+                detected = "Nobel"
+                confidence = 100.0
+
+#             print("Detected within predict_name:", detected, "with confidence:", confidence)
 
             if confidence == 0:
                 confidence = 89.0
@@ -294,7 +288,7 @@ def find_more_chars(pixels, x1, x2, y1, y2, i, debug = False):
 
     x -= i
 
-    print("Returning final x:", x)
+#     print("Returning final x:", x)
 
     return x, y1, y2 # Return updated x boundary, and y-values
  
@@ -307,18 +301,6 @@ def process_image(boxes, pixels):
     # d = enchant.DictWithPWL("en_US","potential_room_names.txt")
     d = enchant.request_pwl_dict("potential_room_names.txt")
 
-    if SHOW_IMAGES:
-        root = tk.Tk()
-        root.attributes("-fullscreen", True)
-        root.bind("<Escape>", lambda event: root.attributes("-fullscreen",
-                                    not root.attributes("-fullscreen")))
-        image_label = tk.Label(root)
-        caption_label = tk.Label(root)
-        caption_label.config(font = ("Arial", 60))
-        image_label.pack()
-        caption_label.pack()
-        root.update()
-
     used_boxes = []    
     rooms = []
 
@@ -326,17 +308,17 @@ def process_image(boxes, pixels):
         if box in used_boxes:
             continue
 
-        print("Starting to look at new word...")
+#         print("Starting to look at new word...")
 
         used_boxes, detected_name, has_spaces, symbols = generate_name(box, used_boxes, detected_name = [], has_spaces = False, symbols = {})
 
-        print("After generated named, detected_name:", detected_name)
-        print("After generated name symbols:", symbols)
+#         print("After generated named, detected_name:", detected_name)
+#         print("After generated name symbols:", symbols)
 
         if len(detected_name) == 1 and symbols: # If it's a singular symbol
             s = list(symbols.values())[0][0]
-            print("Symbol:", s)
-            rooms.append((s, (detected_name[0][0], detected_name[0][3])))
+#             print("Symbol:", s)
+            rooms.append((s, ((detected_name[0][0] + detected_name[0][1])//2, (detected_name[0][2] + detected_name[0][3])//2)))
             remove_box(pixels, detected_name[0][0], detected_name[0][1], detected_name[0][2], detected_name[0][3])
         else: # Predict full room name
 
@@ -363,12 +345,12 @@ def process_image(boxes, pixels):
             if res := find_more_chars(pixels, x1, x2, y1, y2, -1, show):
                 x1, y1, y2 = res[0], res[1], res[2]
             
-            print("updated:", x1, x2, y1, y2)
+#             print("updated:", x1, x2, y1, y2)
 
             if res := find_more_chars(pixels, x1, x2, y1, y2, 1, show):
                 x2, y1, y2 = res[0], res[1], res[2]        
 
-            print("updated:", x1, x2, y1, y2)      
+#             print("updated:", x1, x2, y1, y2)      
 
             full_word, confidence = predict_name(x1, x2, y1, y2, False, has_spaces, symbols, show) 
             full_word.replace(",", "")
@@ -382,32 +364,41 @@ def process_image(boxes, pixels):
                 pipe = full_word.index("|")
                 full_word1 = full_word[:pipe]
                 full_word2 = full_word[pipe + 1:]
-                print("Full word:", full_word1)
-                print("Full word:", full_word2)
+#                 print("Full word:", full_word1)
+#                 print("Full word:", full_word2)
 
                 for i, b in enumerate(detected_name):
                     if i != pipe:
                         remove_box(pixels, b[0], b[1], b[2], b[3])
                         if i == 0:
-                            rooms.append((full_word1, (b[0], b[3])))
+                            rooms.append((full_word1, ((b[0] + b[1]//2), b[3])))
                         elif i == pipe + 1:
-                            rooms.append((full_word2, (b[0], b[3])))
+                            rooms.append((full_word2, ((b[0] + b[1]//2), b[3])))
             elif confidence >= CONFIDENCE_LEVEL:
                 if len(full_word) == 1 and (confidence < UPPER_CONFIDENCE_LEVEL and full_word.isalpha()): # Mis-identified character
-                    print("mis identified, since confidence is", confidence)
+#                     print("mis identified, since confidence is", confidence)
                     continue
+    
+                full = full_word[:]        
+                full_word = []
 
-                for word in full_word.split(" "):
+                for word in full.split(" "):
                     if word == "":
                         continue
 
-                    if not d.check(word):
-                        suggestions = [i for i in d.suggest(word) if len(i) == len(word)]
+                    if not d.check(word) and len(word) > 1:
+                        suggestions = [i for i in d.suggest(word)]
                         if len(suggestions) == 1:
-                            full_word = suggestions[0].capitalize()                                
+                            full_word.append(suggestions[0].capitalize())
+                        else:
+                            full_word.append(word)
+                    else:
+                        full_word.append(word)
+                        
+                full_word = " ".join(full_word)
 
-                print("Full name:", full_word, "with confidence:", confidence)
-                rooms.append((full_word, (first[0], y2)))
+#                 print("Full name:", full_word, "with confidence:", confidence)
+                rooms.append((full_word, ((first[0] + first[1])//2, (y1 + y2)//2)))
                 remove_box(pixels, x1, x2, y1, y2)
 
             elif len(detected_name) > 1: # Go individually
@@ -460,73 +451,89 @@ def process_image(boxes, pixels):
 
                 label = label.capitalize() 
                 if all(i != "*" for i in label):   
-                    print("Each character:", label)   
-                    rooms.append((label, (x1, y2)))         
-            
-        if SHOW_IMAGES:
-            if confidence < CONFIDENCE_LEVEL:
-                if all(i == "*" for i in label):
-                    continue
-                text = f"Each: {label}"
-            else:
-                text = f"Full: {full_word}"
-
-                if confidence == 89.0:
-                    text += " But 100"
-            
-            image3 = Image.open(FILE_NAME)
-            pixels3 = image3.load()
-            for i in detected_name:
-                x1, x2, y1, y2 = i
-                font = ImageFont.truetype("arial", 45)
-                draw_square(pixels3, x1, x2, y1, y2, (255, 0, 0))
-
-            if x1 + 200 > WIDTH:
-                x1 -= 200
-            
-            ImageDraw.Draw(image3).text((x1, y1), text, (255, 0, 0), font = font)
-
-            tk_image = ImageTk.PhotoImage(image3.resize((1200, 700)))
-            image_label.configure(image = tk_image)
-            image_label.pack()
-            root.update()
-            time.sleep(1.5)
+#                     print("Each character:", label)   
+                    rooms.append((label, ((x1 + x2)//2, (y1 + y2)//2)))        
 
     a = sorted(rooms, key = lambda i: int(i[0]) if i[0].isnumeric() else 0)
     return [[i[0], i[1][0], i[1][1]] for i in a]
 
+def find_rectangles(pixels, x, y, found, min_x, max_x, min_y, max_y):
+    """
+    Recursively go through image to check neighboring pixels to form blobs
+    of rectangles as well as min & max for x & y.
+    """
 
-image = Image.open(FILE_NAME)
+    try: # Crude way of making sure pixel is not outside of image
+        pixels[x, y]
+    except:
+        return found, min_x, max_x, min_y, max_y
+
+    min_x1, max_x1, min_y1, max_y1 = min_x, max_x, min_y, max_y
+
+    if pixels[x, y] == (0, 0, 0) and (x, y) not in found: # Found unvisited black pixel
+        if x < min_x:
+            min_x = x
+        elif x > max_x:
+            max_x = x
+
+        if y < min_y:
+            min_y = y
+        elif y > max_y:
+            max_y = y
+
+        # Determine if area is still a rectangle
+
+        if all(pixels[x1, y1] == (0, 0, 0) for x1 in range(min_x, max_x + 1) for y1 in range(min_y, max_y + 1)):       
+            found.add((x, y))
+            for x1 in range(-1, 2):
+                for y1 in range(-1, 2):
+                    if abs(x1) == abs(y1):
+                        continue
+                    found, min_x, max_x, min_y, max_y = find_rectangles(pixels, x + x1, y + y1, found, min_x, max_x, min_y, max_y)
+        else:
+            min_x, max_x, min_y, max_y = min_x1, max_x1, min_y1, max_y1
+
+    return found, min_x, max_x, min_y, max_y
+
+
+image = Image.open(FILE_NAME).convert("RGB")
 
 print("Converting to black and white...")
 image = image_to_bw(image, BW_THRESHOLD)
 pixels = image.load()
 WIDTH, HEIGHT = image.size[0], image.size[1]
-image.save(IMAGE_SAVE_PATH + f"black_and_white_{READ_FROM}.png")
+image.save(IMAGE_SAVE_PATH + f"black_and_white_{READ_FROM[:-4]}.png")
 	
 print("Drawing boxes...")
 boxes_image, boxes, walls = draw_boxes(image.copy()) 
-boxes_image.save(IMAGE_SAVE_PATH + f"custom_boxes_{READ_FROM}.png")
+boxes_image.save(IMAGE_SAVE_PATH + f"custom_boxes_{READ_FROM[:-4]}.png")
 
 print("Processing image...")
 blank_image = image.copy()
 blank_pixels = blank_image.load()
 rooms = process_image(boxes, blank_pixels) 
-print("Rooms:\n\n\n", ", ".join([r[0] for r in rooms]))   
+# print("Rooms:\n\n\n", ", ".join([r[0] for r in rooms]))   
 # blank_image.show()
-blank_image.save(IMAGE_SAVE_PATH + f"blank_map_{READ_FROM}.png")
+blank_image.save(IMAGE_SAVE_PATH + f"blank_map_{READ_FROM[:-4]}.png")
 
-with open(f"list_of_points_{READ_FROM}.txt", "w") as f:
-    for x in range(WIDTH):
-        for y in range(HEIGHT):
-            if blank_pixels[x, y] != (255, 255, 255):
-                f.write(str(x) + " " + str(y) + "\n")
+loaded_pixels, rectangles = set(), []
+for x in range(WIDTH):
+    for y in range(HEIGHT):
+        if (x, y) in loaded_pixels or blank_pixels[x, y] == (255, 255, 255): # Skip over looked-at pixels or white pixels
+            continue
 
-with open(f"rooms_{READ_FROM}.json", "w") as f:
-    json.dump(rooms, f, indent = 4)
-        
+        found, min_x, max_x, min_y, max_y = find_rectangles(blank_pixels, x, y, set(), x, x, y, y)
+        x_len = max_x - min_x
+        y_len = max_y - min_y
+
+        loaded_pixels.update(found)
+        rectangles.append([min_x, min_y, min_x, max_y, x_len])
+
+with open(IMAGE_SAVE_PATH + f"render_{READ_FROM[:-4]}.json", "w") as f:
+    json.dump({"rooms": rooms, "points": rectangles}, f, indent = 4) 
+    
 if USING_TESSERACT:
-    print("Saving updated boxes...")
+#     print("Saving updated boxes...")
     with open(f'boxes_{READ_FROM}.pickle', 'wb') as handle:
         pickle.dump(box_stats, handle, protocol=pickle.HIGHEST_PROTOCOL)
 

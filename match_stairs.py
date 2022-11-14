@@ -74,14 +74,17 @@ for x in range(image.size[0]):
         y2 = y - round(y2) - y_dif
 
         if x2 < 0 or y2 < 0 or x2 >= image2.size[0] or y2 >= image2.size[1]:
+            if pixels[x, y] == (0, 0, 0):
+                pixels[x, y] = (255, 0, 0)
             continue
 
         if pixels2[x2, y2] == (0, 0, 0):
             if pixels[x, y] == (0, 0, 0):
-
-                pixels[x, y] = (0, 0, 255)
+                pixels[x, y] = (148, 0, 211)
             else:
-                pixels[x, y] = (0, 255, 0)
+                pixels[x, y] = (0, 0, 255)
+        elif pixels[x, y] == (0, 0, 0):
+            pixels[x, y] = (255, 0, 0)
 
 # image.show()
 image.save("images/matched_floors.png")

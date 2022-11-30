@@ -76,11 +76,13 @@ function process_images () {
 }
 
 function check_if_finished_processing() {
+    console.log("Called check if finished processing");
     $.ajax({
         url: "{% url 'render:check' id=id %}",
         success: function(data) {
+            console.log(data);
             if(data.processed == "true") {
-                // $('#loadingText').html("Finished processing images...");
+                $('#loadingText').html("Finished processing images...");
                 console.log("Finished processing images at: " + JSON.stringify(data));
                 // $('#recentOutput').html(JSON.stringify(data));
                 render_model(data);    
@@ -106,9 +108,10 @@ $.ajax({
     success: function(data) {
         if(data.processed == "true") {
             $('#loadingText').html("Loading rendered model images...");
-            console.log("Already rendered");
+            console.log("Already have JSON file");
             render_model(data);    
         }else {
+            console.log("Do not already have JSON");
             copy();
         }
     },

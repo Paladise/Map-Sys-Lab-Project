@@ -51,8 +51,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'render.apps.RenderConfig',
-    'process.apps.ProcessConfig',
-    'access_logs'
+    'process.apps.ProcessConfig'
 ]
 
 MIDDLEWARE = [
@@ -63,8 +62,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'access_logs.logging_middleware.AccessLogsMiddleware'
+    'django.middleware.clickjacking.XFrameOptionsMiddleware'
 ]
 
 ROOT_URLCONF = 'maps.urls'

@@ -8,9 +8,12 @@ from datetime import datetime
 from django.conf import settings
 from django.http import JsonResponse
 from django.shortcuts import render
+from heapq import heappush, heappop
 from os import listdir
 
 log = logging.getLogger(__name__)
+
+MULTIPLIER = 2
 
 def get_number_of_floors(id):
     result = subprocess.run(["ls", f"{settings.MEDIA_ROOT}maps/{id}"], capture_output = True, text = True)
@@ -140,31 +143,57 @@ def check_if_finished(request, id):
         
     return JsonResponse(response_data, status=201)
     
-def temp(request):
-    id = "GK4IH2fyMX4x4t0"
-    log.debug(f"Temp view... with id {id}")
-    
-    num_floors = get_number_of_floors(id)
-    
-    response_data = {"num_floors": num_floors}
-    for i in range(1, num_floors + 1):
-        log.debug(f"Temp view loading floor: {i}")
-        log.debug(os.path.isfile(f"{settings.MEDIA_ROOT}maps/{id}/render_floor{i}.json"))
-        
-        with open(f"{settings.MEDIA_ROOT}maps/{id}/render_floor{i}.json", "r") as f:
-            floor_data = json.load(f)
-            
-        response_data[str(i)] = floor_data
-        # response_data[str(i)] = "rawr"
-        
-        # log.debug(f"Temp view finished loading floor: {floor_data}")
-    
-    response_data["processed"] = "true"
-    response_data["time"] = datetime.now().strftime("%H:%M:%S")
-        
-    log.debug(f"Temp view... should be returning JSON response now")
-        
+def pathfinding(request, id, x1, y1, x2, y2):
+    start = (x1, y1)
+    end = (x2, y2)
+    response_data = {}
+    with open(f"{settings.MEDIA_ROOT}maps/{id}/render_floor1.json") as f:
+        data = json.load(f)
+
+    map = data["map"]
+
+    res = a_star(start, end, map)
+
+    if res:
+        path = [[(i[0] - 652) * MULTIPLIER, (380 - i[1]) * MULTIPLIER, 20] for i in res[2]]
+        response_data["path"] = path
+
     return JsonResponse(response_data, status=201)
+
     
+def a_star(start, end, map):
+    log.debug("length")
+    log.debug(len(map))
+    log.debug(len(map[0]))
+    closed = set()
+    open = []
+    start_node = (0, start, [])
+    heappush(open, start_node)
+
+    while open:
+        node = heappop(open)
+        coords, path = node[1], node[2]
+        depth = len(path) + 1
+
+        if coords[0] == end[0] and coords[1] == end[1]:
+            return node
+
+        for x1 in range(-1, 2):
+            for y1 in range(-1, 2):
+                new_coords = (coords[0] + x1, coords[1] + y1)
+                if new_coords not in closed and map[new_coords[0]][new_coords[1]] == 0:
+                    closed.add(new_coords)
+                    child_node = (depth + heuristic(new_coords, end), new_coords, path + [new_coords])
+                    heappush(open, child_node)
+
+    return None
+
+def heuristic(new_coords, end):
+    dx = abs(new_coords[0] - end[0])
+    dy = abs(new_coords[1] - end[1])
+
+    h = dx + dy + -0.58578643762 * min(dx, dy)
+
+    return h
         
         

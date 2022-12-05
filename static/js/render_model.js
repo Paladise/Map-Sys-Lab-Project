@@ -275,6 +275,15 @@ function render_model(model) {
         mid_x = 424;
         mid_y = 351;
     }
+    
+    for(let i = 0; i < path.length; i++) {
+        const dotGeometry = new THREE.BufferGeometry();
+        dotGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array([path[i][0],path[i][1],path[i][2]]), 3));
+        const dotMaterial = new THREE.PointsMaterial({ size: 0.5, color: 0x0000ff });
+        const dot = new THREE.Points(dotGeometry, dotMaterial);
+        scene.add(dot);
+    }
+    
    
     resize();
     animate();  

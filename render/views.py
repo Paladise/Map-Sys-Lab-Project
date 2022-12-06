@@ -108,6 +108,9 @@ def check_if_finished(request, id):
         
         response_data["processed"] = "true"
         response_data["time"] = current_time
+        
+        with open(f"{settings.MEDIA_ROOT}maps/{id}/render_final.json", "w") as f:
+            json.dump(response_data, f, indent = 4) 
     else:
         result = subprocess.run(["ssh", f"2023abasto@hpc8.csl.tjhsst.edu", "cd", 
                                 f"/cluster/2023abasto{settings.MEDIA_URL}{id}", ";", "ls"],
@@ -177,35 +180,23 @@ def a_star(start, end, map):
 
         if coords[0] == end[0] and coords[1] == end[1]:
             return node
-
-        for x1 in range(-1, 2):
-            for y1 in range(-1, 2):
-                new_coords = (coords[0] + x1, coords[1] + y1)
-                if new_coords not in closed and map[new_coords[0]][new_coords[1]] == 0:
-                    closed.add(new_coords)
-                    child_node = (depth + heuristic(new_coords, path, end), new_coords, path + [new_coords])
-                    heappush(open, child_node)
+            
+        for direction in ((-1, 0), (1, 0), (0, 1), (0, -1)):
+            x1, y1 = direction
+            new_coords = (coords[0] + x1, coords[1] + y1)
+            if new_coords not in closed and map[new_coords[0]][new_coords[1]] == 0:
+                closed.add(new_coords)
+                child_node = (depth + heuristic(new_coords, path, end), new_coords, path + [new_coords])
+                heappush(open, child_node)
 
     return None
 
 def heuristic(new_coords, path, end):
     dx = abs(new_coords[0] - end[0])
     dy = abs(new_coords[1] - end[1])
-
-    if len(path) >= 2:
-        parent, cur = path[-2], path[-1]
-    else:
-        parent, cur = ((-new_coords[0], -new_coords[1]), (0, 0))
-        
-    dx1, dy1, dx2, dy2 = parent[0] - cur[0], parent[1] - cur[1], cur[0] - new_coords[0], cur[1] - new_coords[1]
-
-    # h = dx + dy + -0.58578643762 * min(dx, dy)
-
-    # if dx1 != dx2 or dy1 != dy2:
-    #     h += 2
     
     h = dx + dy
         
-    return h
+    return h * 1.000001
         
         

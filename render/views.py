@@ -25,11 +25,11 @@ def index(request):
     return render(request, "404.html", {"message": "imagine"})
 
 def model(request, id):
-    print("Calling model view")
+    log.debug("Calling model view")
     return render(request, "render_model.html", {"id": id})
 
 def copy_images(request, id):
-    print("Calling copy view")
+    log.debug("Calling copy view")
     requested_html = re.search(r'^text/html', request.META.get('HTTP_ACCEPT'))
     if not requested_html:
         subprocess.run(["ssh", "2023abasto@hpc8.csl.tjhsst.edu", "mkdir",
@@ -165,18 +165,22 @@ def pathfinding(request, id, x1, y1, x2, y2):
 
     
 def a_star(start, end, map):
-    log.debug("length")
-    log.debug(len(map))
-    log.debug(len(map[0]))
     closed = set()
     open = []
     start_node = (0, start, [])
     heappush(open, start_node)
+    
+    x_width = len(map)
+    y_width = len(map[0])
 
     while open:
+        # print("Running while looop")
         node = heappop(open)
+        # print("node:", node)
         coords, path = node[1], node[2]
         depth = len(path) + 1
+
+        # print("coords:", coords, "end:", end)
 
         if coords[0] == end[0] and coords[1] == end[1]:
             return node
@@ -184,7 +188,39 @@ def a_star(start, end, map):
         for direction in ((-1, 0), (1, 0), (0, 1), (0, -1)):
             x1, y1 = direction
             new_coords = (coords[0] + x1, coords[1] + y1)
-            if new_coords not in closed and map[new_coords[0]][new_coords[1]] == 0:
+
+            if new_coords[0] < 0 or new_coords[0] > x_width - 1 or  new_coords[1] < 0 or new_coords[1] > y_width - 1:
+                break
+            if abs(y1) == 1:
+                perp = 0
+            else:
+                perp = 1
+                
+            temp_min = new_coords[perp]
+            temp_max = new_coords[perp]
+            
+            # print("perp:", perp)
+            
+            if perp == 0:                
+                while temp_min > 0 and map[temp_min][new_coords[1]] == 0:
+                    temp_min -= 1
+                while temp_max < x_width - 1 and map[temp_max][new_coords[1]] == 0:
+                    temp_max += 1
+            else:
+                while temp_min > 0 and map[new_coords[0]][temp_min] == 0:
+                    temp_min -= 1
+                while temp_max < y_width - 1 and map[new_coords[0]][temp_max] == 0:
+                    temp_max += 1
+                    
+            # print("temp min:", temp_min,"temp max:", temp_max)
+            
+            dist_start = abs(start[0] - new_coords[0]) + abs(start[1] - new_coords[1])
+            dist_end = abs(end[0] - new_coords[0]) + abs(end[1] - new_coords[1])
+
+            # print((temp_min+temp_max)//2, new_coords[perp])
+        
+            if new_coords not in closed and map[new_coords[0]][new_coords[1]] == 0 and ((temp_min+temp_max)//2 == new_coords[perp] or abs(temp_min - temp_max) > 50 or dist_start < 50 or dist_end < 50):
+                # print((temp_min+temp_max)//2, new_coords[perp])
                 closed.add(new_coords)
                 child_node = (depth + heuristic(new_coords, path, end), new_coords, path + [new_coords])
                 heappush(open, child_node)

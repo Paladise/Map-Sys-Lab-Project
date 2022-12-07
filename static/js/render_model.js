@@ -163,11 +163,6 @@ function animate() {
     }
 };
 
-function findPath() {
-    console.log(room1.value);
-    console.log(room2.value);
-}
-
 function render_model(model) {
     
     $('#loadingText').html("Rendering model...");

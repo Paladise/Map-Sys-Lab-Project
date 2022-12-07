@@ -5,6 +5,8 @@ Our 2022-2023 Senior Research Lab Project
 
 ## To-do List
 
+* Detect rotated room names & detect text-wrapping
+* Improve room name detection (especially for single character room names)
 * Update symbol detection 
     * Add functionality to send image of key for backend processing
     * Research image similarity measures and viable thresholds for similarity

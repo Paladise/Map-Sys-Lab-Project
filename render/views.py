@@ -197,6 +197,6 @@ def heuristic(new_coords, path, end):
     
     h = dx + dy
         
-    return h * 1.000001
+    return h
         
         

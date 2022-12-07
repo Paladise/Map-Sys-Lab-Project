@@ -24,6 +24,54 @@
 
 <script type="text/javascript">
 
+function findPath() {
+    result1 = model_json["1"]["rooms"].find(room => room[0] == room1.value);
+    result2 = model_json["1"]["rooms"].find(room => room[0] == room2.value);
+    
+    if(result1 && result2) {
+        x1 = result1[1];
+        y1 = result1[2];
+        x2 = result2[1];
+        y2 = result2[2];
+        var url = "{% url 'render:pathfinding' id=id x1=11111 y1=22222 x2=33333 y2=44444 %}";
+        url = url.replace("11111", x1.toString());
+        url = url.replace("22222", y1.toString());
+        url = url.replace("33333", x2.toString());
+        url = url.replace("44444", y2.toString());
+        console.log(url);
+        $.ajax({
+            url:  url,
+            success: function(data) {
+                createNewPath(data["path"]);
+            }, failure: function(data) {
+                alert("Got an error dude");
+            }
+        })
+    }
+}
+
+function createNewPath(newPath) {
+    path = newPath;
+    
+    for(let i = 0; i < pathPoints.length; i++) {
+        scene.remove(pathPoints[i]);
+    }
+    
+    pathPoints = [];
+    
+    for(let i = 0; i < path.length; i++) {
+        var dotGeometry = new THREE.BufferGeometry();
+        dotGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array([path[i][0], path[i][1], path[i][2] - 20]), 3));
+        var dotMaterial = new THREE.PointsMaterial({ size: 1, color: 0x0000ff });
+        var dot = new THREE.Points(dotGeometry, dotMaterial);
+        pathPoints.push(dot);
+        scene.add(dot);
+    }
+    
+    n = 0;
+    camera_first.position.set(path[0][0], path[0][1], path[0][2]);
+}
+
 function copy() {
     $('#loadingText').html("Copying images...");
     $.ajax({

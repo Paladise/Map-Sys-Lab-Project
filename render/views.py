@@ -219,7 +219,7 @@ def a_star(start, end, map):
 
             # print((temp_min+temp_max)//2, new_coords[perp])
         
-            if new_coords not in closed and map[new_coords[0]][new_coords[1]] == 0 and ((temp_min+temp_max)//2 == new_coords[perp] or abs(temp_min - temp_max) > 50 or dist_start < 50 or dist_end < 50):
+            if new_coords not in closed and map[new_coords[0]][new_coords[1]] == 0 and (abs((temp_min+temp_max)//2 - new_coords[perp]) <= 2 or (abs(temp_min - temp_max) > 50 and (abs(temp_min - new_coords[perp]) > 5) and (abs(temp_max - new_coords[perp]) > 5)) or dist_start < 50 or dist_end < 50):
                 # print((temp_min+temp_max)//2, new_coords[perp])
                 closed.add(new_coords)
                 child_node = (depth + heuristic(new_coords, path, end), new_coords, path + [new_coords])

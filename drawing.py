@@ -149,13 +149,19 @@ def create_image_from_box(pixels, x1, x2, y1, y2, padding, boxes = []):
     return image2
 
 
-def print_image_with_ascii(image):
+def print_image_with_ascii(image, border = False):
     width = image.size[0]
-    
+
     pixels_in_image = list(image.getdata())    
     pixels_to_chars = ["#" if pixel_value < 255/2 else " " for pixel_value in pixels_in_image]
     pixels_to_chars = "".join(pixels_to_chars)
-    
-    image_ascii = [pixels_to_chars[index: index + width] for index in range(0, len(pixels_to_chars), width)]
+        
+    if not border:
+        image_ascii = [pixels_to_chars[index: index + width] for index in range(0, len(pixels_to_chars), width)]
 
+    else:
+        image_ascii = ["x" * (width + 2)]
+        image_ascii += ["x" + pixels_to_chars[index: index + width] + "x" for index in range(0, len(pixels_to_chars), width)]
+        image_ascii += ["x" * (width + 2)]
+        
     print("\n".join(image_ascii))

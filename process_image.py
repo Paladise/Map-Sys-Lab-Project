@@ -5,7 +5,7 @@ import numpy as np
 import pytesseract
 import sys
 import time
-from detect_if_symbol import detect_if_symbol
+from detect_if_symbol import detect_if_symbol, get_similarity_thresholds
 from drawing import draw_boxes, draw_square, image_to_bw, remove_box, create_image_from_box, flood, print_image_with_ascii
 from PIL import Image
 from unidecode import unidecode
@@ -151,7 +151,7 @@ def generate_name(cur_box, used_boxes, detected_name, has_spaces, symbols):
     """
 
     ax1, ax2, ay1, ay2 = cur_box
-    symbol = detect_if_symbol(pixels, ax1, ax2, ay1, ay2)    
+    symbol = detect_if_symbol(pixels_original, SIMILARITY_THRESHOLDS, ax1, ax2, ay1, ay2)    
     if symbol:
         symbols[cur_box] = (symbol, len(detected_name))
 
@@ -502,6 +502,7 @@ def process_image(boxes, pixels):
     return [[i[0], i[1][0], i[1][1]] for i in a]
 
 image = Image.open(FILE_NAME).convert("RGB")
+pixels_original = image.load()
 
 print("Converting to black and white...")
 image = image_to_bw(image, BW_THRESHOLD)
@@ -559,6 +560,9 @@ print("Drawing boxes...")
 # boxes = sorted(list(boxes), key = lambda b: (b[0], b[3]))
 boxes_image, boxes = draw_boxes(image, max_height) 
 boxes_image.save(IMAGE_SAVE_PATH + f"custom_boxes_{READ_FROM[:-4]}.png")
+
+print("Getting symbol similarity threhsolds...")
+SIMILARITY_THRESHOLDS = get_similarity_thresholds()
 
 print("Processing image...")
 blank_image = image.copy()

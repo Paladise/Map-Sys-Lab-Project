@@ -25,8 +25,6 @@ Our 2022-2023 Senior Research Lab Project
 * Improve GUI and CSS styling (should be mobile compatible)
 * Add actual rendering for floors / staircases / elevators
     * Improve lighting to make more realistic
-    * 
-
 * Detect arrows pointing to room names
     * Detect contour of building
 * Detect rooms that are not directly connected to hallway (lacking doorways)

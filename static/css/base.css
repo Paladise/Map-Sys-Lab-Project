@@ -110,8 +110,6 @@ a {
         left: 0;
         right: 0;
         top: 0;
-        padding-top: 50px;
-        padding-bottom: 150px;
         display: inline-flex;
         flex-wrap: wrap;
         align-items: center;
@@ -150,6 +148,10 @@ a {
       font-style: italic;
       font-weight: bold;
       font-size: 15px;
+    }
+    
+    #logo {
+      height: 25px;
     }
 }
 

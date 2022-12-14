@@ -16,15 +16,18 @@
     <canvas id = "particleCanvas"></canvas>
     <div class = "container" id = "particleContainerContent">
         <div class = "left">
-            <h1 class = "name">Create striking maps, with Atlas</h1>
+            <h1 class = "home-name">Create striking maps, with Atlas</h1>
             <p class = "description">Changing dimensionality of maps for indoor navigation.</p>
             <a class = "atlas-button" href = "{% url 'process:atlas' %}">Go to Atlas</a>
         </div>
         <div class = "right">
-            <div class = "drop-zone" id = "dropZone">
-                <span class = "prompt">Drop file here or click to upload</span>
-                <input type="file" id = "dropZoneInput">
-            </div>
+            <form id = "uploadImageForm" method = "POST" action = "{% url 'process:temp' %}">
+                {% csrf_token %}
+                <div class = "drop-zone" id = "dropZone">
+                    <span class = "prompt">Drop file here or click to upload</span>
+                    <input type="file" id = "dropZoneInput" name = "image">
+                </div>
+            </form>
         </div>        
     </div>   
 </section>

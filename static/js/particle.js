@@ -1,14 +1,9 @@
 const canvas = document.getElementById("particleCanvas");
-const main = document.getElementsByClassName("header-canvas")[0];
 const ctx = canvas.getContext("2d");
 const particleContainerContent = document.getElementById("particleContainerContent");
 
-canvas.width = particleContainerContent.getBoundingClientRect().width;
-canvas.height = particleContainerContent.scrollHeight;
-canvas.style.width = canvas.width;
-canvas.style.height = canvas.height;
-main.style.height = canvas.height + "px";
-
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 let particlesArray;
 
 let mouse = {

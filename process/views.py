@@ -1,9 +1,14 @@
 import base64
+import logging
 import secrets
+
 from django.core.files.base import ContentFile
+from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from process.models import MapImage
+
+log = logging.getLogger(__name__)
 
 ID_LENGTH = 11
 
@@ -18,6 +23,7 @@ def base64_file(data, name=None):
 def index(request):
     return render(request, "home.html")
 
+
 def atlas(request):
     if request.method == "POST":
         data = request.POST.dict()
@@ -31,4 +37,17 @@ def atlas(request):
         redirect_url = reverse("render:model", args=(id,))
         return redirect(redirect_url)
 
-    return render(request, "atlas.html") 
+    return render(request, "atlas.html")
+    
+    
+def temp(request):
+    if request.method == "POST":
+        id = secrets.token_urlsafe(ID_LENGTH)
+        
+        for filename, file in request.FILES.items():
+            image = MapImage(id, filename, file)
+            image.save()
+        
+        return JsonResponse({"id": id}, status=201)
+    else:
+        return render(request, "capture.html")

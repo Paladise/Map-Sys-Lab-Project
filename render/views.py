@@ -218,14 +218,19 @@ def a_star(start, end, map):
             dist_end = abs(end[0] - new_coords[0]) + abs(end[1] - new_coords[1])
 
             # print((temp_min+temp_max)//2, new_coords[perp])
-        
-            if new_coords not in closed and map[new_coords[0]][new_coords[1]] == 0 and (abs((temp_min+temp_max)//2 - new_coords[perp]) <= 2 or (abs(temp_min - temp_max) > 50 and (abs(temp_min - new_coords[perp]) > 5) and (abs(temp_max - new_coords[perp]) > 5)) or dist_start < 50 or dist_end < 50):
+            if new_coords not in closed and map[new_coords[0]][new_coords[1]] == 0:
+            # if new_coords not in closed and map[new_coords[0]][new_coords[1]] == 0 and (abs((temp_min+temp_max)//2 - new_coords[perp]) <= 2 or (abs(temp_min - temp_max) > 50 and (abs(temp_min - new_coords[perp]) > 5) and (abs(temp_max - new_coords[perp]) > 5)) or dist_start < 50 or dist_end < 50):
                 # print((temp_min+temp_max)//2, new_coords[perp])
                 closed.add(new_coords)
                 child_node = (depth + heuristic(new_coords, path, end), new_coords, path + [new_coords])
                 heappush(open, child_node)
 
     return None
+
+def extend(direction, point, path):
+    for i in (-1, 1):
+        new_coords = list(point)
+        new_coords = tuple(new_coords[direction]+i)
 
 def heuristic(new_coords, path, end):
     dx = abs(new_coords[0] - end[0])

@@ -179,6 +179,10 @@ LOGGING = {
         'render.views': {
             'handlers': ['file'],
             'level': 'DEBUG',
+        },
+        'process.views': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
         }
     }
 }

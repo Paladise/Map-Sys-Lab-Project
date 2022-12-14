@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block title %}Atlas | Take picture{% endblock %}
+ 
+{% block head %}
+<link href = "https://fonts.googleapis.com/icon?family=Material+Icons" rel = "stylesheet">
+{% endblock %}
+
+{% block body %}
+
+<form action = "{% url 'process:temp' %}" method = "POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="file" accept="image/*" id="captureInput" name="floor1">
+    <input type ="submit" style = "background-color: blue;">
+</form>
+<canvas></canvas>
+
+<script src="{% static 'js/camera2.js' %}"></script>
+
+{% endblock %}

@@ -1,0 +1,153 @@
+input {
+     display: none;
+}
+
+.upload-title {
+    font-weight: 200;
+    margin: 0;
+}
+
+#upload-form {
+    background-color: #f7f8f9;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 20px;
+    padding: 30px; 
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+    user-select: none;
+}
+
+.single-container {
+    flex-basis: 100%; 
+    display: flex;
+    justify-content: center;    
+    column-gap: 10px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+.secondary-container {
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    width: 350px;
+    margin: 0 auto;
+    overflow: hidden;
+    align-items: stretch;
+    flex-wrap: wrap;
+}
+
+.filename-container {
+    width: 200px;
+    flex-grow: 2;
+    color: #09c6f9;
+    height: 40px;
+    background-color: white;
+    line-height: 40px;
+}
+
+.file-upload {
+    width: 75px;
+    color: white;
+    background-color: #09c6f9;
+    line-height: 40px;
+    text-align: center;
+}
+
+.upload-icon {
+    vertical-align: middle;
+}
+
+.filename {
+    margin: 0;
+    padding-left: 20px;
+    padding-right: 20px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.disabled {
+    pointer-events: none;
+}
+
+.file-upload:hover {
+    cursor: pointer;
+}
+
+.drop-zone {
+    border: 2px dashed white;
+    height: 200px;
+}
+
+#submit {
+    background-color: #09c6f9;
+    width: 200px;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    height: 50px;
+    font-size: 18px;
+    margin-top: 10px;
+}
+
+#submit:hover {
+    cursor: pointer;
+    box-shadow: 0 1px 2px 0 rgb(60 64 67 / 30%), 0 1px 3px 1px rgb(60 64 67 / 15%);
+}
+
+.add {
+    border: none;
+    background: none;
+    width: 175px;
+    border-radius: 8px;
+    height: 50px;
+    margin: 0 auto;
+    font-size: 18px;
+}
+
+.add:hover {
+    background-color: #f0f2f5;
+    cursor: pointer;
+}
+
+.progress-bar-container {
+    flex-basis: 100%;
+    height: 20px;
+    background-color: #f0f2f5;
+} 
+
+.progress-bar {
+    background-image: linear-gradient(315deg, #045de9 0%, #09c6f9 74%);
+    text-align: center;
+    color: white;
+    /*-webkit-transition: width 1s ease-in-out;*/
+    /*-moz-transition: width 1s ease-in-out;*/
+    /*-o-transition: width 1s ease-in-out;*/
+    /*transition: width 1s ease-in-out;*/
+}
+
+.help-text {
+    text-decoration: underline;
+}
+
+@media screen and (max-width: 600px) {
+    #upload-form {
+        width: 100%;
+        height: 100%;
+    }
+    
+    .secondary-container {
+        width: 300px;
+    }
+    
+    .add{
+        width: 150px;
+    }
+}

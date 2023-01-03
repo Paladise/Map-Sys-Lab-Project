@@ -5,11 +5,11 @@
 {% block title %}Atlas | Render{% endblock %}
  
 {% block head %}
-<script src='https://threejs.org/build/three.js'></script>
-<script src='https://threejs.org/examples/js/controls/ArcballControls.js'></script>
-<script src='https://threejs.org/examples/js/loaders/FontLoader.js'></script>
-<script src='https://threejs.org/examples/js/controls/TrackballControls.js'></script>
-<script src='https://threejs.org/examples/js/geometries/TextGeometry.js'></script>
+<link rel="stylesheet" type="text/css" href="{% static 'css/render.css' %}">
+<script src="https://cdn.jsdelivr.net/npm/three@0.138.3/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.138.3/examples/js/loaders/FontLoader.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.138.3/examples/js/controls/TrackballControls.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.138.3/examples/js/geometries/TextGeometry.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 {% endblock %}
 

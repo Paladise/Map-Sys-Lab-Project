@@ -12,9 +12,13 @@ const multiplier = 2; // Multiply size of rendered model
 var n = 0; // Index of current camera position on path
 
 var lookahead = 15; // How far the camera looks ahead
+var headPosition = 20; // How high the camera position is
 
 var mid_x = 652;
 var mid_y = 380;
+
+var floorHeight = 50; // Distance between each floor
+var textHeight = 40; // Distance from text to respective floor
 
 function addText(text, x, y, group, floor, mid_x, mid_y) {
     /* Function to add room names at certain locations */
@@ -32,13 +36,13 @@ function addText(text, x, y, group, floor, mid_x, mid_y) {
             visible: true
         });
         var mesh = new THREE.Mesh(textGeo, textMaterial);
-        mesh.position.set((x - mid_x) * multiplier, (mid_y - y) * multiplier, 50+floor*50);
+        mesh.position.set((x - mid_x) * multiplier, (mid_y - y) * multiplier, floorHeight+floor*textHeight);
         mesh.name = "text1";
         mesh.layers.set(1);
         group.add(mesh);
         
         mesh = new THREE.Mesh(textGeo, textMaterial);
-        mesh.position.set((x - mid_x) * multiplier, (mid_y - y) * multiplier, 50+floor*50);
+        mesh.position.set((x - mid_x) * multiplier, (mid_y - y) * multiplier, floorHeight+floor*textHeight);
         mesh.name = "text2";
         mesh.layers.set(2);
         group.add(mesh);
@@ -68,7 +72,7 @@ function addLines(points, group, floor) {
     const mesh = new THREE.Mesh(geometry, material);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
-    mesh.position.set(0, 0, floor*50);
+    mesh.position.set(0, 0, floor*floorHeight);
     group.add(mesh);
 };
 
@@ -142,8 +146,11 @@ function animate() {
     
     if (travel) {
         if (n < path.length) {
-            camera_first.position.set(path[n][0], path[n][1], 20+Math.sin(n/6));
-            camera_first.lookAt(path[n + lookahead][0], path[n + lookahead][1], 20+Math.sin(n/6));
+            floor_btn.value = path[n][2];
+            changeFloor();
+            
+            camera_first.position.set(path[n][0], path[n][1], headPosition+Math.sin(n/6)+path[n][2]*floorHeight);
+            camera_first.lookAt(path[n + lookahead][0], path[n + lookahead][1], headPosition+Math.sin(n/6));
             
             pathPoints[n + lookahead].material.color.setHex(0xff0000);
         }

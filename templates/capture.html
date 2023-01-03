@@ -2,21 +2,37 @@
 
 {% load static %}
 
-{% block title %}Atlas | Take picture{% endblock %}
+{% block title %}Atlas | Capture{% endblock %}
  
 {% block head %}
 <link href = "https://fonts.googleapis.com/icon?family=Material+Icons" rel = "stylesheet">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0" />
+<link rel="stylesheet" type="text/css" href="{% static 'css/capture.css' %}">
 {% endblock %}
 
 {% block body %}
 
-<form action = "{% url 'process:temp' %}" method = "POST" enctype="multipart/form-data">
+<form id = "upload-form" onsubmit = "return submitForm(event)">
     {% csrf_token %}
-    <input type="file" accept="image/*" id="captureInput" name="floor1">
-    <input type ="submit" style = "background-color: blue;">
-</form>
-<canvas></canvas>
+    <div class = "single-container">
+        <h1 class = "upload-title">
+            Upload Images
+        </h1>
+    </div>
+          
+    <div class = "single-container" id = "additions">
+        <button class = "add" id = "addFloor" type = "button">Add floor</button> 
+        <button class = "add" type = "button">Add key</button> 
+    </div>               
+    <button type ="submit" id ="submit">Start processing</button>
+    <button style = "display: none" url="{% url 'process:get_id' %}" id ="getId"></button>
 
-<script src="{% static 'js/camera2.js' %}"></script>
+
+    <div class = "single-container">
+        <p class = "help-text">Need Help?</p>
+    </div>            
+</form>
+
+<script src="{% static 'js/capture.js' %}"></script>
 
 {% endblock %}

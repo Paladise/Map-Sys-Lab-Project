@@ -6,6 +6,7 @@
  
 {% block head %}
 <link href = "https://fonts.googleapis.com/icon?family=Material+Icons" rel = "stylesheet">
+<link rel="stylesheet" type="text/css" href="{% static 'css/home.css' %}">
 {% endblock %}
 
 {% block body %}
@@ -21,7 +22,7 @@
             <a class = "atlas-button" href = "{% url 'process:atlas' %}">Go to Atlas</a>
         </div>
         <div class = "right">
-            <form id = "uploadImageForm" method = "POST" action = "{% url 'process:temp' %}">
+            <form id = "uploadImageForm" method = "POST" action = "{% url 'process:capture' %}">
                 {% csrf_token %}
                 <div class = "drop-zone" id = "dropZone">
                     <span class = "prompt">Drop file here or click to upload</span>

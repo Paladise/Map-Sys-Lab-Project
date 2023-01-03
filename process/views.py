@@ -6,7 +6,7 @@ from django.core.files.base import ContentFile
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse
-from process.models import MapImage
+from process.models import MapImage, File
 
 log = logging.getLogger(__name__)
 
@@ -40,14 +40,73 @@ def atlas(request):
     return render(request, "atlas.html")
     
     
-def temp(request):
-    if request.method == "POST":
-        id = secrets.token_urlsafe(ID_LENGTH)
+def capture(request):
+    log.debug("Calling capture view")
+    if request.method == 'POST':  
+        file = request.FILES['file'].read()
+        fileName= request.POST['filename']
+        existingPath = request.POST['existingPath']
+        end = request.POST['end']
+        nextSlice = request.POST['nextSlice']
+        id = request.POST['id']
         
-        for filename, file in request.FILES.items():
-            image = MapImage(id, filename, file)
-            image.save()
-        
-        return JsonResponse({"id": id}, status=201)
+        # log.debug(id)
+        # log.debug(existingPath)
+        # log.debug(fileName)
+        # log.debug(end)
+        # for f in File.objects.all():
+        #     log.debug(f"F: {f.existingPath}, {f.name}, {f.eof}")
+
+        if file=="" or fileName=="" or existingPath=="" or end=="" or nextSlice=="" or id =="":
+            res = JsonResponse({'data':'Invalid Request'})
+            return res
+        else:
+            if existingPath == 'null': 
+                image = MapImage(id, "temp", request.FILES['file'])
+                image.save()
+                image.image.delete()
+
+                path = f'media/maps/{id}/' + fileName
+                with open(path, 'wb+') as destination: 
+                    destination.write(file)
+                FileFolder = File()
+                FileFolder.existingPath = path
+                FileFolder.eof = end
+                FileFolder.name = fileName
+                FileFolder.save()
+                if int(end):
+                    res = JsonResponse({'data':'Uploaded Successfully','existingPath': path})
+                else:
+                    res = JsonResponse({'existingPath': path})
+                return res
+            else:
+                model_id = File.objects.get(existingPath=existingPath)
+                if model_id.name == fileName:
+                    if not model_id.eof:
+                        with open(model_id.existingPath, 'ab+') as destination: 
+                            destination.write(file)
+                        if int(end):
+                            model_id.eof = int(end)
+                            model_id.save()
+                            res = JsonResponse({'data':'Uploaded Successfully','existingPath':model_id.existingPath})
+                        else:
+                            res = JsonResponse({'existingPath':model_id.existingPath})    
+                        return res
+                    else:
+                        res = JsonResponse({'data':'EOF found. Invalid request'})
+                        return res
+                else:
+                    res = JsonResponse({'data':'No such file exists in the existingPath'})
+                    return res
     else:
         return render(request, "capture.html")
+    
+
+def get_id(request):
+    while True:
+        id = secrets.token_urlsafe(ID_LENGTH)
+        try:
+            MapImage.objects.get(id=id)
+        except MapImage.DoesNotExist:
+            break
+    return JsonResponse({"store_id": id})

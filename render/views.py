@@ -158,7 +158,7 @@ def pathfinding(request, id, x1, y1, x2, y2):
     res = a_star(start, end, map)
 
     if res:
-        path = [[(i[0] - 652) * MULTIPLIER, (380 - i[1]) * MULTIPLIER, 20] for i in res[2]]
+        path = [[(i[0] - 652) * MULTIPLIER, (380 - i[1]) * MULTIPLIER, 1] for i in res[2]]
         response_data["path"] = path
 
     return JsonResponse(response_data, status=201)

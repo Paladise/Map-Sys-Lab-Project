@@ -38,32 +38,49 @@ function drawOnCanvas(file) {
 }
 
 function displayAsImage(file) {
-  var imgURL = URL.createObjectURL(file),
-      img = document.createElement('img');
-
-  img.onload = function() {
-    URL.revokeObjectURL(imgURL);
-  };
-
-  img.src = imgURL;
-  document.body.appendChild(img);
+    var imgURL = URL.createObjectURL(file),
+        img = document.createElement('img');
+    
+    img.onload = function() {
+        URL.revokeObjectURL(imgURL);
+    };
+    
+    img.src = imgURL;
+    img.classList.add("preview-image");
+    document.body.appendChild(img);
+    
+    img.addEventListener("click", e => {
+        img.remove();
+    });
 }
 
 function addFloor() {
     var num = floors.length + 1;
+    
+    if(num == 4) {
+        return;
+    }
+    
     floors.push(num);
     var singleContainer = document.createElement("div");
     singleContainer.classList.add("single-container");
     var secondaryContainer = document.createElement("div");
     secondaryContainer.classList.add("secondary-container");
     secondaryContainer.id = "floor" + num + "container";
-    var filenameContainer = document.createElement("div");
-    filenameContainer.classList.add("filename-container");
+    var fileInfoContainer = document.createElement("div");
+    fileInfoContainer.classList.add("file-info-container");
+    var floorNum = document.createElement("p");
+    floorNum.classList.add("floor-info");
+    floorNum.classList.add("floor-number");
+    floorNum.id = "floorNum" + num;
+    floorNum.innerHTML = "Floor " + num;
     var filename = document.createElement("p");
+    filename.classList.add("floor-info");
     filename.classList.add("filename");
     filename.id = "filename" + num;
-    filename.innerHTML = "Floor " + num;
-    filenameContainer.appendChild(filename);
+    filename.setAttribute("data-floor-num", num);
+    fileInfoContainer.appendChild(floorNum);
+    fileInfoContainer.appendChild(filename);
     var uploadIcon = document.createElement("span");
     uploadIcon.classList.add("material-symbols-outlined");
     uploadIcon.classList.add("upload-icon");
@@ -87,10 +104,20 @@ function addFloor() {
     input.addEventListener("change", e => {
        let floorNum = input.name;
        let container = document.getElementById("floor" + floorNum + "container");
-       container.querySelector("#filename" + floorNum).innerHTML = "Floor " + floorNum + " | " + input.files[0].name;
+       container.querySelector("#floorNum" + floorNum).innerHTML = "Floor " + floorNum;
+       container.querySelector("#filename" + floorNum).innerHTML = input.files[0].name;
+       container.querySelector("#filename" + floorNum).style.display = "block";
     });
     
-    secondaryContainer.appendChild(filenameContainer);
+    filename.addEventListener("click", e => {
+       let floorNum = e.target.getAttribute("data-floor-num");
+       let input = document.getElementById("fileUpload" + floorNum);
+       let file = input.files[0];
+       
+       displayAsImage(file);
+    });
+    
+    secondaryContainer.appendChild(fileInfoContainer);
     secondaryContainer.appendChild(label);
     secondaryContainer.appendChild(input);
     singleContainer.appendChild(secondaryContainer);
@@ -236,11 +263,16 @@ function submitForm(event) {
                 var num = floors[i];
                 var uploader = new FileUpload(document.querySelector("#fileUpload" + num), data["store_id"], num);
                 uploader.upload();
+                
+                $(document).ajaxStop(function() {
+                    window.location.replace("http://atlas.sites.tjhsst.edu/render/" + data["store_id"]);
+                });
             }
         },
         failure: function(data) { 
             alert('Got an error dude');
         }
     })
+
     return false;
 }

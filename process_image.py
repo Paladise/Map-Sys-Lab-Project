@@ -8,6 +8,7 @@ import time
 from detect_if_symbol import detect_if_symbol, get_similarity_thresholds
 from drawing import draw_boxes, draw_square, image_to_bw, remove_box, create_image_from_box, flood, print_image_with_ascii
 from PIL import Image
+from simplify_map import simplify
 from unidecode import unidecode
 
 start_time = time.perf_counter()
@@ -586,6 +587,9 @@ for x in range(WIDTH):
         rectangles.append([min_x, min_y, min_x, max_y, x_len])
             
 blank_image.save(IMAGE_SAVE_PATH + f"blank_map_{READ_FROM[:-4]}.png")
+
+blank_image = simplify(rooms, blank_image)
+blank_pixels = blank_image.load()
 
 map = [[1 if blank_pixels[x, y] == (0, 0, 0) else 0 for y in range(HEIGHT)] for x in range(WIDTH)]
 

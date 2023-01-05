@@ -50,28 +50,6 @@ function findPath() {
     }
 }
 
-function createNewPath(newPath) {
-    path = newPath;
-    
-    for(let i = 0; i < pathPoints.length; i++) {
-        scene.remove(pathPoints[i]);
-    }
-    
-    pathPoints = [];
-    
-    for(let i = 0; i < path.length; i++) {
-        var dotGeometry = new THREE.BufferGeometry();
-        dotGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array([path[i][0], path[i][1], path[i][2] - 20]), 3));
-        var dotMaterial = new THREE.PointsMaterial({ size: 1, color: 0x0000ff });
-        var dot = new THREE.Points(dotGeometry, dotMaterial);
-        pathPoints.push(dot);
-        scene.add(dot);
-    }
-    
-    n = 0;
-    camera_first.position.set(path[0][0], path[0][1], path[0][2]);
-}
-
 function copy() {
     $('#loadingText').html("Copying images...");
     $.ajax({

@@ -17,8 +17,6 @@ Our 2022-2023 Senior Research Lab Project
 * Update pathfinding
     * Search for certain number of stairways / elevators then teleport to next floor
     * Add option to only use elevators for accessibility needs
-    * Use jump-point search or equivalent 
-    * Make sure path is in center of hallways
     * Make sure path doesn't go through other rooms (rooms that are solely numbers should be flood filled around them and treated as walls)
 * Research faster algorithms than flood-filling for determining boxes and implement them
 * Improve GUI and CSS styling (should be mobile compatible)

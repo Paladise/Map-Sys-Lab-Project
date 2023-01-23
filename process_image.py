@@ -34,6 +34,7 @@ Y_THRESHOLD = 6
 BW_THRESHOLD = 150 # Values less than this will become black
 RESIZE = 2
 PADDING = 3
+POSSIBLE_SYMBOLS = ["door", "stairs"]
 
 MOVE_COORDS = ((1, 0), (-1, 0), (0, 1), (0, -1))
 
@@ -318,7 +319,9 @@ def process_image(boxes, pixels):
         last_char = detected_name[-1]
 
         if len(detected_name) == 1 and symbols: # If it's a singular symbol
-            print_image = create_image_from_box(pixels, x1, x2, y1, y2, 0)
+            x1, x2 = first_char[0], first_char[1]
+            y1, y2 = first_char[2], first_char[3]
+            print_image = create_image_from_box(BLACK_AND_WHITE_PIXELS, x1, x2, y1, y2, 0)
             print_image_with_ascii(print_image)
             s = list(symbols.values())[0][0]
             print("Symbol:", s)
@@ -508,6 +511,8 @@ pixels_original = image.load()
 print("Converting to black and white...")
 image = image_to_bw(image, BW_THRESHOLD)
 pixels = image.load()
+BLACK_AND_WHITE_IMAGE = image.copy()
+BLACK_AND_WHITE_PIXELS = BLACK_AND_WHITE_IMAGE.load()
 WIDTH, HEIGHT = image.size[0], image.size[1]
 image.save(IMAGE_SAVE_PATH + f"black_and_white_{READ_FROM[:-4]}.png")
 
@@ -563,7 +568,7 @@ boxes_image, boxes = draw_boxes(image, max_height)
 boxes_image.save(IMAGE_SAVE_PATH + f"custom_boxes_{READ_FROM[:-4]}.png")
 
 print("Getting symbol similarity threhsolds...")
-SIMILARITY_THRESHOLDS = get_similarity_thresholds()
+SIMILARITY_THRESHOLDS = get_similarity_thresholds(POSSIBLE_SYMBOLS)
 
 print("Processing image...")
 blank_image = image.copy()
@@ -588,12 +593,14 @@ for x in range(WIDTH):
             
 blank_image.save(IMAGE_SAVE_PATH + f"blank_map_{READ_FROM[:-4]}.png")
 
-blank_image = simplify(rooms, blank_image)
+print("Getting paths and doorways...")
+
+blank_image, doorways = simplify(rooms, blank_image)
 blank_pixels = blank_image.load()
 
-map = [[1 if blank_pixels[x, y] == (0, 0, 0) else 0 for y in range(HEIGHT)] for x in range(WIDTH)]
+map = [[1 if blank_pixels[x, y] == (0, 0, 0) else 0 for y in range(HEIGHT)] for x in range(WIDTH)] # 1 is for everything that is not a path, 0 is for the paths            
 
 with open(IMAGE_SAVE_PATH + f"render_{READ_FROM[:-4]}.json", "w") as f:
-    json.dump({"rooms": rooms, "points": rectangles, "map": map}, f, indent = 4) 
+    json.dump({"rooms": rooms, "points": rectangles, "map": map, "doorways": doorways}, f, indent = 4) 
     
 print("Entire program took", round(time.perf_counter() - start_time, 3), "seconds.")

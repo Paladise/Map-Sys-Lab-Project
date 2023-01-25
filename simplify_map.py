@@ -10,6 +10,7 @@ GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
+YELLOW = (255, 255, 0)
 
 PADDING = 50
 DIST_BETWEEN = PADDING
@@ -67,7 +68,7 @@ def simplify(rooms, image):
 
                 if ((abs(dists[0] - dists[1]) == 1 and (dists[0] + dists[1]) % 2 == 1) or abs(dists[0] - dists[1]) == 0) and dists[0] < PADDING:
 
-                    # If that pixel is horizontally centered between two walls
+                    # If that pixel is horizontally centered between two things (walls/paths)
                     
                     if dists[2] < 3 or dists[3] < 3:
                         continue
@@ -89,15 +90,20 @@ def simplify(rooms, image):
                                 pixels2[x1, y1] = GREEN
                             else:
                                 break
-
                             j += 1
                 elif ((abs(dists[2] - dists[3]) == 1 and (dists[2] + dists[3]) % 2 == 1) or abs(dists[2] - dists[3]) == 0) and dists[2] < PADDING:
+                    
+                    # If that pixel is vertically centered between two things
+                    
                     if dists[0] < 3 or dists[1] < 3:
                         continue                        
                     if inside(x, y + dists[2]) and inside(x, y - dists[3]) and (pixels2[x, y + dists[2]] in (RED, GREEN) or pixels2[x, y - dists[3]] in (RED, GREEN)):
                         continue
 
-                    pixels2[x, y] = RED                    
+                    pixels2[x, y] = RED     
+                    
+                    # Go horizontally in both directions
+                    
                     dir_y = 0
 
                     for dir_x in (-1, 1):
@@ -124,12 +130,13 @@ def simplify(rooms, image):
                 x2 += x1
                 y2 += y1
 
-#     image2 = Image.open("map_lines.png")
-#     pixels2 = image2.load()
+    # Get possible locations of doorways
 
     doorways = {}
 
-    for name, x, y in rooms:
+    for name, orig_x, orig_y in rooms:
+        
+        x, y = orig_x, orig_y
         
         doorways[name] = []
     
@@ -139,7 +146,7 @@ def simplify(rooms, image):
         while queue:
             x, y = queue.pop()
             
-            if pixels2[x, y] == RED:
+            if pixels2[x, y] == RED or pixels2[x, y] == YELLOW:
             
                 dists = []
                 for dir_x, dir_y in DIRECTIONS:
@@ -147,28 +154,30 @@ def simplify(rooms, image):
                     dists.append(dist)
 
                 if (abs(dists[0] - dists[1]) <= 1 and dists[0] <= 8) or (abs(dists[2] - dists[3]) <= 1 and dists[2] <= 8): # Found doorway
-#                     pixels2[x, y] = (255, 255, 0)
+                    pixels2[x, y] = YELLOW
 
                     doorways[name].append((x, y))
             else:
                 for x1, y1 in DIRECTIONS:
-                    if (x + x1, y + y1) not in visited and inside(x + x1, y + y1) and pixels2[x, y] != BLACK and pixels2[x, y] != WHITE:
+                    if (x + x1, y + y1) not in visited and inside(x + x1, y + y1) and pixels2[x, y] != BLACK and pixels2[x, y] != WHITE and abs(x + x1 - orig_x) < 50 and abs(y + y1 - orig_y) < 50:
                         visited.add((x + x1, y + y1))
                         queue.append((x + x1, y + y1))   
 
+    # Clean everything up to create map in process_image.py                    
+                        
     for x in range(width):
         for y in range(height):
             if pixels2[x, y] == BLUE or pixels2[x, y] == RED or pixels2[x, y] == GREEN:
                 pixels2[x, y] = WHITE
             elif pixels2[x, y] == WHITE:
                 pixels2[x, y] = BLACK  
-#             elif pixels2[x, y] == (255, 255, 0):
-#                 pixels2[x, y] = BLUE
+            elif pixels2[x, y] == YELLOW:
+                pixels2[x, y] = BLUE
                         
     return image2, doorways
 
     
-if __name__ == "__main__":
+if __name__ == "__main__": # For debugging
     import json
     from PIL import Image
     blank_map = Image.open("map.png")
@@ -180,5 +189,4 @@ if __name__ == "__main__":
         
     image2, doorways = simplify(rooms, blank_map)
     image2.save("map_lines2.png")
-    print("Doorways:", doorways)
     

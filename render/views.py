@@ -146,7 +146,10 @@ def check_if_finished(request, id):
         
     return JsonResponse(response_data, status=201)
     
-def pathfinding(request, id, x1, y1, x2, y2):
+def pathfinding(request, id, x1, y1, x2, y2, name1, name2):
+    
+    log.debug(f"PATHFINDING!!!!!!!!!!")
+    
     start = (x1, y1)
     end = (x2, y2)
     response_data = {}
@@ -154,8 +157,13 @@ def pathfinding(request, id, x1, y1, x2, y2):
         data = json.load(f)
 
     map = data["map"]
+    doorways = data["doorways"]
+    
+    log.debug(doorways)
+    log.debug(name1)
+    log.debug(name2)
 
-    res = a_star(start, end, map)
+    res = a_star(start, end, map, doorways, name1, name2)
 
     if res:
         path = [[(i[0] - 652) * MULTIPLIER, (380 - i[1]) * MULTIPLIER, 1] for i in res[2]]
@@ -164,7 +172,9 @@ def pathfinding(request, id, x1, y1, x2, y2):
     return JsonResponse(response_data, status=201)
 
     
-def a_star(start, end, map):
+def a_star(start, end, map, doorways, name1, name2):
+    log.debug("called from A*")
+    
     closed = set()
     open = []
     start_node = (0, start, [])
@@ -174,63 +184,30 @@ def a_star(start, end, map):
     y_width = len(map[0])
 
     while open:
-        # print("Running while looop")
         node = heappop(open)
-        # print("node:", node)
         coords, path = node[1], node[2]
         depth = len(path) + 1
-
-        # print("coords:", coords, "end:", end)
+        
+        log.debug(f"looking at node {coords}: {map[coords[0]][coords[1]]}")
 
         if coords[0] == end[0] and coords[1] == end[1]:
             return node
             
         for direction in ((-1, 0), (1, 0), (0, 1), (0, -1)):
             x1, y1 = direction
-            new_coords = (coords[0] + x1, coords[1] + y1)
+            new_coords = [coords[0] + x1, coords[1] + y1]
 
-            if new_coords[0] < 0 or new_coords[0] > x_width - 1 or  new_coords[1] < 0 or new_coords[1] > y_width - 1:
-                break
-            if abs(y1) == 1:
-                perp = 0
-            else:
-                perp = 1
-                
-            temp_min = new_coords[perp]
-            temp_max = new_coords[perp]
+            if new_coords[0] < 0 or new_coords[0] > x_width - 1 or new_coords[1] < 0 or new_coords[1] > y_width - 1:
+                continue
             
-            # print("perp:", perp)
-            
-            if perp == 0:                
-                while temp_min > 0 and map[temp_min][new_coords[1]] == 0:
-                    temp_min -= 1
-                while temp_max < x_width - 1 and map[temp_max][new_coords[1]] == 0:
-                    temp_max += 1
-            else:
-                while temp_min > 0 and map[new_coords[0]][temp_min] == 0:
-                    temp_min -= 1
-                while temp_max < y_width - 1 and map[new_coords[0]][temp_max] == 0:
-                    temp_max += 1
-                    
-            # print("temp min:", temp_min,"temp max:", temp_max)
-            
-            dist_start = abs(start[0] - new_coords[0]) + abs(start[1] - new_coords[1])
-            dist_end = abs(end[0] - new_coords[0]) + abs(end[1] - new_coords[1])
-
-            # print((temp_min+temp_max)//2, new_coords[perp])
-            if new_coords not in closed and map[new_coords[0]][new_coords[1]] == 0:
-            # if new_coords not in closed and map[new_coords[0]][new_coords[1]] == 0 and (abs((temp_min+temp_max)//2 - new_coords[perp]) <= 2 or (abs(temp_min - temp_max) > 50 and (abs(temp_min - new_coords[perp]) > 5) and (abs(temp_max - new_coords[perp]) > 5)) or dist_start < 50 or dist_end < 50):
-                # print((temp_min+temp_max)//2, new_coords[perp])
-                closed.add(new_coords)
+            if tuple(new_coords) not in closed and map[new_coords[0]][new_coords[1]] != 1:
+                if map[new_coords[0]][new_coords[1]] == 2 and (name1 in doorways and new_coords not in doorways[name1]) and (name2 in doorways and new_coords not in doorways[name2]): # Non-passable doorway
+                    continue
+                closed.add(tuple(new_coords))
                 child_node = (depth + heuristic(new_coords, path, end), new_coords, path + [new_coords])
                 heappush(open, child_node)
 
     return None
-
-def extend(direction, point, path):
-    for i in (-1, 1):
-        new_coords = list(point)
-        new_coords = tuple(new_coords[direction]+i)
 
 def heuristic(new_coords, path, end):
     dx = abs(new_coords[0] - end[0])
@@ -239,5 +216,3 @@ def heuristic(new_coords, path, end):
     h = dx + dy
         
     return h
-        
-        

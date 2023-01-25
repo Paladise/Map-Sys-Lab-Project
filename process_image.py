@@ -598,7 +598,7 @@ print("Getting paths and doorways...")
 blank_image, doorways = simplify(rooms, blank_image)
 blank_pixels = blank_image.load()
 
-map = [[1 if blank_pixels[x, y] == (0, 0, 0) else 0 for y in range(HEIGHT)] for x in range(WIDTH)] # 1 is for everything that is not a path, 0 is for the paths            
+map = [[1 if blank_pixels[x, y] == (0, 0, 0) else 2 if blank_pixels[x, y] == (0, 0, 255) else 0 for y in range(HEIGHT)] for x in range(WIDTH)] # 1 is for everything that is not a path, 0 is for the paths, and 2 is for doorways            
 
 with open(IMAGE_SAVE_PATH + f"render_{READ_FROM[:-4]}.json", "w") as f:
     json.dump({"rooms": rooms, "points": rectangles, "map": map, "doorways": doorways}, f, indent = 4) 

@@ -19,7 +19,7 @@
         <div class = "left">
             <h1 class = "home-name">Create striking maps, with Atlas</h1>
             <p class = "description">Changing dimensionality of maps for indoor navigation.</p>
-            <a class = "atlas-button" href = "{% url 'process:atlas' %}">Go to Atlas</a>
+            <a class = "atlas-button" href = "{% url 'process:capture' %}">Start Uploading</a>
         </div>
         <div class = "right">
             <form id = "uploadImageForm" method = "POST" action = "{% url 'process:capture' %}">

@@ -1,10 +1,11 @@
 import cv2 as cv
 import numpy as np
-from drawing import create_image_from_box
-from image_similarity_measures.quality_metrics import rmse
-from PIL import Image
+
+from image_similarity_measures.quality_metrics import ssim
+from PIL import Image, ImageChops
 from random import choice, random, sample
 
+from utils.drawing import create_image_from_box, print_image_with_ascii
 
 def detect_if_symbol(pixels, thresholds, x1, x2, y1, y2):
     """
@@ -34,18 +35,30 @@ def detect_if_symbol(pixels, thresholds, x1, x2, y1, y2):
         test_cv_image = cv.cvtColor(np.array(test_image), cv.COLOR_GRAY2RGB)
 #         test_image = cv.resize(test_image, (key_image.size[0], key_image.size[1]), interpolation = cv.INTER_AREA)
 
-        m = rmse(key_image, test_cv_image).item()
+        m = ssim(key_image, test_cv_image).item()
+    
+        if symbol == "door":
+            print(m)
 
-        if m < thresholds[symbol]:
+        if m > thresholds[symbol]:
             return symbol
 
     return ""
 
 
+def trim(im):
+    bg = Image.new(im.mode, im.size, im.getpixel((0,0)))
+    diff = ImageChops.difference(im, bg)
+    diff = ImageChops.add(diff, diff, 2.0, -100)
+    bbox = diff.getbbox()
+    if bbox:
+        return im.crop(bbox)
+
+
 def get_similarity_thresholds(symbols = ["door", "stairs", "signage"]):
     """
     Given possible symbols, construct possible thresholds for similarity images
-    by creating several distorted images and comparing their rmses, then returning a dictionary of
+    by creating several distorted images and comparing their ssims, then returning a dictionary of
     symbols and their threshold values
     """
     
@@ -67,9 +80,10 @@ def get_similarity_thresholds(symbols = ["door", "stairs", "signage"]):
             image = Image.open(f"images/{symbol}.png").convert("RGB")
             pixels = image.load()
             w, h = image.size[0], image.size[1]
-            image = create_image_from_box(pixels, 0, w, 0, h, 1).convert("RGB")
-    #         print_image_with_ascii(image.convert("L"), border = True)
+            image = create_image_from_box(pixels, 0, w, 0, h, 1).convert("RGB") # Add 1 pixel padding
 
+            # Shift image
+            
             data = np.array(image)
             data[(data == (0, 0, 0)).all(axis = -1)] = (255, 0, 0)
             img = Image.fromarray(data, mode='RGB')
@@ -109,11 +123,8 @@ def get_similarity_thresholds(symbols = ["door", "stairs", "signage"]):
                         if any(pixels[x + x3, y + y3] == (255, 255, 255) for x3 in range(-1, 2) for y3 in range(-1, 2) if inside(x + x3, y + y3)):
                             not_empty.append((x, y))
 
-            num = choice(range(15, 25))
-            num2 = 0
-            if num > 1:
-                num2 = choice([i for i in range(num - 1)])
-            num -= num2
+            num = choice(range(1, 10))
+            num2 = choice(range(1, 10))
 
             image2 = image.copy()
             pixels2 = image2.load()
@@ -129,14 +140,19 @@ def get_similarity_thresholds(symbols = ["door", "stairs", "signage"]):
             for e in sample(not_empty, num2):
                 x, y = e
                 pixels2[x, y] = (255, 255, 255)
+                
+            image2 = trim(image2)
+            
+            cv_image2 = cv.cvtColor(np.array(image2.convert("L")), cv.COLOR_GRAY2RGB)
+            cv_image2 = cv.resize(cv_image2, (image.size[0], image.size[1]), interpolation = cv.INTER_AREA)
 
-            m = round(rmse(cv.cvtColor(np.array(image.convert("L")), cv.COLOR_GRAY2RGB), cv.cvtColor(np.array(image2.convert("L")), cv.COLOR_GRAY2RGB)).item(), 4)
-
-    #         print_image_with_ascii(image2.convert("L"), border = True)        
-    #         print(m)
-    #         print("Symbol:", symbol)
-    #         print(num, num2)        
-    #         input()
+            m = round(ssim(cv.cvtColor(np.array(image.convert("L")), cv.COLOR_GRAY2RGB), cv_image2).item(), 4)
+            
+#             print_image_with_ascii(Image.fromarray(cv_image2, mode='RGB').convert("L"), border = True)        
+#             print("Similarity measure:", m)
+#             print("Symbol:", symbol)
+#             print("Added:", num, "Removed:", num2)        
+#             input()
             avg.append(m)
 
         threshold = sum(avg) / len(avg)

@@ -60,7 +60,7 @@ def create_bash_script(request, id):
     
             for i, file in enumerate(files):
                 if file[-3:] in ["jpg", "png"]:
-                    rsh.write(f"python process_image.py {id} {file} &\n")
+                    rsh.write(f"python process.py {id} {file} &\n")
             
             if len(files) > 1:
                 rsh.write("wait")

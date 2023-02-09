@@ -1,4 +1,4 @@
-var model_json, scene, scene2, renderer, camera, controls, groups, visibility, group, insetwidth, insetheight, size, travel, floor_btn, room1, room2, pathPoints, findPathButton;
+var model_json, scene, scene2, renderer, main, toggle_panel_btn, nav_panel, camera, controls, groups, visibility, group, insetwidth, insetheight, size, travel, floor_btn, room1, room2, pathPoints, pathPointsFloors, findPathButton, pause_text;
 
 const extrudeSettings = {
     steps: 2,
@@ -54,10 +54,11 @@ function createNewPath(newPath) {
     path = newPath;
     
     for(let i = 0; i < pathPoints.length; i++) {
-        scene.remove(pathPoints[i]);
+        groups[pathPointsFloors[i]].remove(pathPoints[i]);
     }
     
     pathPoints = [];
+    pathPointsFloors = [];
     
     for(let i = 0; i < path.length; i++) {
         var dotGeometry = new THREE.BufferGeometry();
@@ -65,17 +66,22 @@ function createNewPath(newPath) {
         var dotMaterial = new THREE.PointsMaterial({ size: 1, color: 0x0000ff });
         var dot = new THREE.Points(dotGeometry, dotMaterial);
         pathPoints.push(dot);
-        // groups[path[i][2]].push(dot);
-        scene.add(dot);
+        pathPointsFloors.push(path[i][2]-1);
+        groups[path[i][2]-1].add(dot);
     }
+    for (let i=0; i<groups.length; i++){
+        scene.remove(groups[i])
+        scene.add(groups[i])
+    }
+    changeFloor()
+    
     
     n = 0;
-    camera_first.position.set(path[0][0], path[0][1], path[0][2]);
+    camera_first.position.set(path[0][0], path[0][1], path[0][2]*floorHeight+headPosition);
 }
 
 function addLines(points, group, floor) {
     /* Function add walls at certain locations */
-    
     let x1, y1, x2, y2, w;
     x1 = points[0];
     y1 = points[1];
@@ -98,22 +104,16 @@ function addLines(points, group, floor) {
     mesh.receiveShadow = true;
     mesh.position.set(0, 0, floor*floorHeight);
     group.add(mesh);
-};
+}
 
-function changeFloor() {
-    if (floor_btn.value == "All Floors") {
-        for (let i = 0; i < groups.length; i++) {
-            groups[i].visible = true;
-        }
+function changeFloor(){
+    for (let i=0; i<groups.length; i++){
+        groups[i].visible = false
     }
-    else{
-        for (let i = 0; i < groups.length; i++) {
-            groups[i].visible = false;
-        }
-        visibility = floor_btn.value;
-        groups[floor_btn.value].visible = true;
-    }
-};
+    visibility = floor_btn.value
+    groups[floor_btn.value].visible = true
+}
+
 
 function resize() {
     camera.aspect = window.innerWidth/window.innerHeight;
@@ -129,8 +129,26 @@ function resize() {
 function toggle_navigation() {
     if (travel) {
         travel = false
+        pause_text.style.display = "block";
     } else {
         travel = true
+        pause_text.style.display = "none";
+    }
+}
+
+function toggle_panel(){
+    console.log(nav.style.width)
+    if (nav_panel.style.width == "0px"){
+        nav_panel.style.width = "250px";
+        main.style.marginLeft = "250px";
+        toggle_panel_btn.innerHTML = "<";
+        nav_panel.style.visibility = "visible"
+    }
+    else {
+        nav_panel.style.width = "0";
+        main.style.marginLeft = "0";
+        toggle_panel_btn.innerHTML = ">";
+        nav_panel.style.visibility = "hidden"
     }
 }
 
@@ -176,11 +194,15 @@ function animate() {
                 changeFloor();
                 travel = false
             }
-            
+            pathPoints[n].material.color.setHex(0xff0000);
+        }
+        else{
+            travel = true
+            changeFloor();
+        }
+        if (n < path.length-lookahead) {
             camera_first.position.set(path[n][0], path[n][1], headPosition+Math.sin(n/6)+(visibility)*floorHeight);
             camera_first.lookAt(path[n + lookahead][0], path[n + lookahead][1], headPosition+Math.sin(n/6)+(visibility)*floorHeight);
-            
-            pathPoints[n + lookahead].material.color.setHex(0xff0000);
         }
 
         if (n>1){
@@ -220,7 +242,27 @@ function render_model(model) {
     renderer.domElement.style.position = "absolute";
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setClearColor(0xefebd9, 1); // Default background color
-    document.body.appendChild(renderer.domElement);
+    
+    main = document.createElement("div");
+    
+    main.appendChild(renderer.domElement);
+    document.body.appendChild(main);
+    
+    nav_panel = document.createElement("div");
+    nav_panel.style.width = "0px";
+    nav_panel.style.backgroundColor = "#D3D3D3";
+    nav_panel.style.position = "absolute";
+    nav_panel.style.height = "100%";
+    nav_panel.style.top = "400px";
+    nav_panel.style.left = "0";
+    nav_panel.style.transition = ".4s"
+    document.body.appendChild(nav_panel);
+    nav_panel.style.visibility = "hidden";
+    
+    toggle_panel_btn = document.createElement('button');
+    toggle_panel_btn.innerHTML = ">";
+    main.appendChild(toggle_panel_btn);
+    toggle_panel_btn.addEventListener("click", toggle_panel)
     
     // Create Three.js scene
     
@@ -259,8 +301,6 @@ function render_model(model) {
     // Create GUI
     
     floor_btn = document.createElement("select");
-    floor_btn.add = "Floor 1";
-    floor_btn.add = "Floor 2";
     floor_btn.setAttribute("id", "currentFloor");
     floor_btn.setAttribute("name", "Floor");
     document.body.appendChild(floor_btn);
@@ -286,11 +326,12 @@ function render_model(model) {
     document.body.appendChild(findPathButton);
     findPathButton.addEventListener("click", findPath);    
     
-    var newOption = document.createElement("option");
-    newOption.setAttribute("value", "All Floors");
-    node = document.createTextNode("All Floors");
-    newOption.appendChild(node);
-    document.getElementById("currentFloor").appendChild(newOption);
+    pause_text = document.createElement('div');
+    pause_node = document.createTextNode("PAUSED");
+    pause_text.appendChild(pause_node);
+    pause_text.style.position = 'absolute';
+    pause_text.style.top = '300px';
+    document.body.appendChild(pause_text);
 
     // Allow camera to be maneuvered
     
@@ -323,10 +364,10 @@ function render_model(model) {
         for (let j = 0; j < list_of_text.length; j++){
             addText(list_of_text[j][0], list_of_text[j][1], list_of_text[j][2], group, i, mid_x, mid_y);
         }
-        const plane_geometry = new THREE.PlaneGeometry( mid_x*2*5, mid_y*2*3 );
+        const plane_geometry = new THREE.PlaneGeometry( mid_x*2*5, mid_y*2*5 );
         const plane_material = new THREE.MeshBasicMaterial( {color: 0xeeeeee, side: THREE.DoubleSide} );
         const plane = new THREE.Mesh( plane_geometry, plane_material );
-        plane_geometry.translate(0, 0, i)
+        plane_geometry.translate(0, 0, i*floorHeight)
         group.add(plane)
         scene.add(group);
         groups.push(group);
@@ -335,6 +376,7 @@ function render_model(model) {
     }
 
     pathPoints = [];
+    pathPointsFloors= [];
     
     for(let i = 0; i < path.length; i++) {
         var dotGeometry = new THREE.BufferGeometry();
@@ -342,10 +384,14 @@ function render_model(model) {
         var dotMaterial = new THREE.PointsMaterial({ size: 1, color: 0x0000ff });
         var dot = new THREE.Points(dotGeometry, dotMaterial);
         pathPoints.push(dot);
-        // groups[path[i][2]-1].push(dot);
-        scene.add(dot);
+        pathPointsFloors.push(path[i][2]-1);
+        groups[path[i][2]-1].add(dot);
     }
-   
+    for (let i=0; i<groups.length; i++){
+        scene.add(groups[i])
+    }
+    changeFloor()
+    
     resize();
     animate();  
     renderer.domElement.addEventListener("click", toggle_navigation);

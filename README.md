@@ -20,11 +20,11 @@
 * Detect size / resolution of map and use those values instead of hard-coded ones
 
 **Navigation**
-* Sync up multiple floors of map to match based on symbols
-    * Possibly resize maps as well so that they match up in size for birds-eye view
-* Update pathfinding
+* Multi-floor pathfinding
+    * Sync up multiple floors of map to match based on symbols
+    * Maybe resize maps so they match up in birds-eye view
+* Multi-path pathfinding
     * Search for certain number of stairways / elevators then teleport to next floor
-    * Multiple paths
     * Add option to only use elevators for accessibility needs
 
 **Rendering Model**
@@ -32,3 +32,6 @@
     * Should be mobile friendly
 * Add actual rendering for floors / staircases / elevators
 * Add lighting to make more realistic
+
+**Miscellaneous**
+* Add option to copy link for certain map

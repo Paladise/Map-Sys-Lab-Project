@@ -83,14 +83,14 @@ def predict_name(pixels, x1, x2, y1, y2, single_char = True, has_spaces = False,
     return detected, confidence
 
 
-def generate_name(orig_pixels, cur_box, used_boxes, detected_name, has_spaces, symbols, boxes):
+def generate_name(color_pixels, orig_pixels, cur_box, used_boxes, detected_name, has_spaces, symbols, boxes):
     """
     Recursive function using the current box, used boxes, and detected name
     so far to check neighboring pixels and try to construct the full room name.
     """
 
     ax1, ax2, ay1, ay2 = cur_box
-    symbol = detect_if_symbol(orig_pixels, SIMILARITY_THRESHOLDS, ax1, ax2, ay1, ay2)    
+    symbol = detect_if_symbol(color_pixels, SIMILARITY_THRESHOLDS, ax1, ax2, ay1, ay2)    
     if symbol:
         symbols[cur_box] = (symbol, len(detected_name))
 
@@ -115,7 +115,7 @@ def generate_name(orig_pixels, cur_box, used_boxes, detected_name, has_spaces, s
             if abs(ax2 - bx1) >= DIST_FOR_SPACE:
                 has_spaces = True               
             
-            used_boxes, detected_name, has_spaces, symbols = generate_name(orig_pixels, box, used_boxes, detected_name, has_spaces, symbols, boxes)
+            used_boxes, detected_name, has_spaces, symbols = generate_name(color_pixels, orig_pixels, box, used_boxes, detected_name, has_spaces, symbols, boxes)
             break
 
     return used_boxes, detected_name, has_spaces, symbols
@@ -238,7 +238,7 @@ def find_more_chars(pixels, x1, x2, y1, y2, i):
     return x, y1, y2 # Return updated x boundary, and y-values
  
 
-def process_image(boxes, bw_image, thresholds, allowed, max_height):
+def process_image(boxes, color_image, bw_image, thresholds, allowed, max_height):
     """
     Process the entire image to identify all integral parts using already-identified boxes.
     """
@@ -246,6 +246,7 @@ def process_image(boxes, bw_image, thresholds, allowed, max_height):
     blank_image = bw_image.copy()
     orig_pixels = blank_image.load()
     pixels = bw_image.load()
+    color_pixels = color_image.load()
     
     global SIMILARITY_THRESHOLDS, ALLOWED_ROOM_NAMES, WIDTH, HEIGHT, MAX_FONT_SIZE
     SIMILARITY_THRESHOLDS = thresholds
@@ -262,7 +263,7 @@ def process_image(boxes, bw_image, thresholds, allowed, max_height):
 
 #         input("Starting to look at new word... [CLICK ENTER TO CONTINUE]")
 
-        used_boxes, detected_name, has_spaces, symbols = generate_name(orig_pixels, box, used_boxes, detected_name = [], has_spaces = False, symbols = {}, boxes = boxes)
+        used_boxes, detected_name, has_spaces, symbols = generate_name(color_pixels, orig_pixels, box, used_boxes, detected_name = [], has_spaces = False, symbols = {}, boxes = boxes)
         first_char = detected_name[0]
         last_char = detected_name[-1]
 
@@ -340,6 +341,8 @@ def process_image(boxes, bw_image, thresholds, allowed, max_height):
                 
                 if orig != (x1, x2, y1, y2):
                     print("Expanded boundaries to be:", x1, x2, y1, y2)
+                    if x1 == 677 and x2 == 716 and y1 == 794 and y2 == 814:
+                        exit()
                     full_word, confidence = predict_name(pixels, x1, x2, y1, y2, single_char, has_spaces, symbols)
             
                     print_image = create_image_from_box(pixels, x1, x2, y1, y2, 0, [])

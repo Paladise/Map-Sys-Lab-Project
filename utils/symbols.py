@@ -7,6 +7,21 @@ from random import choice, random, sample
 
 from utils.drawing import create_image_from_box, print_image_with_ascii
 
+def create_image_from_box_2(pixels, x1, x2, y1, y2, padding, boxes = []):
+    """
+    Given box coordinates, return image generated around that box 
+    (from initial map) with or without padding
+    """
+
+    image2 = Image.new("RGB", (x2 - x1, y2 - y1), color = "white")
+    pixels2 = image2.load()
+    for x in range(x1, x2):
+        for y in range(y1, y2): 
+            if not boxes or any(b[0] < x < b[1] and b[2] < y < b[3] for b in boxes):
+                pixels2[x - x1, y - y1] = pixels[x, y]
+
+    return image2
+
 def detect_if_symbol(pixels, thresholds, x1, x2, y1, y2):
     """
     Given box of potential symbol, determine whether that image
@@ -15,30 +30,17 @@ def detect_if_symbol(pixels, thresholds, x1, x2, y1, y2):
     Currently uses root mean squared as an image similarity measure
     """
 
-    test_image = create_image_from_box(pixels, x1, x2, y1, y2, 0)
+    test_image = create_image_from_box_2(pixels, x1 + 1, x2 - 1, y1 + 1, y2 - 1, 0)
     width, height = test_image.size
 
     for symbol in thresholds.keys():
         key_image = cv.imread("images/" + symbol + ".png")
         key_width, key_height = key_image.shape[1], key_image.shape[0]
-
-        left = round((width - key_width)/2)
-        top = round((height - key_height)/2)
-        x_right = round(width - key_width) - left
-        x_bottom = round(height - key_height) - top
-        right = width - x_right
-        bottom = height - x_bottom
-
-        # Crop the center of the image
-        test_image = test_image.crop((left, top, right, bottom))
-
-        test_cv_image = cv.cvtColor(np.array(test_image), cv.COLOR_GRAY2RGB)
-#         test_image = cv.resize(test_image, (key_image.size[0], key_image.size[1]), interpolation = cv.INTER_AREA)
+        test_cv_image = np.array(test_image.resize((key_width, key_height)))[:, :, ::-1]
 
         m = ssim(key_image, test_cv_image).item()
     
-        if symbol == "door":
-            print(m)
+#         print(symbol, m)
 
         if m > thresholds[symbol]:
             return symbol
@@ -80,13 +82,17 @@ def get_similarity_thresholds(symbols = ["door", "stairs", "signage"]):
             image = Image.open(f"images/{symbol}.png").convert("RGB")
             pixels = image.load()
             w, h = image.size[0], image.size[1]
-            image = create_image_from_box(pixels, 0, w, 0, h, 1).convert("RGB") # Add 1 pixel padding
+            image = create_image_from_box_2(pixels, 0, w, 0, h, 1).convert("RGB") # Add 1 pixel padding
+            
+            image.save("orig_temp.png")
 
             # Shift image
             
             data = np.array(image)
             data[(data == (0, 0, 0)).all(axis = -1)] = (255, 0, 0)
             img = Image.fromarray(data, mode='RGB')
+            
+            img.save("img_temp.png")
 
             temp = choice([(1, 0), (-1, 0), (0, 1), (0, -1), (0, 0)])
             c, f = temp[0], temp[1]
@@ -107,6 +113,9 @@ def get_similarity_thresholds(symbols = ["door", "stairs", "signage"]):
             data = np.array(img)
             data[(data == (255, 0, 0)).all(axis = -1)] = (0, 0, 0)
             image = Image.fromarray(data, mode='RGB')
+            
+            
+            image.save("temp.png")
 
             pixels = image.load()
             w, h = image.size[0], image.size[1]
@@ -158,7 +167,7 @@ def get_similarity_thresholds(symbols = ["door", "stairs", "signage"]):
         threshold = sum(avg) / len(avg)
 
 
-        thresholds[symbol] = threshold
+        thresholds[symbol] = threshold - 0.05
         
     print("Thresholds:", thresholds)
     return thresholds

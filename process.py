@@ -31,7 +31,7 @@ SIMILARITY_THRESHOLDS = get_similarity_thresholds(POS_SYMBOLS)
 original_image = Image.open(FILE_NAME).convert("RGB")
 WIDTH, HEIGHT = original_image.size[0], original_image.size[1]
 
-bw_image = convert_to_bw(original_image, BW_THRESHOLD)
+bw_image = convert_to_bw(original_image.copy(), BW_THRESHOLD)
 bw_image.save(IMAGE_SAVE_PATH + f"black_and_white_{READ_FROM[:-4]}.png")
 
 
@@ -40,7 +40,7 @@ boxes, boxes_image = get_bounding_boxes(IMAGE_SAVE_PATH + f"black_and_white_{REA
 boxes_image.save(IMAGE_SAVE_PATH + f"boxes_{READ_FROM[:-4]}.png")
 
 print("Processing image...")
-rooms, blank_image = process_image(boxes, bw_image, SIMILARITY_THRESHOLDS, ALLOWED_ROOM_NAMES, MAX_FONT_SIZE) 
+rooms, blank_image = process_image(boxes, original_image, bw_image, SIMILARITY_THRESHOLDS, ALLOWED_ROOM_NAMES, MAX_FONT_SIZE) 
 blank_pixels = blank_image.load()
 
 print("Getting rectangles...")

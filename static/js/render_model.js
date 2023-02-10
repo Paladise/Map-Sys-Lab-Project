@@ -249,11 +249,11 @@ function render_model(model) {
     document.body.appendChild(main);
     
     nav_panel = document.createElement("div");
-    nav_panel.style.width = "0px";
+    nav_panel.style.width = "250px";
     nav_panel.style.backgroundColor = "#D3D3D3";
     nav_panel.style.position = "absolute";
     nav_panel.style.height = "100%";
-    nav_panel.style.top = "400px";
+    nav_panel.style.top = "0px";
     nav_panel.style.left = "0";
     nav_panel.style.transition = ".4s"
     document.body.appendChild(nav_panel);
@@ -261,8 +261,11 @@ function render_model(model) {
     
     toggle_panel_btn = document.createElement('button');
     toggle_panel_btn.innerHTML = ">";
+    toggle_panel_btn.style.position = "absolute";
+    toggle_panel_btn.style.top = "0px";
     main.appendChild(toggle_panel_btn);
     toggle_panel_btn.addEventListener("click", toggle_panel)
+    
     
     // Create Three.js scene
     

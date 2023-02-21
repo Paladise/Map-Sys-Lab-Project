@@ -5,33 +5,28 @@
 ## Features In Progress
 
 **Image Processing**
-* Add ability to flatten / crop images before processing to improve accuracy
-* Detect rotated room names
-* Detect text-wrapping
-* Improve room name detection (especially for single character room names)
+* Improve accuracy
+    * Detect rotated room names
+    * Detect text-wrapping
+    * Update general room name detection (especially for 1 character ones)
 * Update symbol detection 
-    * Add functionality to send image of key for backend processing
-    * Research image similarity measures and viable thresholds for similarity
-    * Update what the labels are for the symbols, i.e. door5 -> Door 5
+    * Add functionality to send image of key and detect symbols with it
     * Add automatic stairway detection (ones represented by striped lines)
 * Research flood-fill alternatives that are faster for determining bounding boxes
-* Detect contour of building
-* Detect arrows pointing to room names
+* Detect doorways on maps where doors are not clear
 * Detect size / resolution of map and use those values instead of hard-coded ones
 
 **Navigation**
 * Multi-floor pathfinding
     * Sync up multiple floors of map to match based on symbols
-    * Maybe resize maps so they match up in birds-eye view
-* Multi-path pathfinding
-    * Search for certain number of stairways / elevators then teleport to next floor
-    * Add option to only use elevators for accessibility needs
+* Find multiple possible paths
 
 **Rendering Model**
 * Improve GUI / CSS
     * Should be mobile friendly
-* Add actual rendering for floors / staircases / elevators
-* Add lighting to make more realistic
+    * Update labels (i.e. door5 -> Door 5)
+* Add rendering for staircases / elevators
+* Add lighting
 
 **Miscellaneous**
 * Add option to copy link for certain map

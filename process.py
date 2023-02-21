@@ -7,6 +7,7 @@ from time import perf_counter
 
 from utils.bounding_boxes import get_bounding_boxes
 from utils.bw import convert_to_bw
+from utils.flatten import flatten_image
 from utils.font_size import get_max_font_size
 from utils.recognize import process_image
 from utils.rect import find_rectangles
@@ -28,7 +29,8 @@ MAX_FONT_SIZE = get_max_font_size(FILE_NAME, ALLOWED_ROOM_NAMES, WEAK_CONFIDENCE
 POS_SYMBOLS = ["door", "stairs"]
 SIMILARITY_THRESHOLDS = get_similarity_thresholds(POS_SYMBOLS)
 
-original_image = Image.open(FILE_NAME).convert("RGB")
+
+original_image = flatten_image(FILE_NAME)
 WIDTH, HEIGHT = original_image.size[0], original_image.size[1]
 
 bw_image = convert_to_bw(original_image.copy(), BW_THRESHOLD)
@@ -60,7 +62,6 @@ for x in range(WIDTH):
 blank_image.save(IMAGE_SAVE_PATH + f"blank_map_{READ_FROM[:-4]}.png")
 
 print("Getting paths and doorways...")
-
 blank_image, doorways = simplify_map(rooms, blank_image)
 blank_pixels = blank_image.load()
 blank_image.save(IMAGE_SAVE_PATH + f"pathways_{READ_FROM[:-4]}.png")

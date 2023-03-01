@@ -16,11 +16,12 @@
 {% block body %}
 
 <section id = "loadingScreen">
-    <p id = "loadingText"></p>
+    <p id = "loadingText">Loading...</p>
     <p id = "recentOutput"></p>
 </section>
 
 <script type="text/javascript" src = "{% static 'js/render_model.js'%}"></script>
+<script type="text/javascript" src = "{% static 'js/path.js'%}"></script>
 
 <script type="text/javascript">
 
@@ -138,7 +139,7 @@ $.ajax({
     url: "{% url 'render:check' id=id %}",
     success: function(data) {
         if(data.processed == "true") {
-            $('#loadingText').html("Loading rendered model images...");
+            document.getElementById("loadingText").innerHTML = "Loading rendered model";
             console.log("Already have JSON file");
             render_model(data);    
         }else {

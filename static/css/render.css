@@ -2,31 +2,104 @@
     position: absolute;
     width: 100%;
     height: 100%;
-    z-index: 2;
+    z-index: 4;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
     background-color: #f7f8f9;
+}
+
+.loading-text {
+    z-index: 5;
+    display: block;
+    margin: 0 auto;
+    width: 40%;
     text-align: center;
+    font-size: 40px;
+    color: white;
+}
+
+.loading-text.small {
+    font-size: 24px;
+}
+
+#particleCanvas {
+  display: block;
+  background-color: #045de9;
+  background-image: linear-gradient(315deg, #045de9 0%, #09c6f9 74%);
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.menu {
+    z-index: 3;
+    position: absolute;
+    display: flex;
+    column-gap: 4px;
+    height: 48px;
+    padding: 4px 10px;
+    margin: 4px;
+    align-items: center;
+    background-color: white;
+    border-radius: 5px;
+    box-shadow: none;
+}
+
+.menu.collapsed {
+    box-shadow: 0px 0px 10px #d3d3d3;
+}
+
+.hamburger {
+    text-align: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    user-select: none;
+}
+
+.hamburger:hover {
+    cursor: pointer;
+    background-color: #f7f8f9;
+}
+
+.logo {
+    height: 100%;
+}
+
+.logo-name {
+    font-size: 20px;
 }
 
 .main-container {
-    display: flex;
-    align-items: stretch;
 }
 
 .nav-panel {
+    position: absolute;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     width: 400px;
-    border-right: 3px solid #D3D3D3;
+    height: 100%;
+    box-shadow: 1px 0px 10px #d3d3d3;
+    z-index: 2;
+    background-color: white;
+    transition: 0.1s linear opacity;
+    overflow: hidden;
+    opacity: 1;
 }
 
 .nav-panel.collapsed {
-    width: 0px;
-    border: 0px;
+    height: 0;
+    opacity: 0;
 }
 
 .floor-btn-container {
-    height: 150px;
+    margin-top: 64px;
+    height: 100px;
     display: flex;
     justify-content: center;
     align-items: center; 
@@ -34,16 +107,22 @@
     row-gap: 10px;
 }
 
-.floor-heading {
+.heading {
     font-weight: normal;
+    font-size: 18px;
 }
 
 .floor-btn {
     height: 40px;
     width: 200px;
-    font-size: 20px;
+    font-size: 18px;
     border: 1px solid #f7f8f9;
     border-radius: 4px;
+    padding: 0px 16px;
+}
+
+.floor-btn:focus {
+    outline: none;
 }
 
 .rooms-container {
@@ -55,37 +134,68 @@
     row-gap: 20px;
 }
 
-.room-heading {
-    font-weight: normal;
+.room-input-wrapper {
+    position: relative;
 }
 
 .room-input {
-    height: 30px;
-    border: 1px solid #f7f8f9;
+    width: 200px;
+    height: 36px;
     border-radius: 3px;
+    background-color: #f7f8f9;
     padding: 0px 10px;
+    border: none;
+    font-size: 14px;
 }
 
-.find-path-container {
-    height: 100px;
-    display: flex;
-    justify-content: center;
-    align-content: center;
+.room-input::placeholder { 
+  color: black;
+}
+
+.room-input:focus {
+    outline: none;
+}
+
+.underline-animation {
+    transition: all 0.25s;
+    display: inline-block;
+    bottom: 0;
+    left: 50%;
+    position: absolute;
+    width: 0%;
+    height: 2px;
+    background-color: #045de9;
+}
+
+.room-input:focus + .underline-animation {
+  left: 0;
+  width: 100%;
 }
 
 .find-path {
-    height: 40px;
-    font-size: 18px;
+    border-radius: 3px;
+    margin-top: 25px;
+    padding: 8px;
+    font-size: 16px;
+    width: 150px;
+    background-color: #09c6f9;
+    color: white;
+    border: none;
+}
+
+.find-path:hover {
+    box-shadow: 0px 0px 5px #09c6f9;
 }
 
 .pause-container {
-    display: flex;
-    justify-content: center;
-    padding: 20px 0px;   
+    
 }
 
 .pause {
     color: red;
+    text-align: center;
+    text-transform: capitalize;
+    font-size: 24px;
 }
 
 .model-container {
@@ -96,6 +206,51 @@
 .toggle-panel {
     position: absolute;
     top: 0px;
+}
+
+@media screen and (max-width: 500px) {
+    .nav-panel {
+        width: 100%;
+    }
+    
+    .heading {
+        font-size: 22px;
+    }
+    
+    .room-input {
+        height: 40px;
+        font-size: 16px;
+    }
+    
+    .find-path {
+        font-size: 18px;
+    }
+    
+    .floor-btn {
+        height: 44px;
+    }
+}
+
+@media screen and (max-height: 500px) {
+  .nav-panel {
+        width: 100%;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: space-around;
+        align-items: center;
+  }
+  
+  .floor-btn-container {
+      width: 50%;
+  }
+  
+  .rooms-container {
+      width: 50%;
+  }
+  
+  .pause {
+      font-size: 18px;
+  }
 }
 
 

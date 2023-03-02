@@ -2,9 +2,10 @@
 
 {% load static %}
 
-{% block title %}Atlas | Render{% endblock %}
+{% block title %}Render{% endblock %}
  
 {% block head %}
+<link href = "https://fonts.googleapis.com/icon?family=Material+Icons" rel = "stylesheet">
 <link rel="stylesheet" type="text/css" href="{% static 'css/render.css' %}">
 <script src="https://cdn.jsdelivr.net/npm/three@0.138.3/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.138.3/examples/js/loaders/FontLoader.min.js"></script>
@@ -16,10 +17,49 @@
 {% block body %}
 
 <section id = "loadingScreen">
-    <p id = "loadingText">Loading...</p>
-    <p id = "recentOutput"></p>
+    <canvas id = "particleCanvas"></canvas>
+    <p id = "loadingText" class = "loading-text">Loading...</p>
+    <p id = "recentOutput" class = "loading-text small"></p>
 </section>
 
+<div class = "menu collapsed">
+    <div class = "hamburger" id = "togglePanel" onclick="toggle_panel()"><span class="material-icons">menu</span></div>
+    <img class = "logo" alt = "" src = "{% static 'images/logo.png' %}"/>
+    <p class = "logo-name">Atlasan</p>
+</div>
+
+<div class = "main-container">
+    <div class = "nav-panel collapsed">
+        <div class = "floor-btn-container">
+            <h2 class = "heading">Change Floor</h2>
+            <select class = "floor-btn" id = "currentFloor" name = "Floor" onchange = "changeFloor()"></select>
+        </div>
+        
+        <div class = "rooms-container">
+            <h2 class = "heading">Navigation</h2>
+            <div class = "room-input-wrapper">
+                <input class = "room-input" placeholder="Start..."/>    
+                <span class = "underline-animation"></span>
+            </div>
+            <div class = "room-input-wrapper">
+                <input class = "room-input" placeholder="Destination..."/>    
+                <span class = "underline-animation"></span>
+            </div>
+            
+            <button class = "find-path" onclick="findPath()">Find path</button>
+        </div>
+        
+        <div class = "pause-container">
+            <p class = "pause">PAUSED</p>
+        </div>
+    </div>
+    
+    <div class = "model-container">
+        
+    </div>
+</div>
+
+<script src="{% static 'js/loading.js' %}"></script>
 <script type="text/javascript" src = "{% static 'js/render_model.js'%}"></script>
 <script type="text/javascript" src = "{% static 'js/path.js'%}"></script>
 

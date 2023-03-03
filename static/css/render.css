@@ -115,7 +115,7 @@
 .floor-btn {
     height: 40px;
     width: 200px;
-    font-size: 18px;
+    font-size: 16px;
     border: 1px solid #f7f8f9;
     border-radius: 4px;
     padding: 0px 16px;
@@ -185,6 +185,7 @@
 
 .find-path:hover {
     box-shadow: 0px 0px 5px #09c6f9;
+    cursor: pointer;
 }
 
 .pause-container {
@@ -196,6 +197,32 @@
     text-align: center;
     text-transform: capitalize;
     font-size: 24px;
+}
+
+.share-link-container {
+    display: flex;
+    justify-content: center;
+    padding: 20px 0px;
+}
+
+.share-link {
+    font-size: 14px;
+    background-color: #045de9;
+    border: none;
+    border-radius: 3px;
+    padding: 6px 12px;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    column-gap: 5px;
+    height: 30px;
+}
+
+.share-link:hover {
+    outline: none;
+    box-shadow: 0px 0px 6px #045de9;
+    cursor: pointer;
 }
 
 .model-container {

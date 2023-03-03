@@ -24,6 +24,3 @@
     * Update labels (i.e. door5 -> Door 5)
 * Add rendering for staircases / elevators
 * Add indoor-lighting
-
-**Miscellaneous**
-* Add option to copy link to model

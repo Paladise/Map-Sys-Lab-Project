@@ -26,7 +26,7 @@ def index(request):
 
 def model(request, id):
     log.debug("Calling model view")
-    return render(request, "render_model.html", {"id": id})
+    return render(request, "render.html", {"id": id})
 
 def copy_images(request, id):
     log.debug("Calling copy view")

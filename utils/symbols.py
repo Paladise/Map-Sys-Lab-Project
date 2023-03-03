@@ -167,7 +167,7 @@ def get_similarity_thresholds(symbols = ["door", "stairs", "signage"]):
         threshold = sum(avg) / len(avg)
 
 
-        thresholds[symbol] = threshold - 0.05
+        thresholds[symbol] = threshold - 0.075
         
     print("Thresholds:", thresholds)
     return thresholds

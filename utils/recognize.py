@@ -16,6 +16,8 @@ PADDING = 3
 CONFIDENCE_THRESHOLD = 60
 UPPER_CONFIDENCE_THRESHOLD = 90
 
+STAIR_COORDS = []
+
 pytesseract.pytesseract.tesseract_cmd = r"/cluster/2023abasto/tesseract-5.1.0/tesseract"
 
 sys.setrecursionlimit(10000) # We don't talk about this line
@@ -93,6 +95,9 @@ def generate_name(color_pixels, orig_pixels, cur_box, used_boxes, detected_name,
     symbol = detect_if_symbol(color_pixels, SIMILARITY_THRESHOLDS, ax1, ax2, ay1, ay2)    
     if symbol:
         symbols[cur_box] = (symbol, len(detected_name))
+        
+        if symbol.lower() in "stairs":
+            STAIR_COORDS.append(cur_box)
 
     used_boxes.append(cur_box)
     detected_name.append(cur_box)   
@@ -248,12 +253,16 @@ def process_image(boxes, color_image, bw_image, thresholds, allowed, max_height)
     pixels = bw_image.load()
     color_pixels = color_image.load()
     
-    global SIMILARITY_THRESHOLDS, ALLOWED_ROOM_NAMES, WIDTH, HEIGHT, MAX_FONT_SIZE
+    global SIMILARITY_THRESHOLDS, ALLOWED_ROOM_NAMES, WIDTH, HEIGHT, MAX_FONT_SIZE, DIST_BETWEEN_LETTERS, DIST_FOR_SPACE, Y_THRESHOLD
     SIMILARITY_THRESHOLDS = thresholds
     ALLOWED_ROOM_NAMES = allowed
     WIDTH = blank_image.size[0]
     HEIGHT = blank_image.size[1]
     MAX_FONT_SIZE = max_height
+    if MAX_FONT_SIZE >= 50: # Create bigger constants for bigger text
+        DIST_BETWEEN_LETTERS = 20
+        DIST_FOR_SPACE = 5
+        Y_THRESHOLD = 12
 
     used_boxes, rooms = [], []
     
@@ -266,7 +275,7 @@ def process_image(boxes, color_image, bw_image, thresholds, allowed, max_height)
         used_boxes, detected_name, has_spaces, symbols = generate_name(color_pixels, orig_pixels, box, used_boxes, detected_name = [], has_spaces = False, symbols = {}, boxes = boxes)
         first_char = detected_name[0]
         last_char = detected_name[-1]
-
+        
         if len(detected_name) == 1 and symbols: # If it's a singular symbol
             x1, x2 = first_char[0], first_char[1]
             y1, y2 = first_char[2], first_char[3]
@@ -341,8 +350,6 @@ def process_image(boxes, color_image, bw_image, thresholds, allowed, max_height)
                 
                 if orig != (x1, x2, y1, y2):
                     print("Expanded boundaries to be:", x1, x2, y1, y2)
-                    if x1 == 677 and x2 == 716 and y1 == 794 and y2 == 814:
-                        exit()
                     full_word, confidence = predict_name(pixels, x1, x2, y1, y2, single_char, has_spaces, symbols)
             
                     print_image = create_image_from_box(pixels, x1, x2, y1, y2, 0, [])
@@ -452,6 +459,8 @@ def process_image(boxes, color_image, bw_image, thresholds, allowed, max_height)
                     remove_box(pixels, x1, x2, y1, y2)
                 else:                
                     print("Not adding...")   
+                    
+    print("\n\n\n", "Stair Coords:", STAIR_COORDS, "\n\n\n")
 
     a = sorted(rooms, key = lambda i: int(i[0]) if i[0].isnumeric() else 0)
     return [[i[0], i[1][0], i[1][1]] for i in a], bw_image

@@ -182,7 +182,12 @@ function check_if_finished_processing() {
 
 function copyLink() {
     navigator.clipboard.writeText("{{ request.build_absolute_uri }}");
-    document.getElementById("shareLink").innerHTML = "Copied Link"; 
+    var shareLink = document.getElementById("shareLink");
+    var before = shareLink.innerHTML;
+    shareLink.innerHTML = "Copied Link!"; 
+    setTimeout(function() {
+        shareLink.innerHTML = before;
+    },1000);
 }
 
 $.ajax({

@@ -2,7 +2,7 @@
 
 {% load static %}
 
-{% block title %}Home{% endblock %}
+{% block title %}Changing Dimensionality of Maps for Indoor Navigation{% endblock %}
  
 {% block head %}
 <link href = "https://fonts.googleapis.com/icon?family=Material+Icons" rel = "stylesheet">
@@ -10,59 +10,96 @@
 {% endblock %}
 
 {% block body %}
-
-<image id = "logo" alt = "TJCSL" src = "{% static 'images/tjcsl.png' %}"/>
-
-<section class = "header-canvas">
+    
+<main>
+    <div class = "blob-container">
+        <div id = "blob"></div>    
+    </div>
     <canvas id = "particleCanvas"></canvas>
-    <div class = "container" id = "particleContainerContent">
-        <div class = "left">
-            <h1 class = "home-name">Create striking maps, with Atlas</h1>
-            <p class = "description">Changing dimensionality of maps for indoor navigation.</p>
-            <a class = "atlas-button" href = "{% url 'process:capture' %}">Start Uploading</a>
+    
+    <div class = "logo-container" id = "logoContainer">
+        <div class = "background-logo" id = "backgroundLogo">
+            <svg id = "svgLogo" viewbox="0 0 310.469 274.748" width="80%" height="80%" xmlns="http://www.w3.org/2000/svg">
+                <path class = "left-logo path" stroke="black" stroke-width="2" style="fill:white" d="M0 274.748h60l74.415-225.599L100 0 0 274.748z"/>
+                <path class = "right-logo path" stroke="black" stroke-width="2" style="fill:white" d="M250.469 274.748h60l-76.604-100h-60l76.604 100z"/>
+            </svg>
         </div>
-        <div class = "right">
-            <form id = "uploadImageForm" method = "POST" action = "{% url 'process:capture' %}">
-                {% csrf_token %}
-                <div class = "drop-zone" id = "dropZone">
-                    <span class = "prompt">Drop file here or click to upload</span>
-                    <input type="file" id = "dropZoneInput" name = "image">
+        
+        <div class = "corner-logo" id = "cornerLogo">
+            <h1>Atlasan</h1>
+        </div>
+    </div>
+    
+    <section class = "main-content">
+        <div class = "landing-screen">
+            <div class = "title-text-container">
+                <h1 class = "title-text">Create</h1>
+                <h1 class = "title-text" id = "titleChanger">striking</h1>
+                <h1 class = "title-text">models</h1>
+            </div> 
+            
+            <a class = "get-started" href = "{% url 'process:capture' %}">Get Started</a>
+        
+            <div class = "scroll-arrow" id = "scrollArrow"></div>
+            <div class = "scroll-arrow small">
+                <span class="material-icons arrow">arrow_downward</span>
+            </div>
+        </div>
+        
+        <div class = "subtitle-text-container">
+            <h1 class = "subtitle-text reveal fade-bottom">Changing dimensionality of <span style = "color: var(--dark-blue)">maps</span> for indoor <span style = "color: var(--med-teal)">navigation</span>.</h1>
+        </div>
+        
+        <div class = "cards-container" id = "cards">
+            <div class = "card reveal fade-left">
+                <div class = "card-content">
+                    <p class = "card-text"><span>Automated</span> to reduce overall workload and simplicity.</p>
                 </div>
-            </form>
-        </div>        
-    </div>   
-</section>
-
-<main id = "main">
-    <section class = "info-section divider"></section>
-
-    <section class = "info-section">
-        <h1>About Atlas</h1>
-        <p>what is the meaning of life</p>
+            </div>
+            <div class = "card reveal fade-bottom">
+                <div class = "card-content">
+                    <p class = "card-text"><span>Aesthetic</span>-pleasing for easy user interaction.</p>
+                </div>
+            </div> 
+            <div class = "card reveal fade-right">
+                <div class = "card-content">
+                    <p class = "card-text"><span>Accurate</span>-ly predicts room names, walls, and other map features.</p>
+                </div>
+            </div>
+            <div class = "card reveal fade-left">
+                <div class = "card-content">
+                    <p class = "card-text"><span>Advanced</span> detection for reliable results.</p>
+                </div>
+            </div>
+            <div class = "card reveal fade-bottom">
+                <div class = "card-content">
+                    <p class = "card-text"><span>Agile</span> backend processing for fast results.</p>
+                </div>
+            </div>
+            <div class = "card reveal fade-right">
+                <div class = "card-content">
+                    <p class = "card-text"><span>Accessible</span> for users to promote universal applications.</p>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <h1>Atlasan</h1>
+            <p id = "developers">easter egg</p>
+            <p>2022 - 2023 Senior Research Project</p>
+        </footer>
     </section>
-
-    <section class = "info-section divider"></section>
-
-    <section class = "info-section">
-        <h1>What can it do?</h1>
-        <p>not much yet :(</p>
-    </section>
-
-    <section class = "info-section divider"></section>
-
-    <section class = "info-section">
-        <h1>Privacy policy</h1>
-        <p>We are not Mark Zuckerberg, and we are too lazy to set up a image hosting system so ur images are safe</p>
-    </section>
-
-    <section class = "info-section divider"></section>
+    
 </main>
 
-<footer>
-    <p id = "developers">You shouldn't be seeing this message O_O, small easter egg</p>
-</footer>
-
+<script src="{% static 'js/blob.js' %}"></script>
+<script src="{% static 'js/cards.js' %}"></script>
+<script src="{% static 'js/changing.js' %}"></script>
+<script src="{% static 'js/devs.js' %}"></script>
 <script src="{% static 'js/particle.js' %}"></script>
-<script src="{% static 'js/home.js' %}"></script> <!-- File upload and scroll -->
-
+<script src="{% static 'js/stroke.js' %}"></script>
+<!--<script src="{% static 'js/face.js' %}"></script>-->
+<script src="{% static 'js/logo.js' %}"></script>
+<script src="{% static 'js/reveal.js' %}"></script>
+<script src="{% static 'js/scroll_arrow.js' %}"></script>
 {% endblock %}

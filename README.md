@@ -1,4 +1,4 @@
-# Atlas | Changing Dimensionality of Map for Indoor Navigation
+# Atlasan | Changing Dimensionality of Map for Indoor Navigation
 
 2022-2023 Senior Research Lab Project
 

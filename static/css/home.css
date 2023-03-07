@@ -29,11 +29,11 @@ body {
     translate: -50% -50%;
     border-radius: 50%;
     background: linear-gradient(to right, var(--med-teal), var(--dark-teal));
-    animation: rotate 20s infinite;
+    animation: blobrotate 20s infinite;
     opacity: 0.9;
 }
 
-@keyframes rotate {
+@keyframes blobrotate {
     from {
         rotate: 0deg;
     }

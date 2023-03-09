@@ -3,7 +3,6 @@ from colorsys import hls_to_rgb
 from PIL import Image
 from random import random
 
-
 try:
     from utils.drawing import draw_square, draw_boxes
 except:
@@ -67,6 +66,10 @@ def clear_perimeter(boxes_pixels, b):
     return True 
 
 def get_bounding_boxes_opencv(filename, max_height = 22, min_height = 9):
+    """
+    Determine bounding boxes using opencv findContours() method
+    """
+    
     tresh_min, tresh_max = 128, 255
     cv_image = cv.imread(filename)
     im_bw = cv.cvtColor(cv_image, cv.COLOR_RGB2GRAY)
@@ -103,8 +106,7 @@ def get_bounding_boxes_opencv(filename, max_height = 22, min_height = 9):
                 removeable.add(child)
             new_boxes.append(b1)
             
-    boxes = []
-    
+    boxes = []    
     for b1 in new_boxes:
         if b1 in removeable:
             continue            

@@ -1,5 +1,4 @@
 import pytesseract
-import sys
 from utils.drawing import create_image_from_box, print_image_with_ascii, remove_box
 from utils.symbols import detect_if_symbol
 
@@ -13,15 +12,13 @@ DIST_BETWEEN_LETTERS = 15
 DIST_FOR_SPACE = 4
 Y_THRESHOLD = 6
 PADDING = 3
+CHANGED = 200
 CONFIDENCE_THRESHOLD = 60
 UPPER_CONFIDENCE_THRESHOLD = 90
 
-STAIR_COORDS = []
-
 pytesseract.pytesseract.tesseract_cmd = r"/cluster/2023abasto/tesseract-5.1.0/tesseract"
 
-sys.setrecursionlimit(10000) # We don't talk about this line
-
+stair_coords = []
 
 def predict_name(pixels, x1, x2, y1, y2, single_char = True, has_spaces = False, symbols = {}, boxes = []):
     """
@@ -33,8 +30,6 @@ def predict_name(pixels, x1, x2, y1, y2, single_char = True, has_spaces = False,
     global box_stats
 
     # Creating image of that specific area
-    
-    print("Calling from predict name")
 
     potential_image = create_image_from_box(pixels, x1, x2, y1, y2, PADDING, boxes)
     potential_pixels = potential_image.load()
@@ -48,18 +43,17 @@ def predict_name(pixels, x1, x2, y1, y2, single_char = True, has_spaces = False,
             for y in range(by1, by2):   
                 potential_pixels[x - x1 + PADDING, y - y1 + PADDING] = 255
 
-    # Run pytesseract (or saved data) on image    
+    # Run pytesseract on image    
 
-    detected = ""
+    detected = "" # Default results
     confidence = -1
 
-    config = f"--oem 3 -l eng --psm 7 {TESSERACT_DIR_CONFIG}"
+    config = f"--oem 3 -l eng --psm 7 -c tessedit_char_whitelist=' 0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ' {TESSERACT_DIR_CONFIG}"
 
     print("Running with x1", x1, "x2", x2, "y1", y1, "y2", y2)
 
     p = pytesseract.image_to_data(
         potential_image, config = config, output_type=pytesseract.Output.DICT)   
-    print("predict:", p)
 
     predict = {"conf": [], "text": []}
 
@@ -74,35 +68,36 @@ def predict_name(pixels, x1, x2, y1, y2, single_char = True, has_spaces = False,
     except:
         pass
 
-    # print("Detected within predict_name:", detected, "with confidence:", confidence)
+    print("Detected:", detected, "with confidence:", confidence)
 
     # "Reinsert" symbols into detected string
 
     for s in symbols.values():
         symbol, index = s
-        detected = detected[:index] + symbol + detected[index:] 
+        detected = detected[:index] + symbol.capitalize() + " " + detected[index:] # Make symbol look natural
 
     return detected, confidence
 
 
 def generate_name(color_pixels, orig_pixels, cur_box, used_boxes, detected_name, has_spaces, symbols, boxes):
     """
-    Recursive function using the current box, used boxes, and detected name
-    so far to check neighboring pixels and try to construct the full room name.
+    Recursive function using the current box, used boxes, and detected name so far
+    to check neighboring pixels and try to construct the full room name.
     """
 
     ax1, ax2, ay1, ay2 = cur_box
+    
     symbol = detect_if_symbol(color_pixels, SIMILARITY_THRESHOLDS, ax1, ax2, ay1, ay2)    
-    if symbol:
+    if symbol: # Check if bounding box contains a symbol
         symbols[cur_box] = (symbol, len(detected_name))
         
-        if symbol.lower() in "stairs":
-            STAIR_COORDS.append(cur_box)
+        if symbol.lower() in ["stair", "stairs", "stairway"]:
+            stair_coords.append([(ax1 + ax2) // 2, (ay1 + ay2) // 2]) # Add it to stair coordinates to match up floors
 
     used_boxes.append(cur_box)
-    detected_name.append(cur_box)   
+    detected_name.append(cur_box) # Add box to detected name
 
-    for box in boxes:
+    for box in boxes: # Search for boxes that are possibly in same room name
         if box in used_boxes:
             continue
 
@@ -114,7 +109,7 @@ def generate_name(color_pixels, orig_pixels, cur_box, used_boxes, detected_name,
             abs((ay1+ay2)/2 - (by1+by2)/2) <= Y_THRESHOLD and # Check if y-coord of centers of boxes are close together
             abs(ax2 - bx1) <= DIST_BETWEEN_LETTERS and # Check if boxes are close enough to be considered in same label
             abs(ay1 - by1) <= Y_THRESHOLD and by2 - by1 > 4 and # 
-            all(orig_pixels[x, ay2] != (0, 0, 0) for x in range(ax2, bx1))
+            all(orig_pixels[x, ay2] != (0, 0, 0) for x in range(ax2, bx1)) # No walls in between
           ): # Part of same word
             
             if abs(ax2 - bx1) >= DIST_FOR_SPACE:
@@ -264,7 +259,7 @@ def process_image(boxes, color_image, bw_image, thresholds, allowed, max_height)
         DIST_FOR_SPACE = 5
         Y_THRESHOLD = 12
 
-    used_boxes, rooms = [], []
+    used_boxes, rooms, actual_boxes = [], [], []
     
     for box in boxes:    
         if box in used_boxes:
@@ -284,14 +279,14 @@ def process_image(boxes, color_image, bw_image, thresholds, allowed, max_height)
             s = list(symbols.values())[0][0]
             print("Symbol:", s)
             rooms.append((s, ((first_char[0] + first_char[1])//2, (first_char[2] + first_char[3])//2)))
+            actual_boxes.append((x1, x2, y1, y2))
             remove_box(pixels, first_char[0], first_char[1], first_char[2], first_char[3])
         else: # Predict full room name
             
-            if len(detected_name) == 1: # Probably just a wall
-                continue
+#             if len(detected_name) == 1: # Probably just a wall
+#                 continue
                 
-            print("After generated name, detected_name:", detected_name)
-            print("After generated name symbols:", symbols)
+            print("After generated name, detected_name:", detected_name, "symbols:", symbols)
 
             # Get bounding box of entire room name
 
@@ -312,9 +307,6 @@ def process_image(boxes, color_image, bw_image, thresholds, allowed, max_height)
             
             full_word, confidence = predict_name(pixels, x1, x2, y1, y2, single_char, has_spaces, symbols, detected_name)
             
-            print("initial prediction:", full_word, "confidence:", confidence)
-            
-            print("initial:")
             print_image = create_image_from_box(pixels, x1, x2, y1, y2, 0, detected_name)
             print_image_with_ascii(print_image)
             
@@ -323,22 +315,23 @@ def process_image(boxes, color_image, bw_image, thresholds, allowed, max_height)
                 print("suggestions:", suggestions)
                 if len(suggestions) == 1:
                     full_word = suggestions[0].capitalize()
-
-                    print("Full word after using suggestions:", full_word)
                     rooms.append((full_word, ((first_char[0] + first_char[1])//2, (y1 + y2)//2)))
+                    actual_boxes.append((x1, x2, y1, y2))
                     remove_box(pixels, x1, x2, y1, y2)
                     continue
                     
             if " " not in full_word and full_word and ALLOWED_ROOM_NAMES.check(full_word.lower()):
-                print("In dictionary so adding...")
+                print(f"{full_word} in dictionary so adding...")
+                actual_boxes.append((x1, x2, y1, y2))
                 rooms.append((full_word, ((first_char[0] + first_char[1])//2, (y1 + y2)//2)))
                 remove_box(pixels, x1, x2, y1, y2)
                 continue
             
-            if confidence == 0 and full_word.isnumeric() and len(full_word) == len(detected_name) - 1:
-                    confidence = CHANGED        
+            if confidence == 0 and ((full_word.isnumeric() and len(full_word) == len(detected_name) - 1) or symbols.keys()):
+                print("Changed confidence because of pytessseract bug")
+                confidence = CHANGED        
             
-            if confidence < CONFIDENCE_THRESHOLD:
+            if confidence < CONFIDENCE_THRESHOLD: # Expand boundaries
                 orig = (x1, x2, y1, y2)
                 
                 if res := find_more_chars(pixels, x1, x2, y1, y2, -1):
@@ -369,18 +362,17 @@ def process_image(boxes, color_image, bw_image, thresholds, allowed, max_height)
                 
             if " " not in full_word and ALLOWED_ROOM_NAMES.check(full_word.lower()):
                 print("In dictionary so adding...")
+                actual_boxes.append((x1, x2, y1, y2))
                 rooms.append((full_word, ((first_char[0] + first_char[1])//2, (y1 + y2)//2)))
                 remove_box(pixels, x1, x2, y1, y2)
                 continue
-            
                 
             if full_word.isalpha():
                 suggestions = [i for i in ALLOWED_ROOM_NAMES.suggest(full_word) if len(i) == len(full_word)]
-                print("suggestions:", suggestions)
+                print("Suggestions:", suggestions)
                 if len(suggestions) == 1:
                     full_word = suggestions[0].capitalize()
-
-                    print("Full word after using suggestions:", full_word)
+                    actual_boxes.append((x1, x2, y1, y2))
                     rooms.append((full_word, ((first_char[0] + first_char[1])//2, (y1 + y2)//2)))
                     remove_box(pixels, x1, x2, y1, y2)
                     continue
@@ -408,7 +400,7 @@ def process_image(boxes, color_image, bw_image, thresholds, allowed, max_height)
                                     x1 = first_char[0]
                                     
                                     print("Adding:", full_word2)
-                                    
+                                    actual_boxes.append((x1, x2, y1, y2))
                                     rooms.append((full_word2, ((first_char[0] + first_char[1])//2, (y1 + y2)//2)))
                                     remove_box(pixels, x1, x2, y1, y2)
                                     
@@ -447,20 +439,27 @@ def process_image(boxes, color_image, bw_image, thresholds, allowed, max_height)
                         print("Changed because in substring")
 
                 print("Full word after using suggestions:", full_word)
-
+                actual_boxes.append((x1, x2, y1, y2))
                 rooms.append((full_word, ((first_char[0] + first_char[1])//2, (y1 + y2)//2)))
                 remove_box(pixels, x1, x2, y1, y2)
             else:
                 
                 if len(full_word) == 2 and full_word.isnumeric() and confidence > 40.0:
                     print("Full word clutch:", full_word)
-
+                    actual_boxes.append((x1, x2, y1, y2))
                     rooms.append((full_word, ((first_char[0] + first_char[1])//2, (y1 + y2)//2)))
+                    remove_box(pixels, x1, x2, y1, y2)
+                elif len(list(symbols.values())) == 1:
+                    s = list(symbols.values())[0][0].capitalize()
+                    box_coords = list(symbols.keys())[0]
+                    print("Symbol clutch:", s)
+                    x1, x2, y1, y2 = box_coords
+                    actual_boxes.append((x1, x2, y1, y2))
+                    rooms.append((full_word, ((x1 + x2)//2, (y1 + y2)//2)))
                     remove_box(pixels, x1, x2, y1, y2)
                 else:                
                     print("Not adding...")   
-                    
-    print("\n\n\n", "Stair Coords:", STAIR_COORDS, "\n\n\n")
-
+    
     a = sorted(rooms, key = lambda i: int(i[0]) if i[0].isnumeric() else 0)
-    return [[i[0], i[1][0], i[1][1]] for i in a], bw_image
+
+    return [[i[0], i[1][0], i[1][1]] for i in a], bw_image, actual_boxes, stair_coords

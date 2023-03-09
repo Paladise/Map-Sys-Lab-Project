@@ -5,7 +5,7 @@ from image_similarity_measures.quality_metrics import ssim
 from PIL import Image, ImageChops
 from random import choice, random, sample
 
-from utils.drawing import create_image_from_box, print_image_with_ascii
+from utils.drawing import create_image_from_box
 
 def create_image_from_box_2(pixels, x1, x2, y1, y2, padding, boxes = []):
     """
@@ -33,7 +33,7 @@ def detect_if_symbol(pixels, thresholds, x1, x2, y1, y2):
     test_image = create_image_from_box_2(pixels, x1 + 1, x2 - 1, y1 + 1, y2 - 1, 0)
     width, height = test_image.size
 
-    for symbol in thresholds.keys():
+    for symbol in thresholds.keys(): # Check all symbols in key
         key_image = cv.imread("images/" + symbol + ".png")
         key_width, key_height = key_image.shape[1], key_image.shape[0]
         test_cv_image = np.array(test_image.resize((key_width, key_height)))[:, :, ::-1]
@@ -43,9 +43,9 @@ def detect_if_symbol(pixels, thresholds, x1, x2, y1, y2):
 #         print(symbol, m)
 
         if m > thresholds[symbol]:
-            return symbol
-
-    return ""
+            return symbol # Possibly a symbol
+ 
+    return "" # Is not a symbol
 
 
 def trim(im):
@@ -77,35 +77,27 @@ def get_similarity_thresholds(symbols = ["door", "stairs", "signage"]):
         print("Looking at symbol:", symbol)
 
         avg = []
-        for _ in range(25):
-
+        for _ in range(25): # Create permutations
             image = Image.open(f"images/{symbol}.png").convert("RGB")
             pixels = image.load()
             w, h = image.size[0], image.size[1]
             image = create_image_from_box_2(pixels, 0, w, 0, h, 1).convert("RGB") # Add 1 pixel padding
-            
-            image.save("orig_temp.png")
 
             # Shift image
             
             data = np.array(image)
             data[(data == (0, 0, 0)).all(axis = -1)] = (255, 0, 0)
             img = Image.fromarray(data, mode='RGB')
-            
-            img.save("img_temp.png")
 
             temp = choice([(1, 0), (-1, 0), (0, 1), (0, -1), (0, 0)])
-            c, f = temp[0], temp[1]
+            c, f = temp[0], temp[1] # c controls left/right, f controls up/down
 
+            a, b, d, e = 1, 0, 0, 1
+    
+            img = img.transform(img.size, Image.Transform.AFFINE, (a, b, c, d, e, f)) # Shift image
 
-            a = 1
-            b = 0
-    #         c = 1 #left/right (i.e. 5/-5)
-            d = 0
-            e = 1
-    #         f = 0 #up/down (i.e. 5/-5)
-            img = img.transform(img.size, Image.Transform.AFFINE, (a, b, c, d, e, f))
-
+            # Randomly replace pixels with opposite color
+        
             data = np.array(img)
             data[(data == (0, 0, 0)).all(axis = -1)] = (255, 255, 255)
             img = Image.fromarray(data, mode='RGB')
@@ -113,14 +105,9 @@ def get_similarity_thresholds(symbols = ["door", "stairs", "signage"]):
             data = np.array(img)
             data[(data == (255, 0, 0)).all(axis = -1)] = (0, 0, 0)
             image = Image.fromarray(data, mode='RGB')
-            
-            
-            image.save("temp.png")
 
             pixels = image.load()
             w, h = image.size[0], image.size[1]
-
-
             empty, not_empty = [], []
 
             for x in range(w):
@@ -156,18 +143,10 @@ def get_similarity_thresholds(symbols = ["door", "stairs", "signage"]):
             cv_image2 = cv.resize(cv_image2, (image.size[0], image.size[1]), interpolation = cv.INTER_AREA)
 
             m = round(ssim(cv.cvtColor(np.array(image.convert("L")), cv.COLOR_GRAY2RGB), cv_image2).item(), 4)
-            
-#             print_image_with_ascii(Image.fromarray(cv_image2, mode='RGB').convert("L"), border = True)        
-#             print("Similarity measure:", m)
-#             print("Symbol:", symbol)
-#             print("Added:", num, "Removed:", num2)        
-#             input()
             avg.append(m)
 
-        threshold = sum(avg) / len(avg)
-
-
-        thresholds[symbol] = threshold - 0.075
+        threshold = sum(avg) / len(avg) # Set average similarity as threshold
+        thresholds[symbol] = threshold - 0.075 # Add extra allowance
         
     print("Thresholds:", thresholds)
     return thresholds

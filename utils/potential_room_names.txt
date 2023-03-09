@@ -92,3 +92,6 @@ galileo
 darwin
 door
 doors
+clinic
+stairs
+elevator

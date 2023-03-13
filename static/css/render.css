@@ -90,6 +90,7 @@
     transition: 0.1s linear opacity;
     overflow: hidden;
     opacity: 1;
+    border-radius: 0 50% 10% 0;
 }
 
 .nav-panel.collapsed {
@@ -237,6 +238,7 @@
 
 @media screen and (max-width: 500px) {
     .nav-panel {
+        border-radius: 0;
         width: 100%;
     }
     
@@ -260,6 +262,7 @@
 
 @media screen and (max-height: 500px) {
   .nav-panel {
+        border-radius: 0;
         width: 100%;
         flex-direction: row;
         flex-wrap: wrap;

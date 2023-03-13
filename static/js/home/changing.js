@@ -1,11 +1,11 @@
 const letters = "abcdefghijklmnopqrstuvwxyz";
 var posWords = ["striking", "advanced",
-"artistic", "catching", "creative", "definite", "detailed",
+"artistic", "catching", "charming", "creative", "definite", "detailed",
 "dominant", "dramatic", "engaging", "exciting", "familiar", "friendly", 
-"historic", "official", "powerful", "precious", "pregnant",
+"historic", "official", "powerful", "portable", "precious", "pregnant",
 "profound", "reliable", "romantic", "standard", "stunning", "suitable",
 "superior", "sweeping", "tangible", "thorough", "touching",
-"valuable", "holistic", "powerful", "charming"];
+"valuable", "holistic", "powerful"];
 
 // Easter egg word in there ;)
 

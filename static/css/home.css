@@ -24,14 +24,14 @@ main {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    z-index: 1;
     text-align: center;
     row-gap: 20px;
-    top: -300px;
+    margin-top: -300px;
 }
 
 .landing-screen-wrapper {
     position: relative;
+    z-index: 1;
 }
 
 .landing-screen {
@@ -294,12 +294,103 @@ main {
     font-size: 14px;
 }
 
+.slideshow-container {
+    background-color: white;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: 100px;
+    padding-bottom: 50px;
+    overflow: hidden;
+}
+
+.slide {
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.images-container {
+    width: 100%;
+    aspect-ratio: 3/2;
+    overflow: hidden;
+    border-radius: 20px;
+    position: relative;
+}
+
+.slide-image {
+    width: 120%;
+    object-fit: cover;
+    display: none;
+    left: 50%;
+    top: 50%;
+    transform: translateX(-50%) translateY(-50%);
+    position: absolute;
+    transition: 0.5s all ease-out;
+}
+
+.slide-image:hover {
+    width: 150%;
+    transition: 0.5s all ease-out;
+}
+
+.slide-description {
+    width: 60%;
+    text-align: left;
+}
+
+.slide-text > .credits {
+    font-size: 14px;
+    font-style: italic;
+}
+
+.slide-text > .credits > a {
+    text-decoration: underline;
+}
+
+.slide-text > h1 {
+    font-size: 18px;
+}
+
+.slide-dots {
+    margin-top: 40px;
+    position: relative;
+    display: flex;
+    column-gap: 5px;
+}
+
+.dot {
+    cursor: pointer;
+    height: 15px;
+    width: 15px;
+    background-color: var(--light-gray);
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.active-dot {
+    position: absolute;
+    left: 0;
+    background-color: var(--light-black);
+    z-index: 1;
+    cursor: pointer;
+    height: 15px;
+    width: 15px;
+    border-radius: 50%;
+    transition: left 0.5s linear;
+}
+
 footer {
     width: 100%;
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
     align-items: center;
-    column-gap: 100px;
-    color: white;
+    column-gap: 50px;
+    color: darkgray;
+    background-color: white;
+    font-size: 14px;
 }

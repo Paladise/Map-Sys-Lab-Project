@@ -16,14 +16,14 @@
 
 <div class = "landing-screen-wrapper">
     <div class = "landing-screen">
-        <div class = "logo">
+        <a class = "logo" href = "{% url 'process:index' %}">
             <svg viewbox="0 0 310.469 274.748" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
                 <path d="M0 274.748h60l74.415-225.599L100 0 0 274.748z"/>
                 <path d="M250.469 274.748h60l-76.604-100h-60l76.604 100z"/>
             </svg>
             
             <h1 class="logo-text">Atlasan</h1>
-        </div>
+        </a>
     
         <div class = "title-text-container">
             <h1 class = "title-text">Create</h1>
@@ -45,7 +45,7 @@
         <div class = "rotating-sphere" id = "rotatingSphere"></div>
         
         <div class = "subtitle-text-container">
-            <h1 class = "subtitle-text reveal fade-bottom">Changing dimensionality of <span style = "color: var(--dark-blue)">maps</span> for indoor <span style = "color: var(--med-teal)">navigation</span>.</h1>
+            <h1 class = "subtitle-text reveal fade-bottom">Changing dimensionality of <span style = "color: var(--med-teal)">maps</span> for indoor <span style = "color: var(--dark-blue)">navigation</span>.</h1>
         </div>
         
         <div class = "cards-container" id = "cards">
@@ -81,7 +81,7 @@
                 <div class = "card-content">
                     <h1 class="card-icon"><span class="material-icons">flash_on</span></h1>
                     <h2 class = "card-header">Agile</h2>
-                    <p class = "card-text">Only takes up to a few minutes backend processing, before you can start using your fully-rendered model.</p>
+                    <p class = "card-text">Only takes up to a few minutes of backend processing before you can start using your fully-rendered model.</p>
                 </div>
             </div>
             <div class = "card reveal fade-bottom">
@@ -92,12 +92,62 @@
                 </div>
             </div>
         </div>
+        
+        <div class = "slideshow-container">
+            <div class="slide reveal fade-bottom">
+                <div class = "images-container">
+                    <img class = "slide-image" src = "{% static 'images/cityscape.jpg' %}">
+                    <img class = "slide-image" src = "{% static 'images/rome.jpg' %}">
+                    <img class = "slide-image" src = "{% static 'images/nightsky.jpg' %}">
+                    <img class = "slide-image" src = "{% static 'images/mountaindoor.jpg' %}">
+                    <img class = "slide-image" src = "{% static 'images/beach.jpg' %}">
+                </div>
+                
+                <div class="slide-description">
+                    <div class="slide-dots">
+                        <span class = "active-dot"></span>
+                        <span class = "dot"></span>
+                        <span class = "dot"></span>
+                        <span class = "dot"></span>
+                        <span class = "dot"></span>
+                        <span class = "dot"></span>
+                    </div>
+                    <div class = "slide-text">
+                        <p class = "credits">Photo by <a href = "https://unsplash.com/photos/Nyvq2juw4_o">Pedro Lastra</a> on Unsplash</p>
+                        <h1>Pre-Processing</h1>
+                        <p>We first attempt to crop the image appropriately to reduce image size and ignore problematic areas
+                        that are un-related to the map itself.</p>
+                    </div>
+                    <div class = "slide-text">
+                        <p class = "credits">Photo by <a href = "https://unsplash.com/photos/s87bBFZviAU">Mathew Schwartz</a> on Unsplash</p>
+                        <h1>Bounding Boxes</h1>
+                        <p>We then get probable maximum and minimum font-sizes, and use it to identify potential room names & symbols that are of correct size.</p>
+                    </div>
+                    <div class = "slide-text">
+                        <p class = "credits">Photo by <a href = "https://unsplash.com/photos/ln5drpv_ImI">Vincentiu Solomon</a> on Unsplash</p>
+                        <h1>Detection</h1>
+                        <p>We look within the bounding boxes and use OCR to detect text and other symbols within the map. We then transform the rest of the 
+                        unidentified map into walls within our model.</p>
+                    </div>
+                    <div class = "slide-text">
+                        <p class = "credits">Photo by <a href = "https://unsplash.com/photos/Rnqa6jOpnHw">Joshua Sortino</a> on Unsplash</p>
+                        <h1>Doorways</h1>
+                        <p>In order to create navigable maps, we attempt to identify and even create artifical doorways to connect rooms to hallways.</p>
+                    </div>
+                    <div class = "slide-text">
+                        <p class = "credits">Photo by <a href = "https://unsplash.com/photos/KMn4VEeEPR8">Sean Oulashin</a> on Unsplash</p>
+                        <h1>Finishing Touches</h1>
+                        <p>The final results are then cleaned up and organized into a JSON file which is then sent to the front-end side for rendering.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </section>
     
 </main>
 
 <footer>
-    <h1>Atlasan</h1>
+    <p>Atlasan</p>
     <p id = "developers">Developed by Andrei Basto and Sean Su</p>
     <p>2022 - 2023 Senior Research Project</p>
 </footer>
@@ -106,6 +156,7 @@
 <script src="{% static 'js/home/changing.js' %}"></script>
 <script src="{% static 'js/home/reveal.js' %}"></script>
 <script src="{% static 'js/home/scroll_arrow.js' %}"></script>
+<script src="{% static 'js/home/slides.js' %}"></script>
 
 <script type="module" src="{% static 'js/home/extend.js' %}"></script>
 <script type="module" src="{% static 'js/home/sphere.js' %}"></script>

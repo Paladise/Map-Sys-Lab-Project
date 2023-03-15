@@ -1,4 +1,5 @@
 var floors = [];
+var symbols = [];
 
 function supported(attribute) {
     var i = document.createElement('input');
@@ -54,87 +55,93 @@ function displayAsImage(file) {
     });
 }
 
-function addFloor() {
-    var num = floors.length + 1;
-    
-    if(num == 4) {
-        return;
+function add(type) {
+    console.log("Adding type:", type);
+    var isFloor = true;
+    if(type == "symbol") {
+        isFloor = false;
     }
     
-    floors.push(num);
-    var singleContainer = document.createElement("div");
-    singleContainer.classList.add("single-container");
-    var secondaryContainer = document.createElement("div");
-    secondaryContainer.classList.add("secondary-container");
-    secondaryContainer.id = "floor" + num + "container";
-    var fileInfoContainer = document.createElement("div");
-    fileInfoContainer.classList.add("file-info-container");
-    var floorNum = document.createElement("p");
-    floorNum.classList.add("floor-info");
-    floorNum.classList.add("floor-number");
-    floorNum.id = "floorNum" + num;
-    floorNum.innerHTML = "Floor " + num;
-    var filename = document.createElement("p");
-    filename.classList.add("floor-info");
-    filename.classList.add("filename");
-    filename.id = "filename" + num;
-    filename.setAttribute("data-floor-num", num);
-    fileInfoContainer.appendChild(floorNum);
-    fileInfoContainer.appendChild(filename);
-    var uploadIcon = document.createElement("span");
-    uploadIcon.classList.add("material-symbols-outlined");
-    uploadIcon.classList.add("upload-icon");
-    uploadIcon.innerHTML = "upload";
-    var label = document.createElement("label");
-    label.setAttribute("for", "fileUpload" + num);
-    label.classList.add("file-upload");
-    label.id = "fileUploadLabel" + num;
-    // label.innerHTML = "Upload";
-    label.appendChild(uploadIcon);
-    var input = document.createElement("input");
-    input.setAttribute("type", "file");
-    input.setAttribute("accept", "image/*");
-    input.id = "fileUpload" + num;
-    input.setAttribute("name", num);
+    if(isFloor && floors.length + 1 == 4) {
+        alert("You can currently only upload 3 floors");
+        return; // Don't allow more than 4 floors
+    }
     
+    if(isFloor) {
+        var num = floors.length + 1;
+        floors.push(num);
+    }else {
+        var num = symbols.length + 1;
+        symbols.push(num);
+    }
+    
+    const template = document.querySelector('.' + type + '-template');
+    const clone = template.content.cloneNode(1).firstElementChild;
+    var secondaryContainer = clone.querySelector(".secondary-container");
+    secondaryContainer.setAttribute("id", type + num + "container");
+    var fileInfo = clone.querySelector(".file-info");
+    fileInfo.setAttribute("id", type + num + "fileInfo");
+    if(type == "floor") {
+        fileInfo.innerHTML = "Floor " + num;
+    }
+    
+    var fileName = clone.querySelector(".fileName");
+    fileName.setAttribute("id", type + num + "fileName");
+    fileName.setAttribute("data-type", type);
+    fileName.setAttribute("data-num", num);
+    var label = clone.querySelector(".file-label");
+    label.setAttribute("for", type + num + "upload");
+    label.setAttribute("id", type + num + "label");
+    var input = clone.querySelector(".file-upload");
+    input.setAttribute("id", type + num + "upload");
+    input.setAttribute("name", type + num + "upload");
+    input.setAttribute("data-type", type);
+    input.setAttribute("data-num", num);
+
     if(supported("capture") == true) {
         input.setAttribute("capture", true); // Allow phones to take pictures directly from camera
     }
-    
+
     input.addEventListener("change", e => {
-       let floorNum = input.name;
-       let container = document.getElementById("floor" + floorNum + "container");
-       container.querySelector("#floorNum" + floorNum).innerHTML = "Floor " + floorNum;
-       container.querySelector("#filename" + floorNum).innerHTML = input.files[0].name;
-       container.querySelector("#filename" + floorNum).style.display = "block";
+        let type = input.getAttribute("data-type");
+        let num = input.getAttribute("data-num");
+        
+        var container = document.getElementById(type + num + "container");
+        container.querySelector("#" + type + num + "fileName").innerHTML = input.files[0].name;
+        container.querySelector("#" + type + num + "fileName").style.display = "block";
     });
     
-    filename.addEventListener("click", e => {
-       let floorNum = e.target.getAttribute("data-floor-num");
-       let input = document.getElementById("fileUpload" + floorNum);
-       let file = input.files[0];
-       
-       displayAsImage(file);
+    fileName.addEventListener("click", e => {
+        let type = fileName.getAttribute("data-type");
+        let num = fileName.getAttribute("data-num");
+        
+        let input = document.getElementById(type + num + "upload");
+        let file = input.files[0];
+        displayAsImage(file);
     });
-    
-    secondaryContainer.appendChild(fileInfoContainer);
-    secondaryContainer.appendChild(label);
-    secondaryContainer.appendChild(input);
-    singleContainer.appendChild(secondaryContainer);
-    document.getElementById("upload-form").insertBefore(singleContainer, document.getElementById("additions"));
+
+    document.getElementById("upload-form").insertBefore(clone, document.getElementById("additions"));
 }
 
-$("#addFloor").click(addFloor);
+$("#addFloor").click(function() {
+    add("floor")
+});
 
-addFloor();
-// addFloor();
+$("#addSymbol").click(function() {
+    add("symbol")
+});
+
+add("floor"); // Create one floor in beginning
 
 class FileUpload {
 
-    constructor(input, id, num) {
+    constructor(input, id, type, num, extra) {
         this.id = id;
         this.input = input;
-        this.floor_num = num;
+        this.num = num;
+        this.type = type;
+        this.extra = extra;
+        
         this.max_length = 1024 * 1024; // 1 mb
     }
 
@@ -147,9 +154,9 @@ class FileUpload {
         let progressBarContainer = document.createElement("div");
         progressBarContainer.id = "progressBarContainer" + this.floor_num;
         progressBarContainer.classList.add("progress-bar-container");
-        document.getElementById("floor" + this.floor_num + "container").appendChild(progressBarContainer);
+        document.getElementById(this.type + this.num + "container").appendChild(progressBarContainer);
         let progressBar = document.createElement("div");
-        progressBar.setAttribute("id", "progressBar" + this.floor_num);
+        progressBar.setAttribute("id", this.type + this.num + "progressBar");
         progressBar.classList.add("progress-bar");
         progressBar.style.width = "0%";
         progressBarContainer.appendChild(progressBar);
@@ -174,7 +181,12 @@ class FileUpload {
             end = 0;
         }
         formData.append('file', currentChunk);
-        formData.append('filename', "floor" + this.floor_num + this.file.name.substr(this.file.name.indexOf("."))); // formData.append('filename', this.file.name);
+        if(this.type == "floor") {
+            var add = this.type + this.num;
+        }else{
+            var add = this.type + this.extra;
+        }
+        formData.append('fileName', add + this.file.name.substr(this.file.name.indexOf("."))); // formData.append('fileName', this.file.name);
         formData.append('end', end);
         formData.append('existingPath', existingPath);
         formData.append('nextSlice', nextChunk);
@@ -195,7 +207,7 @@ class FileUpload {
                             var percent = Math.round((uploadedChunk / self.file.size) * 100);
                         } 
                         
-                        var width = parseInt(document.getElementById("progressBar" + self.floor_num).style.width);
+                        var width = parseInt(document.getElementById(self.type + self.num + "progressBar").style.width);
                         var id = setInterval(frame, 50);
                         
                         function frame() {
@@ -203,13 +215,13 @@ class FileUpload {
                                 clearInterval(id);
                             } else {
                                 width++;
-                                $('#progressBar' + self.floor_num).css('width', width + '%');
-                                $('#progressBar' + self.floor_num).text(width + '%');
+                                $("#" + self.type + self.num + "progressBar").css('width', width + '%');
+                                $("#" + self.type + self.num + "progressBar").text(width + '%');
                             }
                         }
                                             
-                        // $('#progressBar' + self.floor_num).css('width', percent + '%');
-                        // $('#progressBar' + self.floor_num).text(percent + '%');
+                        // $("#" + self.type + self.num + "ProgressBar").css('width', percent + '%');
+                        // $("#" + self.type + self.num + "ProgressBar").text(percent + '%');
                     }
                 });
                 return xhr;
@@ -232,18 +244,18 @@ class FileUpload {
                 } else {
                     // upload complete
                     
-                    var width = parseInt(document.getElementById("progressBar" + self.floor_num).style.width);
+                    var width = parseInt(document.getElementById(self.type + self.num + "progressBar").style.width);
                     var id = setInterval(frame, 50);
                     
                     function frame() {
                         if (width >= 100) {
                             clearInterval(id);
-                            $("#progressBarContainer" + self.floor_num).remove();
-                            document.getElementById("fileUploadLabel" + self.floor_num).firstChild.innerHTML = "done";
+                            $("#" + self.type + self.num + "progressBar").remove();
+                            document.getElementById(self.type + self.num + "label").firstChild.innerHTML = "done";
                         } else {
                             width++;
-                            $('#progressBar' + self.floor_num).css('width', width + '%');
-                            $('#progressBar' + self.floor_num).text(width + '%');
+                            $("#" + self.type + self.num + "progressBar").css('width', width + '%');
+                            $("#" + self.type + self.num + "progressBar").text(width + '%');
                         }
                     }
                 }
@@ -261,13 +273,20 @@ function submitForm(event) {
             console.log(data);
             for(var i = 0; i < floors.length; i++) {
                 var num = floors[i];
-                var uploader = new FileUpload(document.querySelector("#fileUpload" + num), data["store_id"], num);
+                var uploader = new FileUpload(document.getElementById("floor" + num + "upload"), data["store_id"], "floor", num, null);
                 uploader.upload();
-                
-                $(document).ajaxStop(function() {
-                    window.location.replace("http://atlas.sites.tjhsst.edu/render/" + data["store_id"]);
-                });
             }
+            
+            for(var i = 0; i < symbols.length; i++) {
+                var num = symbols[i];
+                var uploader = new FileUpload(document.getElementById("symbol" + num + "upload"), data["store_id"], "symbol", num, document.getElementById("symbol" + num + "fileInfo").value);
+                uploader.upload();
+            }
+            
+            $(document).ajaxStop(function() {
+                window.location.replace("http://atlas.sites.tjhsst.edu/render/" + data["store_id"]);
+            });
+            
         },
         failure: function(data) { 
             alert('Got an error dude');

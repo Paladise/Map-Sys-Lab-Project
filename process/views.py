@@ -44,7 +44,7 @@ def capture(request):
     log.debug("Calling capture view")
     if request.method == 'POST':  
         file = request.FILES['file'].read()
-        fileName= request.POST['filename']
+        fileName= request.POST['fileName']
         existingPath = request.POST['existingPath']
         end = request.POST['end']
         nextSlice = request.POST['nextSlice']

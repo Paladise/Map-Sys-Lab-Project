@@ -19,14 +19,45 @@
             Upload Images
         </h1>
     </div>
+    
+    <template class = "floor-template">
+        <div class="single-container">
+            <div class = "secondary-container">
+                <div class = "file-info-container">
+                    <p class = "file-info"></p>
+                    <p class = "fileName"></p>
+                </div>
+            </div>
+            
+            <label class = "file-label">
+                <span class = "material-symbols-outlined upload-icon">upload</span>
+            </label>
+            <input class = "file-upload" type = "file" accept="image/*">
+        </div>
+    </template>
+    
+    <template class = "symbol-template">
+        <div class="single-container">
+            <div class = "secondary-container">
+                <div class = "file-info-container">
+                    <input class = "file-info" placeholder = "Enter symbol name...">
+                    <p class = "fileName"></p>
+                </div>
+            </div>
+            
+            <label class = "file-label">
+                <span class = "material-symbols-outlined upload-icon">upload</span>
+            </label>
+            <input class = "file-upload" type = "file" accept="image/*">
+        </div>
+    </template>
           
     <div class = "single-container" id = "additions">
         <button class = "add" id = "addFloor" type = "button">Add floor</button> 
-        <button class = "add" type = "button">Add key</button> 
+        <button class = "add" id = "addSymbol" type = "button">Add Symbol</button> 
     </div>               
     <button type ="submit" id ="submit">Start processing</button>
     <button style = "display: none" url="{% url 'process:get_id' %}" id ="getId"></button>
-
 
     <div class = "single-container">
         <p class = "help-text">Need Help?</p>

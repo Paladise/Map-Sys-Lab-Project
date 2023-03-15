@@ -54,29 +54,45 @@ input {
     padding: 0px 20px;
 }
 
-.file-upload {
+.file-label {
     width: 75px;
     color: white;
     background-color: #09c6f9;
     line-height: 40px;
     text-align: center;
+    cursor: pointer;
 }
 
 .upload-icon {
     vertical-align: middle;
 }
 
-.floor-info {
+.file-info {
     margin: auto 0;
     height: 30px;
     line-height: 30px;
-}
-
-.floor-number {
     padding-right: 10px;
+    display: block;
 }
 
-.filename {
+.symbol-input {
+    display: block;
+    width: 40%;
+    margin: auto 0;
+    height: 30px;
+    border: 0;
+    border-bottom: 1px solid #f7f8f9;
+    margin-right: 5px;
+}
+
+.symbol-input:active {
+    outline: none;
+}
+
+.fileName {
+    margin: auto 0;
+    height: 30px;
+    line-height: 30px;
     flex: 1;
     padding-left: 10px;
     border-left: 1px solid #f7f8f9;
@@ -87,16 +103,12 @@ input {
     display: none;
 }
 
-.filename:hover {
+.fileName:hover {
     text-decoration: underline;
 }
 
 .disabled {
     pointer-events: none;
-}
-
-.file-upload:hover {
-    cursor: pointer;
 }
 
 .drop-zone {

@@ -57,6 +57,7 @@ main {
     column-gap: 20px;
     height: 40px;
     fill: black;
+    user-select: none;
 }
 
 .logo-text {
@@ -72,13 +73,15 @@ main {
     column-gap: 26px;
     flex-wraP: wrap;
     align-items: center;
-    margin-top: 100px;
+    margin-top: 80px;
+    user-select: none;
 }
 
 .title-text {
     font-size: 60px;
     text-align: center;
     font-family: 'Space Mono', monospace;
+    margin: 0;
 }
 
 .get-started {
@@ -173,6 +176,19 @@ main {
     width: 600px;
     height: 600px;
     z-index: 5;
+    user-select: none;
+}
+
+.rotating-sphere::after {
+    content:"";
+    display: block;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    user-select: none;
+    z-index: 5;
 }
 
 .scroll-arrow {
@@ -183,7 +199,7 @@ main {
     border-radius: 50%;
     bottom: -20px;
     right: -50px;
-    z-index: 5;
+    z-index: 8;
 }
 
 .scroll-arrow.small {
@@ -200,7 +216,7 @@ main {
 }
 
 #scrollArrow {
-    z-index: 6;
+    z-index: 9;
     opacity: 0;
 }
 
@@ -219,6 +235,12 @@ main {
     opacity: 1;
     box-shadow: 0px 0px 12px var(--dark-white);
     transition: all 1s;
+}
+
+@media (max-width: 700px) {
+    .scroll-arrow, .scroll-arrow.small {
+        display: none;
+    }
 }
 
 .cards-container {

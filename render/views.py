@@ -168,12 +168,14 @@ def pathfinding(request, id, x1, y1, x2, y2, name1, name2):
     if res:
         path = [[(i[0] - 652) * MULTIPLIER, (380 - i[1]) * MULTIPLIER, 1] for i in res[2]]
         response_data["path"] = path
+    else:
+        response_data["ERROR"] = "Unable to find path"
 
     return JsonResponse(response_data, status=201)
 
     
 def a_star(start, end, map, doorways, name1, name2):
-    log.debug("called from A*")
+    log.debug(f"called from A*, x_width: {len(map)} y_width: {len(map[0])}")
     
     closed = set()
     open = []
@@ -188,7 +190,7 @@ def a_star(start, end, map, doorways, name1, name2):
         coords, path = node[1], node[2]
         depth = len(path) + 1
         
-        log.debug(f"looking at node {coords}: {map[coords[0]][coords[1]]}")
+        # log.debug(f"looking at node {coords}: {map[coords[0]][coords[1]]}, open: {len(open)}")
 
         if coords[0] == end[0] and coords[1] == end[1]:
             return node
@@ -201,8 +203,8 @@ def a_star(start, end, map, doorways, name1, name2):
                 continue
             
             if tuple(new_coords) not in closed and map[new_coords[0]][new_coords[1]] != 1:
-                if map[new_coords[0]][new_coords[1]] == 2 and (name1 in doorways and new_coords not in doorways[name1]) and (name2 in doorways and new_coords not in doorways[name2]): # Non-passable doorway
-                    continue
+                # if map[new_coords[0]][new_coords[1]] == 2 and (name1 in doorways and new_coords not in doorways[name1]) and (name2 in doorways and new_coords not in doorways[name2]): # Non-passable doorway
+                #     continue
                 closed.add(tuple(new_coords))
                 child_node = (depth + heuristic(new_coords, path, end), new_coords, path + [new_coords])
                 heappush(open, child_node)

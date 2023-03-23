@@ -31,7 +31,10 @@
             <h1 class = "title-text">models</h1>
         </div> 
         
-        <a class = "get-started" href = "{% url 'process:capture' %}">Get Started</a>
+        <a class = "get-started" href = "{% url 'process:capture' %}">
+            Get Started
+            <div class = "page-unload-circle"></div>
+        </a>
     
         <div class = "scroll-arrow" id = "scrollArrow"></div>
         <div class = "scroll-arrow small">
@@ -154,6 +157,7 @@
 
 <script src="{% static 'js/home/cards.js' %}"></script>
 <script src="{% static 'js/home/changing.js' %}"></script>
+<script src="{% static 'js/home/pagechange.js' %}"></script>
 <script src="{% static 'js/home/reveal.js' %}"></script>
 <script src="{% static 'js/home/scroll_arrow.js' %}"></script>
 <script src="{% static 'js/home/slides.js' %}"></script>

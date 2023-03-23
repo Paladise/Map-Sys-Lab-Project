@@ -64,7 +64,7 @@ function addLines(points, group, floor) {
     shape.lineTo((x2 - mid_x + w) * multiplier, (mid_y - y2) * multiplier);
     shape.lineTo((x1 - mid_x + w) * multiplier, (mid_y - y1) * multiplier);
     shape.lineTo((x1 - mid_x) * multiplier, (mid_y - y1) * multiplier);
-
+    
     const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
     const material = new THREE.MeshPhongMaterial({
         color: 0xffffff
@@ -259,13 +259,16 @@ function render_model(model) {
     
     const color = 0xFFFFFF;
     const intensity = 1.5;
-    const light = new THREE.DirectionalLight(color, intensity);
-    light.position.set(400, 400, 800); // HARDCODED  
-    light.target.position.set(0, 0, 0);
-    light.castShadow = true;
-    scene.add(light);
-    scene.add(light.target);
-    const light_helper = new THREE.DirectionalLightHelper(light, 200);
+    const light = new THREE.HemisphereLight( 0xffffff, 0xf7f8f9, 0.6  );
+    light.position.set( 0, 0, 500 );
+    scene.add( light );
+    // const light = new THREE.DirectionalLight(color, intensity);
+    // light.position.set(400, 400, 800); // HARDCODED  
+    // light.target.position.set(0, 0, 0);
+    // light.castShadow = true;
+    // scene.add(light);
+    // scene.add(light.target);
+    const light_helper = new THREE.HemisphereLightHelper(light, 50);
     scene.add(light_helper);
    
     for (let i = 0; i < num_floors; i++) {

@@ -39,7 +39,7 @@ def copy_images(request, id):
         files = result.stdout.strip().split("\n")
         
         for f in files:
-            if "floor" not in f:
+            if "floor" not in f and "symbol" not in f:
                 continue
             copy_res = subprocess.run(["scp", f"{settings.MEDIA_ROOT}maps/{id}/{f}",
                                       f"2023abasto@hpc8.csl.tjhsst.edu:/cluster/2023abasto{settings.MEDIA_URL}{id}/"])
@@ -59,7 +59,7 @@ def create_bash_script(request, id):
             rsh.write('#!/bin/bash\n')
     
             for i, file in enumerate(files):
-                if file[-3:] in ["jpg", "png"]:
+                if file[-3:] in ["jpg", "png"] and not file.startswith("symbol"):
                     rsh.write(f"python process.py {id} {file} &\n")
             
             if len(files) > 1:

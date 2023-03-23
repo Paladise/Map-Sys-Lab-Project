@@ -14,7 +14,7 @@ def flatten_image(filename, debugging = False):
     thresh = cv.inRange(img, lower, upper)
     
     if debugging:
-        cv.imwrite("thresh_before.jpg", thresh) 
+        cv.imwrite("debug_results/thresh_before.jpg", thresh) 
 
     # find all of the connected components (white blobs in your image).
     # im_with_separated_blobs is an image where each detected blob has a different pixel value ranging from 1 to nb_blobs - 1.
@@ -38,7 +38,7 @@ def flatten_image(filename, debugging = False):
             thresh[im_with_separated_blobs == blob + 1] = 255 # Replaces black pixels with white
  
     if debugging:
-        cv.imwrite("thresh_after.png", thresh)
+        cv.imwrite("debug_images/thresh_after.png", thresh)
 
     contours, hierarchy = cv.findContours(thresh, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
     
@@ -66,14 +66,14 @@ def flatten_image(filename, debugging = False):
         print()
         print("Approximation:", approx)   
         cv.rectangle(img, (x, y, x + w, y + h), (0, 0, 255), 2)
-        cv.imwrite("temp.png", img)
+        cv.imwrite("debug_results/flatten_result.png", img)
     
     matrix = cv.getPerspectiveTransform(approx, dest)
     result = cv.warpPerspective(img, matrix, (width, height))
     result = result[y:y+h, x:x+w] # Crop
     
     if debugging: 
-        cv.imwrite("result.png", result)
+        cv.imwrite("debug_results/flatten_result2.png", result)
     
     img = cv.cvtColor(result, cv.COLOR_BGR2RGB)
     img_pil = Image.fromarray(img)
@@ -81,7 +81,7 @@ def flatten_image(filename, debugging = False):
     return img_pil
     
 if __name__ == "__main__":
-#     flatten_image("floor1.jpg", True)
-#     flatten_image("test.jpg",True)
-#     flatten_image("test2.jpg",True)
-    flatten_image("test3.jpg",True)
+#     flatten_image("debug_images/floor1.jpg", True)
+#     flatten_image("debug_images/test.jpg", True)
+#     flatten_image("debug_images/test2.jpg", True)
+    flatten_image("debug_images/test3.jpg", True)

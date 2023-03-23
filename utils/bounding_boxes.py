@@ -22,12 +22,7 @@ def rectangle_overlap(a, b):
     """
     Check if two rectangles overlap so redundant bounding boxes are not detected
     """
-    
-    if a[0] == 774 and a[1] == 811 and a[2] == 711 and a[3] == 811:
-        debug = True
-    else:
-        debug = False
-    
+
     ax1, ax2, orig_ay1, orig_ay2 = a
     bx1, bx2, orig_by1, orig_by2 = b
     
@@ -41,9 +36,6 @@ def rectangle_overlap(a, b):
     by2 = (orig_by1 + orig_by2) / 2 + 4
     
     if ax1 <= bx2 and ax2 >= bx1 and ay1 <= by2 and ay2 >= by1:
-        if debug == True:
-            print(ax1, ax2, ay1, ay2)
-            print(bx1, bx2, by1, by2)
         return True # Overlaps
     else:
         return False # Do not overlap
@@ -125,7 +117,7 @@ def get_bounding_boxes_opencv(filename, max_height = 22, min_height = 9):
 
 
 if __name__ == "__main__":
-    filename = "black_and_white_floor1.png"
-    filename = "test_bounding2.png"
+    filename = "debug_images/black_and_white_floor1.png"
+    filename = "debug_images/test_bounding2.png"
     _, image = get_bounding_boxes_beta(filename)
-    image.save("bounding_boxes.png")
+    image.save("debug_results/bounding_boxes.png")

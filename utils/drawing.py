@@ -12,11 +12,6 @@ def flood(pixels, x, y, found, min_x, max_x, min_y, max_y, width, height):
     if x < 0 or y < 0 or x >= width or y >= height:
         return found, min_x, max_x, min_y, max_y
 
-#     try: # Crude way of making sure pixel is not outside of image
-#         pixels[x, y]
-#     except:
-#         return found, min_x, max_x, min_y, max_y
-
     if pixels[x, y] == (0, 0, 0) and (x, y) not in found and len(found) < 10000: # Found unvisited black pixel, checking if < 10000 so don't get recursion error
         found.add((x, y))
 

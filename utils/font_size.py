@@ -3,6 +3,12 @@ import pytesseract
 from PIL import Image
 
 def get_bound_font_size(filename, d, weak_confidence, high_confidence):
+    """
+    Get the approximate biggest and smallest font sizes in the image to make it
+    easier to determine bounding boxes later on. Does this by running an initial,
+    rudimentary pytesseract check first.
+    """
+    
     TESSERACT_DIR_CONFIG = '--tessdata-dir "/cluster/2023abasto/local/share/tessdata"'
     pytesseract.pytesseract.tesseract_cmd = r"/cluster/2023abasto/tesseract-5.1.0/tesseract"
 
@@ -36,7 +42,8 @@ def get_bound_font_size(filename, d, weak_confidence, high_confidence):
                 print("Text: {}".format(text))
                 print("Minimum height allowed will be:", min_height)
                 print()
-                    
+                                    
+    # Add extra allowance
     max_height += 5
     min_height -= 5
     return max_height, min_height

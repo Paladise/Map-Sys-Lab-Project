@@ -206,19 +206,4 @@ def simplify_map(rooms, image):
                 else:
                     break
                                
-    return image2, doorways
-
-    
-if __name__ == "__main__": # For debugging
-    import json
-    from PIL import Image
-    blank_map = Image.open("map.png")
-    
-    with open("render_floor1.json") as f:
-        data = json.load(f)
-    
-    rooms = data["rooms"]
-        
-    image2, doorways = simplify_map(rooms, blank_map)
-    image2.save("map_lines2.png")
-    
+    return image2, doorways    

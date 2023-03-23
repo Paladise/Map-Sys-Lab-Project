@@ -7,6 +7,7 @@
 Fix bugs :D
 
 **Processing**
+* Detect room names that are text-wrapped
 * Update symbol detection 
     * Add functionality to send image(s) of key and detect symbols with it
 
@@ -22,8 +23,6 @@ Fix bugs :D
 
 ## Future Ideas
 * Add automatic stairway detection (ones represented by striped lines)
-* Detect room names that are text-wrapped
 * Detect room names that are vertically-oriented
 * Improve general accuracy
 * Find multiple possible paths
-* Add option to only search for paths that use elevators (for accessibility needs)

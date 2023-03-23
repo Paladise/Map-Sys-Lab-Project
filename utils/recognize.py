@@ -6,6 +6,8 @@ SIMILARITY_THRESHOLDS = []
 ALLOWED_ROOM_NAMES = None
 WIDTH, HEIGHT = None, None
 MAX_FONT_SIZE = None
+DIRECTORY = None
+SYMBOL_FILES = None
 TESSERACT_DIR_CONFIG = '--tessdata-dir "/cluster/2023abasto/local/share/tessdata"'
 
 DIST_BETWEEN_LETTERS = 15
@@ -87,7 +89,7 @@ def generate_name(color_pixels, orig_pixels, cur_box, used_boxes, detected_name,
 
     ax1, ax2, ay1, ay2 = cur_box
     
-    symbol = detect_if_symbol(color_pixels, SIMILARITY_THRESHOLDS, ax1, ax2, ay1, ay2)    
+    symbol = detect_if_symbol(color_pixels, SIMILARITY_THRESHOLDS, ax1, ax2, ay1, ay2, DIRECTORY, SYMBOL_FILES)    
     if symbol: # Check if bounding box contains a symbol
         symbols[cur_box] = (symbol, len(detected_name))
         
@@ -138,6 +140,8 @@ def flood_y(pixels, x, prev_x):
     if start_y:
         for i in (-1, 1):
             y = start_y
+            if i == 1: # Don't have duplicate
+                y += 1
             while True:
                 if pixels[x, y] == (0, 0, 0) and len(found) <= MAX_FONT_SIZE:
                     found.append(y)
@@ -183,11 +187,16 @@ def find_more_chars(pixels, x1, x2, y1, y2, i):
 
     prev_x = [y for y in range(y1, y2) if pixels[start_x, y] == (0, 0, 0)]
     
+    if not prev_x: # OpenCV weird bounding boxes not bounding correctly
+        prev_x = [(y1 + y2) // 2] # Just set initial y to middle value
+    
     x = start_x
     space = 0
     found = False
+    cur_x = None
 
     while True: 
+#         print("Find more x:", x, "prev_x:", prev_x, "cur_x:", cur_x, "space:", space, "found:", found)
         x += i
         
         if x == 0 or x == WIDTH - 1:
@@ -215,12 +224,7 @@ def find_more_chars(pixels, x1, x2, y1, y2, i):
 #             if space == 5:
 #                 return None
             
-#             space += 1
-
-        cur_x = flood_y(pixels, x, prev_x)   
-
-        if found:
-            prev_x = cur_x    
+        cur_x = flood_y(pixels, x, prev_x)     
 
         if len(cur_x) > MAX_FONT_SIZE: # Most likely a wall
             break
@@ -234,11 +238,14 @@ def find_more_chars(pixels, x1, x2, y1, y2, i):
 
         if space == 5 or x < 0 or x > WIDTH: # Only found empty space 
             return None
+        
+        if found:
+            prev_x = cur_x  
 
     return x, y1, y2 # Return updated x boundary, and y-values
  
 
-def process_image(boxes, color_image, bw_image, thresholds, allowed, max_height):
+def process_image(boxes, color_image, bw_image, thresholds, allowed, max_height, directory, symbol_files):
     """
     Process the entire image to identify all integral parts using already-identified boxes.
     """
@@ -248,11 +255,13 @@ def process_image(boxes, color_image, bw_image, thresholds, allowed, max_height)
     pixels = bw_image.load()
     color_pixels = color_image.load()
     
-    global SIMILARITY_THRESHOLDS, ALLOWED_ROOM_NAMES, WIDTH, HEIGHT, MAX_FONT_SIZE, DIST_BETWEEN_LETTERS, DIST_FOR_SPACE, Y_THRESHOLD
+    global SIMILARITY_THRESHOLDS, ALLOWED_ROOM_NAMES, WIDTH, HEIGHT, MAX_FONT_SIZE, DIST_BETWEEN_LETTERS, DIST_FOR_SPACE, Y_THRESHOLD, DIRECTORY
     SIMILARITY_THRESHOLDS = thresholds
     ALLOWED_ROOM_NAMES = allowed
     WIDTH = blank_image.size[0]
     HEIGHT = blank_image.size[1]
+    DIRECTORY = directory
+    SYMBOL_FILES = symbol_files
     MAX_FONT_SIZE = max_height
     if MAX_FONT_SIZE >= 50: # Create bigger constants for bigger text
         DIST_BETWEEN_LETTERS = 20

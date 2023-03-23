@@ -77,7 +77,7 @@ def get_doorways(image, rooms):
             while ins(point) and pixels[point[0], point[1]] == WHITE: # Travel along potential hallway area
                 point[j] += d
                
-            end = point[j]
+            end = point[j] - d # Go back one pixel
             
             if not ins(point): # Reached end of map, shouldn't be a hallway
                 continue
@@ -95,8 +95,6 @@ def get_doorways(image, rooms):
             # Limit distance of how far it traveled along blank area since usually looks out onto a small-length hallway
             if abs(begin - end) > 100:
                 continue
-                
-            #TODO: CHANGE HOW FAR RECTANGLE GOES
               
             if all(not rectangle_overlap(rect, r2) for r2 in rooms if r != r2): # If no intersection, new area is hallway 
                 remove_box(pixels, rect[0], rect[1], rect[2], rect[3]) # Replace all walls with blank pixels

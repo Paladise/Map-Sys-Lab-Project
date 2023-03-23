@@ -3,13 +3,17 @@ import numpy as np
 from skimage.measure import approximate_polygon, find_contours
 
 def get_rectangles(img):
+    """
+    Get rectangles of potential walls in the image by using approximate_polygons()
+    """
+    
     img = np.array(img.convert('L')) # Convert to opencv format
-    contours = find_contours(img, 0)
+    contours = find_contours(img) # Find contours in image
     rectangles = []
 
     for contour in contours:
         # increase tolerance to further reduce number of lines
-        polygon = approximate_polygon(contour, tolerance=10)
+        polygon = approximate_polygon(contour, tolerance=4)
 
         polygon = polygon.astype(np.int).tolist()
 

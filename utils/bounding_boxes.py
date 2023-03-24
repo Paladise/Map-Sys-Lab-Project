@@ -9,6 +9,7 @@ except:
     from drawing import draw_square, draw_boxes
 
 WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
 
 def get_bounding_boxes(filename, max_height, min_height):
     """
@@ -57,6 +58,14 @@ def clear_perimeter(boxes_pixels, b):
         
     return True 
 
+def check_interior(pixels, x1, x2, y1, y2):
+    """
+    Check if the interior of a bounding box is also made up of pixels, in other words,
+    check if there are some pixels inside the bounding boxes that are not immediately next to the perimeter
+    """
+    
+    return any(pixels[x, y] == BLACK for x in range(x1 + 2, x2 - 1) for y in range(y1 + 2, y2 - 1))
+            
 def get_bounding_boxes_opencv(filename, max_height = 22, min_height = 9):
     """
     Determine bounding boxes using opencv findContours() method
@@ -76,8 +85,18 @@ def get_bounding_boxes_opencv(filename, max_height = 22, min_height = 9):
     for index, c in enumerate(contours):
         x,y,w,h = cv.boundingRect(c)
         if  h >= min_height and h <= max_height and w > 1:
-            boxes.append((x, x + w, y, y + h))
-            indices.append(index)
+            if w <= 4 or h <= 4 or check_interior(boxes_pixels, x, x + w, y, y + h):
+                boxes.append((x, x + w, y, y + h))
+                indices.append(index)
+    
+      # Debugging
+#     for b in boxes:
+#         x1, x2, y1, y2 = b
+#         hasdf,s,l = random(), 0.5 + random()/2.0, 0.4 + random()/5.0
+#         rgb = tuple([int(256*i) for i in hls_to_rgb(hasdf,l,s)]) 
+#         draw_square(boxes_pixels, x1, x2, y1, y2, rgb)
+        
+#     return boxes, boxes_image
     
     # Remove redundant bounding boxes
     new_boxes = []
@@ -85,7 +104,7 @@ def get_bounding_boxes_opencv(filename, max_height = 22, min_height = 9):
     for i1, b1 in enumerate(boxes):
         if any(rectangle_overlap(b1, b2) for b2 in boxes if b1 != b2) or clear_perimeter(boxes_pixels, b1):
         
-            # Mark a box as a bounding box only if it overlaps another box 
+            # Mark a box as a bounding box only if it "overlaps" another box 
             # (i.e. part of same room name)
             # Or since a box may contain a full word, mark it if it is surrounded
             # by blank pixels, since will be in center of room
@@ -119,5 +138,5 @@ def get_bounding_boxes_opencv(filename, max_height = 22, min_height = 9):
 if __name__ == "__main__":
     filename = "debug_images/black_and_white_floor1.png"
     filename = "debug_images/test_bounding2.png"
-    _, image = get_bounding_boxes_beta(filename)
+    _, image = get_bounding_boxes_opencv(filename)
     image.save("debug_results/bounding_boxes.png")

@@ -7,7 +7,34 @@ try:
 except:
     from drawing import remove_box
 
-THRESHOLD = .6 # Threshold needed to identify something as a symbol
+THRESHOLD = .65 # Threshold needed to identify something as a symbol
+BLACK = (0, 0, 0)
+
+def flood(pixels, x, y, found, min_x, max_x, min_y, max_y, width, height):
+    """
+    Flood Fill
+    """
+    
+    if x < 0 or y < 0 or x >= width or y >= height:
+        return found, min_x, max_x, min_y, max_y
+
+    if pixels[x, y] == BLACK and (x, y) not in found and len(found) < 400:
+        found.add((x, y))
+
+        if x < min_x:
+            min_x = x
+        elif x > max_x:
+            max_x = x
+
+        if y < min_y:
+            min_y = y
+        elif y > max_y:
+            max_y = y
+
+        for x1, y1 in ((-1, 0), (1, 0), (0, -1), (0, 1)):             
+            found, min_x, max_x, min_y, max_y = flood(pixels, x + x1, y + y1, found, min_x, max_x, min_y, max_y, width, height)
+                
+    return found, min_x, max_x, min_y, max_y
 
 def find_symbols(pil_image, pos_symbols, directory, symbol_files, debugging = False):
     """
@@ -38,12 +65,38 @@ def find_symbols(pil_image, pos_symbols, directory, symbol_files, debugging = Fa
             
             if amount <= 1: # Ignore all ones that are close to other symbols
                 if all((abs(x - x1) + abs(y - y1)) > 100 for x1, y1 in symbols[symbol]): # Add padding to prevent duplicates
+                    
+                    # Attempt to expand boundaries since template image might have not have same size as actual symbol on map
+                
+                    found_start = False
+                    
+                    start_x, start_y = x, y
+                    for x1 in range(x, x + w):
+                        if not found_start:
+                            for y1 in range(y, y + h):
+                                if not found_start:
+                                    if pixels[x1, y1] == BLACK:
+                                        start_x = x1
+                                        start_y = y1
+                                        found_start = True
+                                else:
+                                    break
+                        else:
+                            break
+                                
+                    found, min_x, max_x, min_y, max_y = flood(pixels, start_x, start_y, set(), x, x + w, y, y + h, image.shape[1], image.shape[0])
+                    
+                    w, h = template.shape[:-1]
+                    
+                    if len(found) < 400 and 2*w > (max_x - min_x) and 2*h > (max_y - min_y):
+                        x, y, w, h = min_x, min_y, max_x - min_x, max_y - min_y
+                    
                     remove_box(pixels, x, x + w, y, y + h)
                     if debugging:
                         if symbol in "stairs":
-                            cv.rectangle(image, pt, (x + w, y + h), (0, 0, 255), 1)
+                            cv.rectangle(image, (x, y), (x + w, y + h), (0, 0, 255), 1)
                         else:
-                            cv.rectangle(image, pt, (x + w, y + h), (0, 255, 0), 1)
+                            cv.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 1)
                     symbols[symbol].append((x + w//2, y + h//2)) # Append midpoint
     
     if debugging:
@@ -69,7 +122,7 @@ def integrate_detected(rooms, found_symbols, stair_coords):
 
     
 if __name__ == "__main__":
-    symbols, image = find_symbols(Image.open("debug_images/blank2.png"), ["door", "stairs"], "debug_images/", {"door.png": "door", "stairs.png": "stairs"}, True)
+    symbols, image = find_symbols(Image.open("debug_images/blank2.png"), ["door", "stairs", "sign"], "debug_images/", {"door.png": "door", "stairs.png": "stairs", "symbolsignage.png": "sign"}, True)
     
     image.save("debug_results/search_result.png")
     

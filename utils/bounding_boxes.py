@@ -64,7 +64,7 @@ def check_interior(pixels, x1, x2, y1, y2):
     check if there are some pixels inside the bounding boxes that are not immediately next to the perimeter
     """
     
-    return any(pixels[x, y] == BLACK for x in range(x1 + 2, x2 - 1) for y in range(y1 + 2, y2 - 1))
+    return any(pixels[x, y] == BLACK for x in range(x1 + 2, x2 - 1) for y in range(y1 + 2, y2 - 2))
             
 def get_bounding_boxes_opencv(filename, max_height = 22, min_height = 9):
     """

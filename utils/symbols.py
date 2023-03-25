@@ -26,19 +26,31 @@ def get_symbols(directory):
     
     for file in files:
         filedir = directory + file
-        tresh_min, tresh_max = 128, 255
+        tresh_min, tresh_max = 175, 255
         cv_image = cv.imread(filedir)
         im_bw = cv.cvtColor(cv_image, cv.COLOR_RGB2GRAY)
         (thresh, im_bw) = cv.threshold(im_bw, tresh_min, tresh_max, 0)
         contours, hierarchy = cv.findContours(im_bw, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
         cs = sorted(contours, key = cv.contourArea, reverse = True)
+        
+        pil_image = Image.fromarray(im_bw)
+        pixels = pil_image.load()
+        
+        pil_image.save(directory + "cropped" + file)
 
         c = cs[0]
         x, y, w, h = cv.boundingRect(c)
+        height, width = cv_image.shape[0], cv_image.shape[1]
 
-        if not ((abs(w - cv_image.shape[0]) <= 1 or abs(h - cv_image.shape[1]) <= 1) and cv_image.shape[0] < 50):
+        print(x, y, w, h)
+        print(width, height)
+        
+        if (abs(w - width) <= 1 and abs(h - height) <= 1) and all(pixels[x, 0] == 255 for x1 in range(width)):
+            print("Taking second contour for file:", file)
             c = cs[1] # Sometimes bounding box may be whole image so take second contour
-
+            
+#         input("waiting for file: " + file)    
+        
         x, y, w, h = cv.boundingRect(c)
         pil_image = Image.open(filedir)
         new_image = pil_image.crop((x, y, x + w, y + h))

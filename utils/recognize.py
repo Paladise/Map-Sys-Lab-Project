@@ -337,7 +337,7 @@ def process_image(boxes, color_image, bw_image, thresholds, allowed, max_height,
                 continue
             
             if confidence == 0 and ((full_word.isnumeric() and len(full_word) == len(detected_name) - 1) or symbols.keys()):
-                print("Changed confidence because of pytessseract bug")
+                print("Changed confidence because of pytesseract bug")
                 confidence = CHANGED        
             
             if confidence < CONFIDENCE_THRESHOLD: # Expand boundaries
@@ -419,6 +419,14 @@ def process_image(boxes, color_image, bw_image, thresholds, allowed, max_height,
                                     x2 = detected_name[i - 1][1]
                                 
                             break
+                            
+                if len(full_word) >= 3 and full_word[0] == "B" and full_word[1] == "8" and full_word[2:].isnumeric(): # Pytesseract probably identified the 8 twice (once as a B)
+                    full_word = full_word[1:]
+                    print("Potential pytesseract bug with B and 8, new is:", full_word)
+                    actual_boxes.append((x1, x2, y1, y2))
+                    rooms.append((full_word, ((first_char[0] + first_char[1])//2, (y1 + y2)//2)))
+                    remove_box(pixels, x1, x2, y1, y2)
+                    continue
 
                 # Get word suggestions
     

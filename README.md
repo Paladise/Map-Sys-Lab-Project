@@ -7,7 +7,8 @@
 Fix bugs :D
 
 **Processing**
-* Detect room names that are text-wrapped
+* Create unique identifier for each name for navigation
+* Remove incorrect room names by looking at near-by room names and see if it is likely to be located there
 
 **Navigation**
 * Multi-floor pathfinding
@@ -17,9 +18,10 @@ Fix bugs :D
 **User-Interface**
 * Render staircases & elevators
 * Add indoor-lighting
+* Update upload / capture page layout & CSS
 
 ## Future Ideas
 * Add automatic stairway detection (ones represented by striped lines)
 * Find multiple possible paths
 * Detect room names that are vertically-oriented
-* Improve general accuracy
+* Improve accuracy

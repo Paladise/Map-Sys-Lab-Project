@@ -45,16 +45,16 @@ def find_symbols(pil_image, pos_symbols, directory, symbol_files, debugging = Fa
     pixels = pil_image.load()
     symbols = {}
     
-    for file, symbol in symbol_files.items():
+    for file, symbol in symbol_files.items(): # For every symbol
         symbols[symbol] = []
-        template = cv.imread(directory + file)
+        template = cv.imread(directory + file) # Get template (uploaded-separately) symbol
         w, h = template.shape[:-1]
 
-        res = cv.matchTemplate(image, template, cv.TM_CCOEFF_NORMED)
+        res = cv.matchTemplate(image, template, cv.TM_CCOEFF_NORMED) # Use openCV to match it in map image
     
         loc = np.where(res >= THRESHOLD)
-        pos_points = [pt for pt in zip(*loc[::-1])]
-        for pt in pos_points:  # Switch columns and rows      
+        pos_points = [pt for pt in zip(*loc[::-1])] # Switch columns and rows  
+        for pt in pos_points:      
             x, y = pt[0], pt[1]
             
             amount = 0
@@ -104,7 +104,6 @@ def find_symbols(pil_image, pos_symbols, directory, symbol_files, debugging = Fa
     
     return symbols, pil_image
 
-
 def integrate_detected(rooms, found_symbols, stair_coords):
     """
     Combine found rooms and symbols into one array for simpler exporting
@@ -112,12 +111,28 @@ def integrate_detected(rooms, found_symbols, stair_coords):
     
     for symbol, list_of_coords in found_symbols.items():
         for coord in list_of_coords:
-            x, y = coord[0], coord[1]
-            rooms.append([symbol.capitalize(), x, y])
+            
+            
+            # Attempt to combine names detected near symbols into one label
+            
+            combined = False             
+            x, y = coord[0], coord[1]            
+            for room in rooms:
+                label, x1, y1 = room[0], room[1], room[2]
+                
+                if abs(y - y1) < 5 and x < x1 and x1 - x < 25: # Possibly should be one label
+                    combined = True
+                    rooms.remove(room)
+                    new_label = symbol.capitalize() + " " + label
+                    rooms.append([new_label, x, y])
+                    break
+                    
+            if not combined: # Did not combine with any existing room names        
+                rooms.append([symbol.capitalize(), x, y])
             
             if symbol.lower() in ["stair", "stairs", "stairway"]:
                 stair_coords.append([x, y])
-    
+
     return rooms, stair_coords
 
     

@@ -4,25 +4,25 @@
 
 ## Features In Progress
 
-Fix bugs :D ^1^^2^
+Fix bugs :D <sup>1, 2</sup>
 
-**Processing** ^1^
+**Processing** <sup>1</sup>
 * Create unique identifier for each name for navigation
 * Detect text-wrapping
 * Remove incorrect room names by looking at near-by room names and see if it is likely to be located there
 
 **Navigation**
-* Multi-floor pathfinding ^2^
+* Multi-floor pathfinding <sup>2</sup>
     * Sync up floors to match based on stairs
-* Replace hard-coded values ^2^
-* Update pathfinding ^1^
+* Replace hard-coded values <sup>2</sup>
+* Update pathfinding <sup>1</sup>
     * Don't let it hug walls
 
 **User-Interface**
-* Render staircases & elevators ^2^
-* Render entire building ^2^
-* Add indoor-lighting ^2^
-* Update upload / capture page layout & CSS ^1^
+* Render staircases & elevators <sup>2</sup>
+* Render entire building <sup>2</sup>
+* Add indoor-lighting <sup>2</sup>
+* Update upload / capture page layout & CSS <sup>1</sup>
 
 ## Future Ideas
 * Add automatic stairway detection (ones represented by striped lines)

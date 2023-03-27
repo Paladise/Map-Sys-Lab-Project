@@ -9,7 +9,7 @@ Fix bugs :D <sup>1, 2</sup>
 **Processing** <sup>1</sup>
 * Create unique identifier for each name for navigation
 * Detect text-wrapping
-* Remove incorrect room names by looking at near-by room names and see if it is likely to be located there
+* Remove incorrect room names by looking at nearby room names and see if it is likely to be located there
 
 **Navigation**
 * Multi-floor pathfinding <sup>2</sup>

@@ -132,8 +132,23 @@ def integrate_detected(rooms, found_symbols, stair_coords):
             
             if symbol.lower() in ["stair", "stairs", "stairway"]:
                 stair_coords.append([x, y])
+                
+    # Create unique identifier for repeated labels
+    
+    new_rooms = []
+    new_labels = set()
+    
+    for i, room in enumerate(rooms):
+        label = room[0]
+        count = 0
+        while any(label == rooms[j][0] for j in range(len(rooms)) if j != i) or label in new_labels: # Has matching label
+            count += 1 # Increment label until finds unique one
+            label = room[0] + "-" + str(count)
+            
+        new_rooms.append([label, room[1], room[2]])       
+        new_labels.add(label)
 
-    return rooms, stair_coords
+    return new_rooms, stair_coords
 
     
 if __name__ == "__main__":

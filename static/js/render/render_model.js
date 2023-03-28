@@ -21,6 +21,11 @@ var textHeight = 40; // Distance from text to respective floor
 var mid_x = 652;
 var mid_y = 380; // HARDCODED
 
+const texture = new THREE.TextureLoader().load( "/static/textures/plaster.jpg" ); // Hardcoded static path, should do it separately
+texture.wrapS = THREE.RepeatWrapping;
+texture.wrapT = THREE.RepeatWrapping;
+texture.repeat.set( 2, 2 );
+
 function addText(text, x, y, group, floor, mid_x, mid_y) {
     /* Function to add room names at certain locations */
     
@@ -66,8 +71,9 @@ function addLines(points, group, floor) {
     shape.lineTo((x1 - mid_x) * multiplier, (mid_y - y1) * multiplier);
     
     const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-    const material = new THREE.MeshPhongMaterial({
-        color: 0xffffff
+    const material = new THREE.MeshBasicMaterial({
+        // color: 0xffffff
+        map: texture
     });
     const mesh = new THREE.Mesh(geometry, material);
     mesh.castShadow = true;

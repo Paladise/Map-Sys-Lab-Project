@@ -8,6 +8,8 @@ except:
     from drawing import remove_box
 
 THRESHOLD = .65 # Threshold needed to identify something as a symbol
+WALL_PROXIMITY = 25
+BELOW_PROXIMITY = 40
 BLACK = (0, 0, 0)
 
 def flood(pixels, x, y, found, min_x, max_x, min_y, max_y, width, height):
@@ -104,10 +106,12 @@ def find_symbols(pil_image, pos_symbols, directory, symbol_files, debugging = Fa
     
     return symbols, pil_image
 
-def integrate_detected(rooms, found_symbols, stair_coords):
+def integrate_detected(rooms, found_symbols, stair_coords, image):
     """
-    Combine found rooms and symbols into one array for simpler exporting
+    Combine found rooms and symbols into one array for simpler exporting. Also create unique IDs for labels.
     """
+    
+    pixels = image.load()
     
     for symbol, list_of_coords in found_symbols.items():
         for coord in list_of_coords:
@@ -132,7 +136,49 @@ def integrate_detected(rooms, found_symbols, stair_coords):
             
             if symbol.lower() in ["stair", "stairs", "stairway"]:
                 stair_coords.append([x, y])
+        
+    # Detect text-wrapping
+    
+    new_rooms = []
+    used_rooms = []
+    
+    for room in rooms: # For each room label
+        label, x, y = room[0], room[1], room[2]
+        
+        if any(pixels[x1, y1] == BLACK for x1 in range(x, x + WALL_PROXIMITY) for y1 in range(y - 4, y + 4)):
+            # There is a black pixel (potential dash or wall) to the right of the room label within certain proximity
+            
+            found = False
+            
+            for room2 in rooms: # Go through rooms again to ones that are below it
+                label2, x1, y1 = room2[0], room2[1], room2[2] 
                 
+                if x == x1 and y == y1: # Room we are currently on, so skip
+                    continue
+                    
+                if abs(x - x1) < 10 and y1 > y and y1 - y < 30: # Found possible room label
+                    
+                    if any(pixels[x2, y2] == BLACK for x2 in range(x, x1) for y2 in range(y, y1)): 
+                        continue # Found obstruction between two labels so ignoring
+                    
+                    if (label in [i.capitalize() for i in found_symbols.keys()] and label2.isnumeric()) or (label.isnumeric() and label2.isalpha()):
+                        
+                        # Top one is symbol and bottom is numbers or top one is numbers and bottom is word
+            
+                        label += " " + label2 # Connect two labels
+                
+                        used_rooms.append(room2)
+                
+                        found = True
+                        break
+                        
+                if found:
+                    break
+                    
+        new_rooms.append([label, x, y])
+    
+    rooms = [room for room in new_rooms if room not in used_rooms]
+    
     # Create unique identifier for repeated labels
     
     new_rooms = []

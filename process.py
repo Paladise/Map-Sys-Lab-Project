@@ -47,23 +47,26 @@ boxes_image.save(DIRECTORY + f"boxes_{READ_FROM[:-4]}.png")
 print("Processing image...")
 rooms, blank_image, actual_boxes, stair_coords = process_image(boxes, original_image, bw_image, SIMILARITY_THRESHOLDS, ALLOWED_ROOM_NAMES, MAX_FONT_SIZE, DIRECTORY, SYMBOL_FILES) 
 
+blank_image.save(DIRECTORY + f"temp_blank_map_{READ_FROM[:-4]}.png")
+
+print("stairs BEFORE:", stair_coords)
+
 print("Getting symbols that we might have missed...")
 found_symbols, blank_image = find_symbols(blank_image, POS_SYMBOLS, DIRECTORY, SYMBOL_FILES)
-rooms, stair_coords = integrate_detected(rooms, found_symbols, stair_coords)
+rooms, stair_coords = integrate_detected(rooms, found_symbols, stair_coords, blank_image)
+
+print("Getting rectangles...")
+rectangles, _ = get_rectangles(blank_image, WIDTH, HEIGHT, rooms)
 
 print("Getting doorways...")
 blank_image = get_doorways(blank_image, actual_boxes)
 blank_pixels = blank_image.load()
 blank_image.save(DIRECTORY + f"blank_map_{READ_FROM[:-4]}.png")
 
-print("Getting rectangles...")
-rectangles = get_rectangles(blank_image)
-doorways = {}
-
-# print("Getting paths and doorways...")
-# blank_image, doorways = simplify_map(rooms, blank_image)
-# blank_pixels = blank_image.load()
-# blank_image.save(DIRECTORY + f"pathways_{READ_FROM[:-4]}.png")
+print("Getting paths and doorways...")
+blank_image, doorways = simplify_map(rooms, blank_image)
+blank_pixels = blank_image.load()
+blank_image.save(DIRECTORY + f"pathways_{READ_FROM[:-4]}.png")
 
 print("Saving paths...")
 map = [[1 if blank_pixels[x, y] == (0, 0, 0) else 2 if blank_pixels[x, y] == (255, 255, 0) else 0 for y in range(HEIGHT)] for x in range(WIDTH)] # 1 is for everything that is not a path, 0 is for the paths, and 2 is for doorways            

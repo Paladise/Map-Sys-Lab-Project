@@ -8,26 +8,27 @@ Fix bugs :D <sup>1, 2</sup>
 
 **Processing** <sup>1</sup>
 * Detect text-wrapping
-* Remove incorrect room names by looking at nearby room names and see if it is likely to be located there
 
 **Navigation**
 * Multi-floor pathfinding <sup>2</sup>
     * Sync up floors to match based on stairs
     * Look into matching through similar wall-layouts?
 * Replace any hard-coded values <sup>2</sup>
-* Update pathfinding <sup>1</sup>
-    * Don't let it hug walls
 
 **User-Interface**
-* Render staircases & elevators <sup>2</sup>
-* Render entire building <sup>2</sup>
-* Add indoor-lighting <sup>2</sup>
+* Render staircases <sup>2</sup>
+* Combine floors to render entire building <sup>2</sup>
 * Update upload / capture page layout & CSS <sup>1</sup>
-    * Create mini-tutorial / tooltips
 
 ## Future Ideas
 * Add automatic stairway detection (ones represented by striped lines)
+* Add automatic doorway detection (ones represented by quarter-circles)
 * Find multiple possible paths
 * Improve detection accuracy
     * Detect room names that are vertically-oriented
+    * Detect room names that are on top of walls
 * Generate specific directions based on path
+* Allow users to add or remove room names
+* Render elevators 
+* Better creation for diagonal walls (doesn't create massive blob)
+* Create mini-tutorial / tooltips

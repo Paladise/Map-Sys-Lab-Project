@@ -61,6 +61,7 @@ input {
     line-height: 40px;
     text-align: center;
     cursor: pointer;
+    border-radius: 5px;
 }
 
 .upload-icon {
@@ -73,6 +74,11 @@ input {
     line-height: 30px;
     padding-right: 10px;
     display: block;
+}
+
+input.file-info {
+    border: none;
+    border-bottom: 1px solid var(--dark-blue);
 }
 
 .symbol-input {

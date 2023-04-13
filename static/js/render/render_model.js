@@ -1,6 +1,6 @@
 var path, model_json, scene, scene2, renderer, camera, controls, groups, visibility, group, insetwidth, insetheight, size, travel, pathPoints, pathPointsFloors, window_width;
 var mainContainer, modelContainer, togglePanelBtn, navPanel, floorBtn, room1, room2, findPathButton, pauseText;
-var roomsContainer, floorBtnContainer, findPathContainer, pauseContainer, floorHeading;
+var roomsContainer, floorBtnContainer, findPathContainer, pauseContainer, floorHeading, numFloors;
 
 const extrudeSettings = {
     steps: 2,
@@ -21,13 +21,14 @@ var textHeight = 40; // Distance from text to respective floor
 var mid_x = 652;
 var mid_y = 380; // HARDCODED
 
+// Wall texture
 const texture = new THREE.TextureLoader().load( "/static/textures/plaster.jpg" ); // Hardcoded static path, should do it separately
 texture.wrapS = THREE.RepeatWrapping;
 texture.wrapT = THREE.RepeatWrapping;
 texture.repeat.set( 2, 2 );
 
 function addText(text, x, y, group, floor, mid_x, mid_y) {
-    /* Function to add room names at certain locations */
+    /* Function to add text labels at certain locations */
     
     var loader = new THREE.FontLoader();
     loader.load('https://threejs.org/examples/fonts/optimer_regular.typeface.json', function(font) {
@@ -41,6 +42,9 @@ function addText(text, x, y, group, floor, mid_x, mid_y) {
             color: 0x000000,
             visible: true
         });
+        
+        // Create two meshes for text, one for bird-eye view camera and one for first-person view
+        
         var mesh = new THREE.Mesh(textGeo, textMaterial);
         mesh.position.set((x - mid_x) * multiplier, (mid_y - y) * multiplier, floorHeight+floor*textHeight);
         mesh.name = "text1";
@@ -117,6 +121,8 @@ function toggle_panel() {
     document.getElementsByClassName("menu")[0].classList.toggle("collapsed");
 }
 
+var slowDown = 0;
+
 function animate() {
     requestAnimationFrame(animate);
     controls.update();
@@ -180,7 +186,14 @@ function animate() {
             }
         }
         
-        n++;
+        if(slowDown == 1) {
+            n++; 
+            slowDown = 0;
+        }else{
+            slowDown = 1;
+        }
+        
+        
     }
 };
 
@@ -188,7 +201,7 @@ function render_model(model) {
     $('#loadingText').html("Rendering model...");
     
     //Get JSON model attributes
-    const num_floors = model["num_floors"];
+    numFloors = model["num_floors"];
     
     // Setting initial values
     
@@ -274,10 +287,10 @@ function render_model(model) {
     // light.castShadow = true;
     // scene.add(light);
     // scene.add(light.target);
-    const light_helper = new THREE.HemisphereLightHelper(light, 50);
-    scene.add(light_helper);
+    // const light_helper = new THREE.HemisphereLightHelper(light, 50);
+    // scene.add(light_helper);
    
-    for (let i = 0; i < num_floors; i++) {
+    for (let i = 0; i < numFloors; i++) {
         let list_of_text = model[(i + 1).toString()]["rooms"];
         let list_of_points = model[(i + 1).toString()]["points"];
         group = new THREE.Group();
@@ -315,6 +328,7 @@ function render_model(model) {
     animate();  
     renderer.domElement.addEventListener("click", toggle_navigation);
     window.addEventListener("resize", resize);
+    window.addEventListener("orientationchange", resize);
     if (screen.orientation) {
         screen.orientation.addEventListener("change", resize); // Mobile devices
     }

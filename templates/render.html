@@ -71,17 +71,37 @@
 
 <script type="text/javascript">
 function findPath() {
-    result1 = model_json["1"]["rooms"].find(room => room[0] == room1.value);
-    result2 = model_json["1"]["rooms"].find(room => room[0] == room2.value);
     
-    if(result1 && result2) {
+    // Find rooms (and their coordinates / floors)
+    
+    for(let i = 1; i <= numFloors; i++) {
+        let res;
+        res = model_json[i.toString()]["rooms"].find(room => room[0].toLowerCase() == room1.value.toLowerCase());
+        
+        if(res) {
+            result1 = res;
+            result1.push(i); // Add floor number
+        }
+        
+        res = model_json[i.toString()]["rooms"].find(room => room[0].toLowerCase() == room2.value.toLowerCase());
+        
+        if(res) {
+            result2 = res;
+            result2.push(i); // Add floor number
+        }
+    }
+    
+    if(result1 && result2) { // Found both rooms in our model
         name1 = result1[0];
         name2 = result2[0];
         x1 = result1[1];
         y1 = result1[2];
+        f1 = result1[3];
         x2 = result2[1];
         y2 = result2[2];
-        var url = "{% url 'render:pathfinding' id=id x1=11111 y1=22222 x2=33333 y2=44444 name1=55555 name2=66666 %}";
+        f2 = result2[3];
+        // Flawless code here
+        var url = "{% url 'render:pathfinding' id=id x1=11111 y1=22222 x2=33333 y2=44444 name1=55555 name2=66666 floor1=77777 floor2=88888 %}";
         url = url.replace("11111", x1.toString());
         url = url.replace("22222", y1.toString());
         url = url.replace("33333", x2.toString());
@@ -89,15 +109,19 @@ function findPath() {
         url = url.replace("44444", y2.toString());
         url = url.replace("55555", name1);
         url = url.replace("66666", name2);
+        url = url.replace("77777", f1);
+        url = url.replace("88888", f2);
         console.log(url);
         $.ajax({
             url:  url,
             success: function(data) {
                 createNewPath(data["path"]);
             }, failure: function(data) {
-                alert("Got an error dude");
+                alert("Backend pathfinding error");
             }
         })
+    }else {
+        alert("Unable to find specified room name");
     }
 }
 

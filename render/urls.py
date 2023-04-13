@@ -7,7 +7,7 @@ urlpatterns = [
     path('<id>/create', views.create_bash_script, name='create'),
     path('<id>/process', views.process_images, name='process'),
     path('<id>/check', views.check_if_finished, name='check'),
-    path('<id>/pathfinding/<int:x1>/<int:y1>/<int:x2>/<int:y2>/<str:name1>/<str:name2>', views.pathfinding, name='pathfinding'),
+    path('<id>/pathfinding/<int:x1>/<int:y1>/<int:x2>/<int:y2>/<str:name1>/<str:name2>/<int:floor1>/<int:floor2>', views.pathfinding, name='pathfinding'),
     path('<id>/', views.model, name='model')
 ]
 

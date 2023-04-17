@@ -11,7 +11,7 @@ function createNewPath(newPath) {
     for(let i = 0; i < path.length; i++) {
         var dotGeometry = new THREE.BufferGeometry();
         dotGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array([path[i][0], path[i][1], (path[i][2]-1)*floorHeight]), 3));
-        var dotMaterial = new THREE.PointsMaterial({ size: 1, color: 0x0000ff });
+        var dotMaterial = new THREE.PointsMaterial({ size: 1, color: 0x09c6f9 });
         var dot = new THREE.Points(dotGeometry, dotMaterial);
         pathPoints.push(dot);
         pathPointsFloors.push(path[i][2]-1);

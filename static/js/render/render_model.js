@@ -84,13 +84,13 @@ function addLines(points, group, floor) {
 }
 
 function changeFloor() {
-    for (let i=0; i<groups.length; i++) {
-        groups[i].visible = false;
+    for (let i = 0; i < groups.length; i++) {
+        groups[i].visible = false; // Hide every floor group
     }
+    
     visibility = floorBtn.value;
-    groups[floorBtn.value].visible = true;
+    groups[floorBtn.value].visible = true; // Make that specific floor visible
 }
-
 
 function resize() {
     camera.aspect = window.innerWidth/window.innerHeight;
@@ -107,7 +107,7 @@ function toggle_navigation() {
     if (travel) {
         travel = false;
         pauseText.style.visibility = "visible";
-    } else {
+    } else if (path) {
         travel = true;
         pauseText.style.visibility = "hidden";
     }
@@ -154,15 +154,15 @@ function animate() {
     
     // Move first person view camera
     
-    if (travel) {
+    if (travel && path) {
         if (n < path.length) {
-            if (path[n][2]-1 != floorBtn.value){
+            if (path[n][2] - 1 != floorBtn.value) { // If changing floors
                 visibility = path[n][2]-1
                 floorBtn.value = path[n][2]-1;
                 changeFloor();
-                travel = false
+                travel = false;
             }
-            pathPoints[n].material.color.setHex(0xff0000);
+            pathPoints[n].material.color.setHex(0x045de9);
         }else {
             travel = true
             changeFloor();
@@ -219,8 +219,9 @@ function render_model(model) {
     // Create Three.js scene
     
     scene = new THREE.Scene();
-    const axesHelper = new THREE.AxesHelper(400);
-    scene.add(axesHelper);
+    
+    // const axesHelper = new THREE.AxesHelper(400);
+    // scene.add(axesHelper);
     
     // Bird eye view camera
     
@@ -231,7 +232,7 @@ function render_model(model) {
         25000 //far clipping plane
     );
     camera.layers.enable(1);
-    camera.position.set(0, 0, 750); // HARDCODED
+    camera.position.set(0, 0, 750); 
     camera.lookAt(0, 0, 0);
     
     // First person view camera
@@ -249,6 +250,8 @@ function render_model(model) {
     
     const camera_first_helper = new THREE.CameraHelper(camera_first); // Show where first person view camera is
     scene.add(camera_first_helper);
+    
+    // Connect to user interface
     
     mainContainer = document.getElementsByClassName("main-container")[0];
     
@@ -271,25 +274,19 @@ function render_model(model) {
     // Allow camera to be maneuvered
     
     controls = new THREE.TrackballControls(camera, renderer.domElement);
-    // controls.rotateSpeed = 0; // Prevent camera rotation 
+    controls.rotateSpeed = 0; // Prevent camera rotation 
+    
+    // Create lights for environment
     
     const color = 0xFFFFFF;
     const intensity = 1.5;
     const light = new THREE.HemisphereLight( 0xffffff, 0xf7f8f9, 0.6  );
     light.position.set( 0, 0, 500 );
     scene.add( light );
-    // const light = new THREE.DirectionalLight(color, intensity);
-    // light.position.set(400, 400, 800); // HARDCODED  
-    // light.target.position.set(0, 0, 0);
-    // light.castShadow = true;
-    // scene.add(light);
-    // scene.add(light.target);
-    // const light_helper = new THREE.HemisphereLightHelper(light, 50);
-    // scene.add(light_helper);
     
     const connect = model["connect"];
    
-    for (let i = 0; i < numFloors; i++) {
+    for (let i = 0; i < numFloors; i++) { // For each floor
         mid_x = connect[i][0];
         mid_y = connect[i][1];
         let list_of_text = model[(i + 1).toString()]["rooms"];
@@ -334,6 +331,6 @@ function render_model(model) {
     
     setTimeout(() => {
       $('#loadingScreen').remove();
-    }, 1000);
+    }, 2000);
     
 }

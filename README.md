@@ -6,11 +6,6 @@
 
 Fix bugs :D
 
-**Navigation**
-* Multi-floor pathfinding
-    * Sync up floors to match based on stairs
-* Replace any hard-coded values 
-
 **User-Interface**
 * Combine floors to render entire building
 

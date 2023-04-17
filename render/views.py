@@ -8,6 +8,7 @@ from datetime import datetime
 from django.conf import settings
 from django.http import JsonResponse
 from django.shortcuts import render
+from ast import literal_eval
 from heapq import heappush, heappop
 from math import sqrt
 from os import listdir
@@ -108,11 +109,16 @@ def check_if_finished(request, id):
                 
             response_data[str(i)] = floor_data 
             
-            stair_coords.append(floor_data["stairs"])
+            stair_coords.append([[int(j) for j in i] for i in floor_data["stairs"]])
         
         response_data["processed"] = "true"
         response_data["time"] = current_time
+        log.debug(f"Stairs: {stair_coords}")
+        log.debug(f"Alignments: {find_alignments(stair_coords)}")
         response_data["stairs"] = find_alignments(stair_coords)
+        connect = sorted(response_data["stairs"][0].items())[0]
+        log.debug([list(literal_eval(connect[0]))] + [list(i) for i in connect[1]])
+        response_data["connect"] = [list(literal_eval(connect[0]))] + [list(i) for i in connect[1]]
         
         with open(f"{settings.MEDIA_ROOT}maps/{id}/render_final.json", "w") as f:
             json.dump(response_data, f, indent = 4) 
@@ -143,11 +149,13 @@ def check_if_finished(request, id):
                     
                 response_data[str(i)] = floor_data 
                 
-                stair_coords.append(floor_data["stairs"])
+                stair_coords.append([[int(j) for j in i] for i in floor_data["stairs"]])
             
             response_data["processed"] = "true"
             response_data["time"] = current_time
             response_data["stairs"] = find_alignments(stair_coords)
+            connect = sorted(response_data["stairs"][0].items())[0]
+            response_data["connect"] = [list(literal_eval(connect[0]))] + [list(i) for i in connect[1]]
         else:
             response_data = {"processed": "false", "time": current_time}
         
@@ -160,13 +168,22 @@ def pathfinding(request, id, x1, y1, x2, y2, name1, name2, floor1, floor2):
     end = (x2, y2)
     response_data = {}
     
+    with open(f"{settings.MEDIA_ROOT}maps/{id}/render_final.json") as f:
+        data = json.load(f)
+        
+    connect = data["connect"]
+    
+    log.debug(f"x1: {x1}, y1: {y1}, x2: {x2}, y2: {y2}, floor1: {floor1}, floor2: {floor2}")
+    log.debug(f"connect: {connect}")
+    
     if floor1 == floor2: # Rooms are on the same floor
     
-        with open(f"{settings.MEDIA_ROOT}maps/{id}/render_floor{floor1}.json") as f:
-            data = json.load(f)
-    
-        map = data["map"]
-        doorways = data["doorways"]
+        log.debug("Rooms are on the same floor")
+            
+        map = data[str(floor1)]["map"]
+        doorways = data[str(floor1)]["doorways"]
+        
+        floor1 -= 1 # Subtract 1 since zero-indexed
         
         log.debug(doorways)
         log.debug(name1)
@@ -175,26 +192,54 @@ def pathfinding(request, id, x1, y1, x2, y2, name1, name2, floor1, floor2):
         res = a_star(start, end, map, doorways, name1, name2)
     
         if res:
-            path = [[(i[0] - 652) * MULTIPLIER, (380 - i[1]) * MULTIPLIER, 1] for i in res[2]] # HARDCODED
+            path = [[(i[0] - connect[floor1][0]) * MULTIPLIER, (connect[floor1][1] - i[1]) * MULTIPLIER, floor2] for i in res[2]]
             response_data["path"] = path
         else:
             response_data["ERROR"] = "Unable to find path"
             
-    else:
-        with open(f"{settings.MEDIA_ROOT}maps/{id}/render_floor{floor1}.json") as f:
-            data1 = json.load(f)
+    else: # Rooms are on different floors
     
-        with open(f"{settings.MEDIA_ROOT}maps/{id}/render_floor{floor2}.json") as f:
-            data2 = json.load(f)
             
-        map1 = data["map"]
-        doorways1 = data["doorways"]
+        map1 = data[str(floor1)]["map"]
+        doorways1 = data[str(floor1)]["doorways"]
+        
+        stair_coords = data["stairs"]
+        
+        floor1 -= 1 # Subtract 1 since zero-indexed
+        
+        stairs1 = {literal_eval(k): v for k, v in stair_coords[floor1].items()}
         
         # Go to nearest stairway
         
-        # Transfer floors
+        dists = sorted(stairs1.items(), key = lambda k: (x1 - k[0][0])**2 + (x2 - k[0][1])**2) # Sort based on distance between stair and start
         
-        # Repeat to destination
+        log.debug(f"dists: {dists}")
+        
+        
+        for stair_coord, stair_coord2 in dists:
+            res1 = a_star(start, stair_coord, map1, doorways1, name1, "")
+            
+            if res1: # Break loop if found accessible stairway
+                break
+            
+        if res1:
+            # Transfer floors, and go to destination from second stairway
+            
+            map2 = data[str(floor2)]["map"]
+            doorways2 = data[str(floor2)]["doorways"]
+            
+            floor2 -= 1
+            
+            stair_coord2 = tuple(stair_coord2[0]) # Temporary solution, will only work on 2 floors
+            
+            res2 = a_star(stair_coord2, end, map2, doorways2, "", name2)
+            
+            if res2:
+                path = [[(i[0] - connect[floor1][0]) * MULTIPLIER, (connect[floor1][1] - i[1]) * MULTIPLIER, floor1 + 1] for i in res1[2]]
+                path += [[(i[0] - connect[floor2][0]) * MULTIPLIER, (connect[floor2][1] - i[1]) * MULTIPLIER, floor2 + 1] for i in res2[2]]
+                response_data["path"] = path
+            else:
+                response_data["ERROR"] = "Unable to find path"
     
     return JsonResponse(response_data, status=201)
 
@@ -316,8 +361,8 @@ def create_dictionary(l1):
         toReturn.append(dict())
     for i in range(len(l1)):
         for j in range(len(l1[0])):
-            toReturn[j][l1[i][j]] = list(l1[i])
-            toReturn[j][l1[i][j]].remove(l1[i][j])
+            toReturn[j][str(l1[i][j])] = list(l1[i])
+            toReturn[j][str(l1[i][j])].remove(l1[i][j])
     return toReturn
 
 def find_alignments(stair_points):

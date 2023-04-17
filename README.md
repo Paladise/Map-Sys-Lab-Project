@@ -29,3 +29,4 @@ Fix bugs :D
 * Better creation for diagonal walls (doesn't create massive blob)
 * Look into matching floors through similar wall-layouts so not only reliant on staircases
 * Create mini-tutorial / tooltips
+* Enable detection on maps that are not black text on white background

@@ -1,6 +1,6 @@
 var path, model_json, scene, scene2, renderer, camera, controls, groups, visibility, group, insetwidth, insetheight, size, travel, pathPoints, pathPointsFloors, window_width;
 var mainContainer, modelContainer, togglePanelBtn, navPanel, floorBtn, room1, room2, findPathButton, pauseText;
-var roomsContainer, floorBtnContainer, findPathContainer, pauseContainer, floorHeading, numFloors;
+var roomsContainer, floorBtnContainer, findPathContainer, pauseContainer, floorHeading, numFloors, mid_x, mid_y;
 
 const extrudeSettings = {
     steps: 2,
@@ -17,9 +17,6 @@ var headPosition = 20; // How high the camera position is
 
 var floorHeight = 50; // Distance between each floor
 var textHeight = 40; // Distance from text to respective floor
-
-var mid_x = 652;
-var mid_y = 380; // HARDCODED
 
 // Wall texture
 const texture = new THREE.TextureLoader().load( "/static/textures/plaster.jpg" ); // Hardcoded static path, should do it separately
@@ -246,7 +243,7 @@ function render_model(model) {
         2500 //far clipping plane
     );
     camera_first.layers.enable(2);
-    camera_first.position.set(mid_x, mid_y, 10);
+    camera_first.position.set(0, 0, 10);
     camera_first.rotation.x = Math.PI / 2;
     camera_first.rotation.z = 0;
     
@@ -289,8 +286,12 @@ function render_model(model) {
     // scene.add(light.target);
     // const light_helper = new THREE.HemisphereLightHelper(light, 50);
     // scene.add(light_helper);
+    
+    const connect = model["connect"];
    
     for (let i = 0; i < numFloors; i++) {
+        mid_x = connect[i][0];
+        mid_y = connect[i][1];
         let list_of_text = model[(i + 1).toString()]["rooms"];
         let list_of_points = model[(i + 1).toString()]["points"];
         group = new THREE.Group();
@@ -302,7 +303,7 @@ function render_model(model) {
         for (let j = 0; j < list_of_points.length; j++) {
             addLines(list_of_points[j], group, i);
         }
-        for (let j = 0; j < list_of_text.length; j++){
+        for (let j = 0; j < list_of_text.length; j++) {
             addText(list_of_text[j][0], list_of_text[j][1], list_of_text[j][2], group, i, mid_x, mid_y);
         }
         const plane_geometry = new THREE.PlaneGeometry( mid_x*2*5, mid_y*2*5 ); // HARDCODED
@@ -312,14 +313,12 @@ function render_model(model) {
         group.add(plane)
         scene.add(group);
         groups.push(group);
-        mid_x = 424;
-        mid_y = 351; // HARDCODED
     }
 
     pathPoints = [];
     pathPointsFloors= [];
     
-    for (let i=0; i<groups.length; i++) {
+    for (let i = 0; i < groups.length; i++) {
         scene.add(groups[i]);
     }
     

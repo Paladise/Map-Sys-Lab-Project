@@ -247,6 +247,11 @@ def pathfinding(request, id, x1, y1, x2, y2, name1, name2, floor1, floor2):
 def a_star(start, end, map, doorways, name1, name2):
     log.debug(f"called from A*, x_width: {len(map)} y_width: {len(map[0])}")
     
+    start = tuple(start)
+    end = tuple(end)
+    
+    doorways = {k: [tuple(i) for i in v] for k, v in doorways.items()}
+    
     closed = set()
     open = []
     start_node = (0, start, [])
@@ -262,20 +267,20 @@ def a_star(start, end, map, doorways, name1, name2):
         
         # log.debug(f"looking at node {coords}: {map[coords[0]][coords[1]]}, open: {len(open)}")
 
-        if coords[0] == end[0] and coords[1] == end[1]:
+        if coords == end or (name2 in doorways and coords in doorways[name2]):
             return node
             
         for direction in ((-1, 0), (1, 0), (0, 1), (0, -1)):
             x1, y1 = direction
-            new_coords = [coords[0] + x1, coords[1] + y1]
+            new_coords = (coords[0] + x1, coords[1] + y1)
 
             if new_coords[0] < 0 or new_coords[0] > x_width - 1 or new_coords[1] < 0 or new_coords[1] > y_width - 1:
                 continue
             
-            if tuple(new_coords) not in closed and map[new_coords[0]][new_coords[1]] != 1:
+            if new_coords not in closed and map[new_coords[0]][new_coords[1]] != 1:
                 if map[new_coords[0]][new_coords[1]] == 2 and (name1 in doorways and new_coords not in doorways[name1]) and (name2 in doorways and new_coords not in doorways[name2]): # Non-passable doorway
                     continue
-                closed.add(tuple(new_coords))
+                closed.add(new_coords)
                 child_node = (depth + heuristic(new_coords, path, end), new_coords, path + [new_coords])
                 heappush(open, child_node)
 

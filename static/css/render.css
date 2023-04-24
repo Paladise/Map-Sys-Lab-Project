@@ -235,6 +235,22 @@
     top: 0px;
 }
 
+.snackbar {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    height: 60px;
+    z-index: 50;
+    background-color: var(--dark-blue);
+    bottom: 50px;
+    border-radius: 5px;
+    text-align: center;
+    color: white;
+    font-size: 20px;
+    line-height: 60px;
+    padding: 0px 20px;
+}
+
 @media screen and (max-width: 500px) {
     .nav-panel {
         border-radius: 0;

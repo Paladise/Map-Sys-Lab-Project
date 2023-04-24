@@ -22,7 +22,6 @@ var textHeight = 40; // Distance from text to respective floor
 const texture = new THREE.TextureLoader().load( "/static/textures/plaster.jpg" ); // Hardcoded static path, should do it separately
 texture.wrapS = THREE.RepeatWrapping;
 texture.wrapT = THREE.RepeatWrapping;
-texture.repeat.set( 2, 2 );
 
 function addText(text, x, y, group, floor, mid_x, mid_y) {
     /* Function to add text labels at certain locations */
@@ -43,7 +42,7 @@ function addText(text, x, y, group, floor, mid_x, mid_y) {
         // Create two meshes for text, one for bird-eye view camera and one for first-person view
         
         var mesh = new THREE.Mesh(textGeo, textMaterial);
-        mesh.position.set((x - mid_x) * multiplier, (mid_y - y) * multiplier, floorHeight+floor*textHeight);
+        mesh.position.set((x - mid_x) * multiplier, (mid_y - y) * multiplier, floorHeight*floor+textHeight);
         mesh.name = "text1";
         mesh.layers.set(1);
         group.add(mesh);
@@ -58,6 +57,7 @@ function addText(text, x, y, group, floor, mid_x, mid_y) {
 
 function addLines(points, group, floor) {
     /* Function add walls at certain locations */
+    
     let x1, y1, x2, y2, w;
     x1 = points[0];
     y1 = points[1];
@@ -99,7 +99,7 @@ function resize() {
 
     insetwidth = window.innerWidth / 3;
     insetheight = window.innerHeight / 3;
-    camera_first.aspect = insetwidth/insetheight;
+    camera_first.aspect = insetwidth / insetheight;
     camera_first.updateProjectionMatrix();
 }
 
@@ -107,7 +107,7 @@ function toggle_navigation() {
     if (travel) {
         travel = false;
         pauseText.style.visibility = "visible";
-    } else if (path) {
+    } else if (path && n != path.length) {
         travel = true;
         pauseText.style.visibility = "hidden";
     }
@@ -116,6 +116,17 @@ function toggle_navigation() {
 function toggle_panel() {
     navPanel.classList.toggle("collapsed");
     document.getElementsByClassName("menu")[0].classList.toggle("collapsed");
+}
+
+function createSnackbar(message) {
+    var snackbar = document.createElement("div");
+    snackbar.classList.add("snackbar");
+    snackbar.innerHTML = message;
+    document.body.appendChild(snackbar);
+    
+    setTimeout(function() {
+        snackbar.remove();
+    }, 3000);
 }
 
 var slowDown = 0;
@@ -157,6 +168,14 @@ function animate() {
     if (travel && path) {
         if (n < path.length) {
             if (path[n][2] - 1 != floorBtn.value) { // If changing floors
+                if(n != 0) {
+                    var msgVal = "down";
+                    if(path[n][2] - 1 > floorBtn.value) {
+                        msgVal = "up";
+                    }
+                    createSnackbar("Walk " + msgVal + " the stairs");   
+                }
+                
                 visibility = path[n][2]-1
                 floorBtn.value = path[n][2]-1;
                 changeFloor();
@@ -164,8 +183,8 @@ function animate() {
             }
             pathPoints[n].material.color.setHex(0x045de9);
         }else {
-            travel = true
-            changeFloor();
+            travel = false;
+            createSnackbar("Arrived");
         }
         
         if (n < path.length-lookahead) {
@@ -303,7 +322,8 @@ function render_model(model) {
         for (let j = 0; j < list_of_text.length; j++) {
             addText(list_of_text[j][0], list_of_text[j][1], list_of_text[j][2], group, i, mid_x, mid_y);
         }
-        const plane_geometry = new THREE.PlaneGeometry( mid_x*2*5, mid_y*2*5 ); // HARDCODED
+        // Create floor
+        const plane_geometry = new THREE.PlaneGeometry( mid_x*20, mid_x*20 );
         const plane_material = new THREE.MeshBasicMaterial( {color: 0xeeeeee, side: THREE.DoubleSide} );
         const plane = new THREE.Mesh( plane_geometry, plane_material );
         plane_geometry.translate(0, 0, i*floorHeight)

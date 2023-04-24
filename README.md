@@ -18,10 +18,11 @@ Fix bugs :D
     * Detect room names that are on top of walls
     * Detect room names that are connected to a room with an arrow
     * Detect text wrapping better
+    * Detect maps that are not black text on white background
 * Generate specific directions based on path
 * Allow users to add or remove room names / edit model
 * Render staircases & elevators 
-* Better creation for diagonal walls (doesn't create massive blob)
+* Better creation for diagonal walls (don't create massive blob)
 * Look into matching floors through similar wall-layouts so not only reliant on staircases
 * Create mini-tutorial / tooltips
-* Enable detection on maps that are not black text on white background
+* Be able to change speed of camera to accomodate different walking speeds

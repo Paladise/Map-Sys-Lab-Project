@@ -113,8 +113,9 @@ def check_if_finished(request, id):
         
         response_data["processed"] = "true"
         response_data["time"] = current_time
+        log.debug(f"Found stairs: {len(stair_coords[0])}, {len(stair_coords[1])}")
         log.debug(f"Stairs: {stair_coords}")
-        log.debug(f"Alignments: {find_alignments(stair_coords)}")
+        log.debug(f"Alignments: {len(find_alignments(stair_coords)[0].keys())}, {find_alignments(stair_coords)}")
         response_data["stairs"] = find_alignments(stair_coords)
         connect = sorted(response_data["stairs"][0].items())[0]
         log.debug([list(literal_eval(connect[0]))] + [list(i) for i in connect[1]])
@@ -211,7 +212,7 @@ def pathfinding(request, id, x1, y1, x2, y2, name1, name2, floor1, floor2):
         
         # Go to nearest stairway
         
-        dists = sorted(stairs1.items(), key = lambda k: (x1 - k[0][0])**2 + (x2 - k[0][1])**2) # Sort based on distance between stair and start
+        dists = sorted(stairs1.items(), key = lambda k: (x1 - k[0][0])**2 + (y1 - k[0][1])**2) # Sort based on distance between stair and start
         
         log.debug(f"dists: {dists}")
         
@@ -299,13 +300,13 @@ def heuristic(new_coords, path, end):
 ##############################################
 
 class Stair_point():
-    def __init__(self, point, children=[], error=.05):
-        self.children = list()
+    def __init__(self, point, children=[], error=0.1):
+        self.children = list() # Children are rest of stair points that are on the same floor
         self.point = tuple(point)
         self.error = error
         for child in children:
-            self.children.append((self.point[0]-child[0], self.point[1]-child[1], tuple(child)))
-        self.children.sort(reverse=True)
+            self.children.append((self.point[0]-child[0], self.point[1]-child[1], tuple(child))) # Dist between point and child, and child
+        self.children.sort(reverse=True) # Sort from smallest distance to greatest
 
     def add_children(self, child):
         self.children.append((self.point[0]-child[0], self.point[1]-child[1], tuple(child)))
@@ -315,37 +316,32 @@ class Stair_point():
         return sqrt(x**2+y**2)/sqrt(x_dif**2+y_dif**2)
 
     def near(self, x_dif, y_dif):
-        for x, y, n in self.children:
-            temp = (sqrt(x**2+y**2)/sqrt(x_dif**2+y_dif**2))
-            x = x/temp
-            y = y/temp
-            low = temp*(1+self.error)
-            high = temp*(1-self.error)
-            if (float(x*high) <= x_dif <= float(x*low)) and ((float(y*low) <= y_dif <= float(y*high)) or (float(y*high) <= y_dif <= float(y*low))):
+        for x, y, n in self.children: # For every child (n) and distance between that point and child
+            ratio = self.calc_ratio(x, y, x_dif, y_dif)
+            
+            x /= ratio
+            y /= ratio
+            low = ratio * (1 + self.error)
+            high = ratio * (1 - self.error)
+            if (float(x*low) <= x_dif <= float(x*high) or float(x*high) <= x_dif <= float(x*low)) and ((float(y*low) <= y_dif <= float(y*high)) or (float(y*high) <= y_dif <= float(y*low))):
                 return n
         return None
 
     def align(self, target_points):
         matches = []
-        for point in target_points:
-            match = [[self.point, point.point]]
+        for target_point in target_points: # For every target point
+            match = [[self.point, target_point.point]]
 
-            for x_dif, y_dif, p in point.children:
-                if self.near(x_dif, y_dif):
-                    match.append([self.near(x_dif, y_dif), p])
-            matches.append(match)
+            for x_dif, y_dif, p in target_point.children: # For every child (stair point on same floor) of the target point
+                if self.near(x_dif, y_dif): # If that child is near to original point children
+                    match.append([self.near(x_dif, y_dif), p]) # Append that original point child, and target point child
+            matches.append(match) # Append that match to target point matches
         return matches
 
-def average(x1, x2, y1, y2):
-    return ((x1+x2)/2, (y1+y2)/2)
-
-def average_list(list1):
-    toReturn = []
-    for point in list1:
-        toReturn.append(average(point[0], point[1], point[2], point[3]))
-    return toReturn
-
-def asign_points(list1):
+def assign_points(list1):
+    """
+    For each point in the list, create a stair point, with children being rest of stair points (on same floor)
+    """
     toReturn = []
     for i in range(len(list1)):
         temp = list1.pop(0)
@@ -353,17 +349,11 @@ def asign_points(list1):
         list1.append(temp)
     return toReturn
 
-def compare(l1, l2):
-    toReturn = []
-    for ele in l1:
-        if ele not in l2:
-            toReturn.append(ele)
-    return toReturn
-
-def create_dictionary(l1):
+def create_dictionary(l1): # Create dictionary of best matches
     toReturn = []
     for i in range(len(l1[0])):
         toReturn.append(dict())
+        
     for i in range(len(l1)):
         for j in range(len(l1[0])):
             toReturn[j][str(l1[i][j])] = list(l1[i])
@@ -371,14 +361,12 @@ def create_dictionary(l1):
     return toReturn
 
 def find_alignments(stair_points):
-    n = 1
-    x = asign_points(stair_points[0])
-    y = asign_points(stair_points[1])
+    x = assign_points(stair_points[0])
+    y = assign_points(stair_points[1])
     best = (0, [])
-    highs = []
-    for i in range(len(x)):
-        temp = x[i].align(y)
-        for j in range(len(temp)):
-            if len(temp[j]) > best[0]:
-                best = [len(temp[j]), (temp[j])]
+    for i in range(len(x)): # For each stair point in first floor
+        temp = x[i].align(y) # Try to create alignments
+        for j in range(len(temp)): # For each alignment
+            if len(temp[j]) > best[0]: # If there are more alignments than current best
+                best = [len(temp[j]), (temp[j])] # Make current best those alignments
     return create_dictionary(best[1])

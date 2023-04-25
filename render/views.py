@@ -157,8 +157,13 @@ def check_if_finished(request, id):
             response_data["stairs"] = find_alignments(stair_coords)
             connect = sorted(response_data["stairs"][0].items())[0]
             response_data["connect"] = [list(literal_eval(connect[0]))] + [list(i) for i in connect[1]]
+            
+            if "render_final.json" not in files:
+                with open(f"{settings.MEDIA_ROOT}maps/{id}/render_final.json", "w") as f:
+                    json.dump(response_data, f, indent = 4) 
         else:
-            response_data = {"processed": "false", "time": current_time}
+            copied = [i for i in range(1, num_floors + 1) if f"render_floor{i}.json" in files]
+            response_data = {"processed": "false", "time": current_time, "Finished floor(s)": copied}
         
     log.debug(f"Check if finished view... should be returning JSON response now")
         

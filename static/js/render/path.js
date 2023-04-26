@@ -1,4 +1,6 @@
 function createNewPath(newPath) {
+    createSnackbar("Calculated path");
+    
     path = newPath;
     
     for(let i = 0; i < pathPoints.length; i++) {

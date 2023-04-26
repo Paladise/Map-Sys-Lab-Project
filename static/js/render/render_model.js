@@ -11,6 +11,7 @@ const extrudeSettings = {
 const multiplier = 2; // Multiply size of rendered model
 
 var n = 0; // Index of current camera position on path
+var cam_count = 0
 
 var lookahead = 15; // How far the camera looks ahead
 var headPosition = 20; // How high the camera position is
@@ -103,13 +104,20 @@ function resize() {
     camera_first.updateProjectionMatrix();
 }
 
-function toggle_navigation() {
-    if (travel) {
-        travel = false;
-        pauseText.style.visibility = "visible";
-    } else if (path && n != path.length) {
-        travel = true;
-        pauseText.style.visibility = "hidden";
+function mouse_input() {
+    var x = window.event.clientX;
+    var y = window.event.clientY;
+    if ((x>window_width - insetwidth - 16) && (y<window.innerHeight - insetheight - 16)){
+        cam_count += 1;
+    }
+    else {
+        if (travel) {
+            travel = false;
+            pauseText.style.visibility = "visible";
+        } else if (path && n != path.length) {
+            travel = true;
+            pauseText.style.visibility = "hidden";
+        }
     }
 }
 
@@ -145,7 +153,7 @@ function animate() {
         }
     });
     renderer.setViewport(0, 0, window_width, window.innerHeight)
-    renderer.render(scene, camera);
+    renderer.render(scene, cameras[cam_count%2]);
     renderer.clearDepth();
     renderer.setScissorTest(true);
     renderer.setScissor(
@@ -160,7 +168,7 @@ function animate() {
         insetwidth,
         insetheight,
     );
-    renderer.render(scene, camera_first);
+    renderer.render(scene, cameras[(cam_count+1)%2]);
     renderer.setScissorTest(false);
     
     // Move first person view camera
@@ -192,8 +200,8 @@ function animate() {
             camera_first.lookAt(path[n + lookahead][0], path[n + lookahead][1], headPosition+Math.sin(n/6)+(visibility)*floorHeight);
         }
 
-        if(n>1) {
-            if(camera_first.rotation.x>1) {
+        if(n > 1) {
+            if(camera_first.rotation.x > 1) {
                 camera_first.rotation.x = Math.PI / 2;
                 camera_first.rotation.z = 0;
             }else {
@@ -202,13 +210,12 @@ function animate() {
             }
         }
         
-        if(slowDown == 1) {
-            n++; 
+        if(slowDown == 2) {
+            n++;
             slowDown = 0;
         }else{
-            slowDown = 1;
+            slowDown++;
         }
-        
         
     }
 };
@@ -243,12 +250,11 @@ function render_model(model) {
     // scene.add(axesHelper);
     
     // Bird eye view camera
-    
     camera = new THREE.PerspectiveCamera(
         90, //FOV
         window.innerWidth / window.innerHeight, //aspect
         1, //near clipping plane
-        25000 //far clipping plane
+        5000 //far clipping plane
     );
     camera.layers.enable(1);
     camera.position.set(0, 0, 750); 
@@ -269,7 +275,7 @@ function render_model(model) {
     
     const camera_first_helper = new THREE.CameraHelper(camera_first); // Show where first person view camera is
     scene.add(camera_first_helper);
-    
+    cameras = [camera, camera_first]
     // Connect to user interface
     
     mainContainer = document.getElementsByClassName("main-container")[0];
@@ -341,8 +347,8 @@ function render_model(model) {
     
     changeFloor();
     resize();
-    animate();  
-    renderer.domElement.addEventListener("click", toggle_navigation);
+    animate();
+    renderer.domElement.addEventListener("click", mouse_input);
     window.addEventListener("resize", resize);
     window.addEventListener("orientationchange", resize);
     if (screen.orientation) {

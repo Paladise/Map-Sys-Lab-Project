@@ -13,7 +13,6 @@
     z-index: 5;
     display: block;
     margin: 0 auto;
-    width: 40%;
     text-align: center;
     font-size: 40px;
     color: white;
@@ -110,6 +109,7 @@
 .heading {
     font-weight: normal;
     font-size: 18px;
+    margin: 10px 0px;
 }
 
 .floor-btn {
@@ -126,7 +126,6 @@
 }
 
 .rooms-container {
-    height: 200px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -189,7 +188,7 @@
 }
 
 .pause-container {
-    
+    padding: 10px 0px;
 }
 
 .pause {
@@ -197,6 +196,7 @@
     text-align: center;
     text-transform: capitalize;
     font-size: 24px;
+    margin: 0px;
 }
 
 .share-link-container {
@@ -239,7 +239,6 @@
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    height: 60px;
     z-index: 50;
     background-color: var(--dark-blue);
     bottom: 50px;
@@ -247,8 +246,11 @@
     text-align: center;
     color: white;
     font-size: 20px;
-    line-height: 60px;
-    padding: 0px 20px;
+    line-height: 20px;
+    padding: 20px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 @media screen and (max-width: 500px) {
@@ -273,29 +275,43 @@
     .floor-btn {
         height: 44px;
     }
+    
+    .floor-btn-container {
+        margin-top: 60px;
+    }
+    
+    .snackbar {
+        font-size: 18px;
+        padding: 10px;
+    }
 }
 
-@media screen and (max-height: 500px) {
-  .nav-panel {
+@media screen and (max-height: 600px) and (min-width: 500px) {
+    .nav-panel {
         border-radius: 0;
         width: 100%;
         flex-direction: row;
         flex-wrap: wrap;
         justify-content: space-around;
         align-items: center;
-  }
+    }
+    
+    .floor-btn-container {
+        width: 50%;
+        margin-top: 60px;
+    }
+    
+    .rooms-container {
+        width: 50%;
+    }
+    
+    .pause {
+        font-size: 18px;
+    }
   
-  .floor-btn-container {
-      width: 50%;
-  }
-  
-  .rooms-container {
-      width: 50%;
-  }
-  
-  .pause {
-      font-size: 18px;
-  }
+    .find-path {
+        margin-top: 0px;
+    }
 }
 
 

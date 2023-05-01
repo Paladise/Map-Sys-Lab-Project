@@ -28,16 +28,16 @@ canvas.addEventListener("mouseout",
   }
 );
 
-window.addEventListener("resize",
-  function() {
+function resizeParticleCanvas() {
     canvas.width = particleContainerContent.getBoundingClientRect().width;
     canvas.height = particleContainerContent.scrollHeight;
     canvas.style.width = particleContainerContent.getBoundingClientRect().width;
     canvas.style.height = particleContainerContent.scrollHeight;
     mouse.radius = ((canvas.height / 100) * (canvas.width / 100));
     init();
-  }
-);
+}
+
+window.addEventListener("resize", resizeParticleCanvas);
 
 class Particle {
   constructor(x, y, directionX, directionY, size, color) {

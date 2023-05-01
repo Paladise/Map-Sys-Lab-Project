@@ -1,4 +1,4 @@
-var path, model_json, scene, scene2, renderer, camera, controls, groups, visibility, group, insetwidth, insetheight, size, travel, pathPoints, pathPointsFloors, window_width;
+var model_json, path, scene, scene2, renderer, camera, controls, groups, visibility, group, insetwidth, insetheight, size, travel, pathPoints, pathPointsFloors;
 var mainContainer, modelContainer, togglePanelBtn, navPanel, floorBtn, room1, room2, findPathButton, pauseText;
 var roomsContainer, floorBtnContainer, findPathContainer, pauseContainer, floorHeading, numFloors, mid_x, mid_y;
 
@@ -107,7 +107,7 @@ function resize() {
 function mouse_input() {
     var x = window.event.clientX;
     var y = window.event.clientY;
-    if ((x>window_width - insetwidth - 16) && (y<window.innerHeight - insetheight - 16)){
+    if ((x>window.innerWidth - insetwidth - 16) && (y<window.innerHeight - insetheight - 16)){
         cam_count += 1;
     }
     else {
@@ -152,18 +152,18 @@ function animate() {
             }
         }
     });
-    renderer.setViewport(0, 0, window_width, window.innerHeight)
+    renderer.setViewport(0, 0, window.innerWidth, window.innerHeight)
     renderer.render(scene, cameras[cam_count%2]);
     renderer.clearDepth();
     renderer.setScissorTest(true);
     renderer.setScissor(
-        window_width - insetwidth - 16,
+        window.innerWidth - insetwidth - 16,
         window.innerHeight - insetheight - 16,
         insetwidth,
         insetheight,
     );
     renderer.setViewport(
-        window_width - insetwidth - 16,
+        window.innerWidth - insetwidth - 16,
         window.innerHeight - insetheight - 16,
         insetwidth,
         insetheight,
@@ -232,14 +232,13 @@ function render_model(model) {
     size = 20;
     travel = false;
     groups = new Array();
-    model_json = model;
-    window_width = window.innerWidth;
+    model_json = model; // for pathfinding
     
     // Create Three.js renderer
     
     renderer = new THREE.WebGLRenderer();
     renderer.setPixelRatio(window.devicePixelRatio); //get the correct pixel detail on portable devices
-    renderer.setSize(window_width, window.innerHeight);
+    renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setClearColor(0xffffff, 1); // Default background color
     
     // Create Three.js scene
@@ -331,8 +330,7 @@ function render_model(model) {
         }
         // Create floor
         const plane_geometry = new THREE.PlaneGeometry( mid_x*20, mid_x*20 );
-        // const plane_material = new THREE.MeshBasicMaterial( {color: 0xeeeeee, side: THREE.DoubleSide} );
-        const plane_material = new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide} );
+        const plane_material = new THREE.MeshBasicMaterial( {color: 0xeeeeee, side: THREE.DoubleSide} );
         const plane = new THREE.Mesh( plane_geometry, plane_material );
         plane_geometry.translate(0, 0, i*floorHeight)
         group.add(plane)
@@ -358,7 +356,8 @@ function render_model(model) {
     }
     
     setTimeout(() => {
-      $('#loadingScreen').remove();
+        window.removeEventListener("resize", resizeParticleCanvas);
+        $('#loadingScreen').remove();
     }, 2000);
     
 }

@@ -55,7 +55,6 @@ closet
 janitor
 janitorial
 computer
-lab
 conference
 electrical
 function
@@ -85,9 +84,7 @@ courtyard
 staffroom
 studio
 lounge
-aud
 lob
-art 
 galileo 
 darwin
 door

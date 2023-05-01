@@ -1,4 +1,9 @@
 function createNewPath(newPath) {
+    if(newPath == null) {
+        createSnackbar("Couldn't calculate specified path, try putting rooms that are nearby start/destination");
+        return;
+    }
+    
     createSnackbar("Calculated path");
     
     path = newPath;

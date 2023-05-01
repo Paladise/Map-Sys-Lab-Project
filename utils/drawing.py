@@ -1,7 +1,6 @@
 from colorsys import hls_to_rgb
 from PIL import Image
-from random import random
-    
+from random import random    
 
 def flood(pixels, x, y, found, min_x, max_x, min_y, max_y, width, height):
     """
@@ -124,7 +123,7 @@ def create_image_from_box(pixels, x1, x2, y1, y2, padding, boxes = []):
     return image2
 
 
-def print_image_with_ascii(image, border = False):
+def print_image_with_ascii(image, border = False):    
     width = image.size[0]
 
     pixels_in_image = list(image.getdata())    

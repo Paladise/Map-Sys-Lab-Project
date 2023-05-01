@@ -6,9 +6,6 @@
 
 Fix bugs :D
 
-**User-Interface**
-* Combine floors to render entire building
-
 ## Future Ideas
 * Add automatic stairway detection (ones represented by striped lines)
 * Add automatic doorway detection (ones represented by quarter-circles)
@@ -22,6 +19,7 @@ Fix bugs :D
 * Generate specific directions based on path
 * Allow users to add or remove room names / edit model
 * Render staircases & elevators 
+* Combine floors to render entire building
 * Better creation for diagonal walls (don't create massive blob)
 * Look into matching floors through similar wall-layouts so not only reliant on staircases
 * Create mini-tutorial / tooltips

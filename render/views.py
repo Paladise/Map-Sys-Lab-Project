@@ -104,8 +104,12 @@ def check_if_finished(request, id):
         for i in range(1, num_floors + 1):
             log.debug(f"Check if finished view loading floor: {i}")
             
-            with open(f"{settings.MEDIA_ROOT}maps/{id}/render_floor{i}.json", "r") as f:
-                floor_data = json.load(f)
+            try:
+                with open(f"{settings.MEDIA_ROOT}maps/{id}/render_floor{i}.json", "r") as f:
+                    floor_data = json.load(f)
+            except json.decoder.JSONDecodeError: # Didn't copy JSON file correctly, so removing it (will retry again)
+                subprocess.run(["rm", f"{settings.MEDIA_ROOT}maps/{id}/render_floor{i}.json"])
+                return JsonResponse({"Error": "Didn't copy JSON file correctly"}, status=201)
                 
             response_data[str(i)] = floor_data 
             
@@ -145,8 +149,12 @@ def check_if_finished(request, id):
                                           
                 log.debug(f"Check if finished view copied floor: {i}")
                 
-                with open(f"{settings.MEDIA_ROOT}maps/{id}/render_floor{i}.json", "r") as f:
-                    floor_data = json.load(f)
+                try:
+                    with open(f"{settings.MEDIA_ROOT}maps/{id}/render_floor{i}.json", "r") as f:
+                        floor_data = json.load(f)
+                except json.decoder.JSONDecodeError: # Didn't copy JSON file correctly, so removing it (will retry again)
+                    subprocess.run(["rm", f"{settings.MEDIA_ROOT}maps/{id}/render_floor{i}.json"])
+                    return JsonResponse({"Error": "Didn't copy JSON file correctly"}, status=201)
                     
                 response_data[str(i)] = floor_data 
                 
@@ -284,7 +292,7 @@ def a_star(start, end, map, doorways, name1, name2):
                 continue
             
             if new_coords not in closed and map[new_coords[0]][new_coords[1]] != 1:
-                if map[new_coords[0]][new_coords[1]] == 2 and (name1 in doorways and new_coords not in doorways[name1]) and (name2 in doorways and new_coords not in doorways[name2]): # Non-passable doorway
+                if map[new_coords[0]][new_coords[1]] == 2 and (name1 not in doorways or new_coords not in doorways[name1]) and (name2 not in doorways or new_coords not in doorways[name2]): # Non-passable doorway
                     continue
                 closed.add(new_coords)
                 child_node = (depth + heuristic(new_coords, path, end), new_coords, path + [new_coords])

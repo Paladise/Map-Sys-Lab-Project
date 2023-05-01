@@ -10,6 +10,8 @@ DIRECTORY = None
 SYMBOL_FILES = None
 TESSERACT_DIR_CONFIG = '--tessdata-dir "/cluster/2023abasto/local/share/tessdata"'
 
+DEBUG_PRINT = False
+
 DIST_BETWEEN_LETTERS = 15
 DIST_FOR_SPACE = 4
 Y_THRESHOLD = 6
@@ -291,9 +293,6 @@ def process_image(boxes, color_image, bw_image, thresholds, allowed, max_height,
             actual_boxes.append((x1, x2, y1, y2))
             remove_box(pixels, first_char[0], first_char[1], first_char[2], first_char[3])
         else: # Predict full room name
-            
-#             if len(detected_name) == 1: # Probably just a wall
-#                 continue
                 
             print("After generated name, detected_name:", detected_name, "symbols:", symbols)
 
@@ -340,7 +339,7 @@ def process_image(boxes, color_image, bw_image, thresholds, allowed, max_height,
                 print("Changed confidence because of pytesseract bug")
                 confidence = CHANGED        
             
-            if confidence < CONFIDENCE_THRESHOLD: # Expand boundaries
+            if confidence < UPPER_CONFIDENCE_THRESHOLD: # Expand boundaries
                 orig = (x1, x2, y1, y2)
                 
                 if res := find_more_chars(pixels, x1, x2, y1, y2, -1):
@@ -385,6 +384,10 @@ def process_image(boxes, color_image, bw_image, thresholds, allowed, max_height,
                     rooms.append((full_word, ((first_char[0] + first_char[1])//2, (y1 + y2)//2)))
                     remove_box(pixels, x1, x2, y1, y2)
                     continue
+                    
+            if full_word == "1" and confidence < UPPER_CONFIDENCE_THRESHOLD:
+                print("Wall probably misidentified as 1")
+                continue
             
             if confidence >= CONFIDENCE_THRESHOLD:
                 print(f"Confidence {confidence} greater than threshold: {CONFIDENCE_THRESHOLD}")
@@ -454,6 +457,10 @@ def process_image(boxes, color_image, bw_image, thresholds, allowed, max_height,
                         full_word = a
                             
                         print("Changed because in substring")
+                        
+                if len({len(full_word), len(full), len(detected_name)}) == 3 and confidence < UPPER_CONFIDENCE_THRESHOLD: # All have different number of chars
+                    print("All 3 had different number of chars and not high enough confidence, so not including...")
+                    continue
 
                 print("Full word after using suggestions:", full_word)
                 actual_boxes.append((x1, x2, y1, y2))

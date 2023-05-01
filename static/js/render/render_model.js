@@ -240,7 +240,7 @@ function render_model(model) {
     renderer = new THREE.WebGLRenderer();
     renderer.setPixelRatio(window.devicePixelRatio); //get the correct pixel detail on portable devices
     renderer.setSize(window_width, window.innerHeight);
-    renderer.setClearColor(0xefebd9, 1); // Default background color
+    renderer.setClearColor(0xffffff, 1); // Default background color
     
     // Create Three.js scene
     
@@ -273,9 +273,10 @@ function render_model(model) {
     camera_first.rotation.x = Math.PI / 2;
     camera_first.rotation.z = 0;
     
-    const camera_first_helper = new THREE.CameraHelper(camera_first); // Show where first person view camera is
-    scene.add(camera_first_helper);
+    // const camera_first_helper = new THREE.CameraHelper(camera_first); // Show where first person view camera is
+    // scene.add(camera_first_helper);
     cameras = [camera, camera_first]
+    
     // Connect to user interface
     
     mainContainer = document.getElementsByClassName("main-container")[0];
@@ -299,7 +300,7 @@ function render_model(model) {
     // Allow camera to be maneuvered
     
     controls = new THREE.TrackballControls(camera, renderer.domElement);
-    controls.rotateSpeed = 0; // Prevent camera rotation 
+    controls.rotateSpeed = 0; // Prevent bird-eye view camera rotation 
     
     // Create lights for environment
     
@@ -330,7 +331,8 @@ function render_model(model) {
         }
         // Create floor
         const plane_geometry = new THREE.PlaneGeometry( mid_x*20, mid_x*20 );
-        const plane_material = new THREE.MeshBasicMaterial( {color: 0xeeeeee, side: THREE.DoubleSide} );
+        // const plane_material = new THREE.MeshBasicMaterial( {color: 0xeeeeee, side: THREE.DoubleSide} );
+        const plane_material = new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide} );
         const plane = new THREE.Mesh( plane_geometry, plane_material );
         plane_geometry.translate(0, 0, i*floorHeight)
         group.add(plane)

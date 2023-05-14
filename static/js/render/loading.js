@@ -1,3 +1,17 @@
+const timerDiv = document.getElementById("timer");
+const startTime = new Date();
+
+var timerInterval = setInterval(function() {
+    var endTime = new Date();
+    var timeDiff = endTime - startTime; //in ms
+    timeDiff /= 1000; // strip the ms
+
+    var seconds = Math.round(timeDiff);
+    var minutes = Math.round(seconds / 60);
+    seconds = seconds % 60;
+    timerDiv.innerHTML = (minutes < 10 ? "0"+minutes : minutes) + ":" + (seconds < 10 ? "0"+seconds: seconds) + " elapsed";
+}, 1000);
+
 const canvas = document.getElementById("particleCanvas");
 const ctx = canvas.getContext("2d");
 const particleContainerContent = document.getElementById("particleContainerContent");

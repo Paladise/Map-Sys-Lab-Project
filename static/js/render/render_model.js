@@ -295,7 +295,7 @@ function render_model(model) {
     modelContainer.appendChild(renderer.domElement);
     
     togglePanelBtn = document.getElementById("togglePanel");
-
+    
     // Allow camera to be maneuvered
     
     controls = new THREE.TrackballControls(camera, renderer.domElement);
@@ -357,6 +357,7 @@ function render_model(model) {
     
     setTimeout(() => {
         window.removeEventListener("resize", resizeParticleCanvas);
+        clearInterval(timerInterval);
         $('#loadingScreen').remove();
     }, 2000);
     

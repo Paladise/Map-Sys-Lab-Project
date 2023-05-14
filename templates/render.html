@@ -20,6 +20,7 @@
     <canvas id = "particleCanvas"></canvas>
     <p id = "loadingText" class = "loading-text">Loading...</p>
     <p id = "recentOutput" class = "loading-text small"></p>
+    <p id = "timer" class = "loading-text small"></p>
 </section>
 
 <div class = "menu collapsed">
@@ -218,10 +219,8 @@ $.ajax({
     success: function(data) {
         if(data.processed == "true") {
             document.getElementById("loadingText").innerHTML = "Loading rendered model";
-            console.log("Already have JSON file");
             render_model(data);    
         }else {
-            console.log("Do not already have JSON");
             copy();
         }
     },

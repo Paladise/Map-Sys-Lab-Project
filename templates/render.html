@@ -185,7 +185,6 @@ function check_if_finished_processing() {
             console.log(data);
             if(data.processed == "true") {
                 $('#loadingText').html("Finished processing images...");
-                console.log("Finished processing images at: " + JSON.stringify(data));
                 // $('#recentOutput').html(JSON.stringify(data));
                 render_model(data);    
             }else {

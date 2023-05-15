@@ -45,10 +45,8 @@ def copy_images(request, id):
                 continue
             copy_res = subprocess.run(["scp", f"{settings.MEDIA_ROOT}maps/{id}/{f}",
                                       f"2023abasto@hpc8.csl.tjhsst.edu:/cluster/2023abasto{settings.MEDIA_URL}{id}/"])
-        
-        current_time = datetime.now().strftime("%H:%M:%S")
-        response_data = {"time": current_time}
-        return JsonResponse(response_data, status=201)
+    
+        return JsonResponse({}, status=201)
     else:
         return render(request, "404.html", {"message": "Bad boy >:("})
 
@@ -72,9 +70,7 @@ def create_bash_script(request, id):
     
         subprocess.run(["rm", f"{settings.MEDIA_ROOT}maps/{id}/process.sh"]) # Remove unnecessary process.sh file
     
-        current_time = datetime.now().strftime("%H:%M:%S")
-        response_data = {"time": current_time}
-        return JsonResponse(response_data, status=201)
+        return JsonResponse({}, status=201)
     else:
         return render(request, "404.html", {"message": "Bad boy >:("})
     
@@ -86,8 +82,7 @@ def process_images(request, id):
         result = subprocess.Popen(["ssh", f"2023abasto@hpc8.csl.tjhsst.edu", "bash",
                                   f"/cluster/2023abasto{settings.MEDIA_URL}{id}/process.sh"])
         
-        current_time = datetime.now().strftime("%H:%M:%S")
-        response_data = {"time": current_time}
+        response_data = {}
         return JsonResponse(response_data, status=201)
     else:
         return render(request, "404.html", {"message": "Bad boy >:("})
@@ -97,7 +92,6 @@ def check_if_finished(request, id):
     log.debug(f"Check if finished view... with id {id}")
     
     num_floors = get_number_of_floors(id)
-    current_time = datetime.now().strftime("%H:%M:%S")
     if os.path.isfile(f"{settings.MEDIA_ROOT}maps/{id}/render_floor1.json"):
         response_data = {"num_floors": num_floors}
         stair_coords = []
@@ -116,7 +110,6 @@ def check_if_finished(request, id):
             stair_coords.append([[int(j) for j in i] for i in floor_data["stairs"]])
         
         response_data["processed"] = "true"
-        response_data["time"] = current_time
         log.debug(f"Found stairs: {len(stair_coords[0])}, {len(stair_coords[1])}")
         log.debug(f"Stairs: {stair_coords}")
         log.debug(f"Alignments: {len(find_alignments(stair_coords)[0].keys())}, {find_alignments(stair_coords)}")
@@ -154,14 +147,13 @@ def check_if_finished(request, id):
                         floor_data = json.load(f)
                 except json.decoder.JSONDecodeError: # Didn't copy JSON file correctly, so removing it (will retry again)
                     subprocess.run(["rm", f"{settings.MEDIA_ROOT}maps/{id}/render_floor{i}.json"])
-                    return JsonResponse({"Error": "Didn't copy JSON file correctly"}, status=201)
+                    return JsonResponse({"Error": "Didn't copy JSON file correctly, removing & retrying..."}, status=201)
                     
                 response_data[str(i)] = floor_data 
                 
                 stair_coords.append([[int(j) for j in i] for i in floor_data["stairs"]])
             
             response_data["processed"] = "true"
-            response_data["time"] = current_time
             response_data["stairs"] = find_alignments(stair_coords)
             connect = sorted(response_data["stairs"][0].items())[0]
             response_data["connect"] = [list(literal_eval(connect[0]))] + [list(i) for i in connect[1]]
@@ -171,7 +163,7 @@ def check_if_finished(request, id):
                     json.dump(response_data, f, indent = 4) 
         else:
             copied = [i for i in range(1, num_floors + 1) if f"render_floor{i}.json" in files]
-            response_data = {"processed": "false", "time": current_time, "Finished floor(s)": copied}
+            response_data = {"processed": "false", "files": [f for f in files if "symbol" not in f], "Finished floor(s)": copied}
         
     log.debug(f"Check if finished view... should be returning JSON response now")
         

@@ -20,6 +20,10 @@
 
 .loading-text.small {
     font-size: 24px;
+    width: 100%;
+    padding: 0px 50px;
+    box-sizing: border-box;
+    word-wrap: break-word;
 }
 
 #particleCanvas {

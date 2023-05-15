@@ -7,9 +7,13 @@ var timerInterval = setInterval(function() {
     timeDiff /= 1000; // strip the ms
 
     var seconds = Math.round(timeDiff);
-    var minutes = Math.round(seconds / 60);
+    var minutes = Math.floor(seconds / 60);
     seconds = seconds % 60;
-    timerDiv.innerHTML = (minutes < 10 ? "0"+minutes : minutes) + ":" + (seconds < 10 ? "0"+seconds: seconds) + " elapsed";
+    var text = (minutes < 10 ? "0"+minutes : minutes) + ":" + (seconds < 10 ? "0"+seconds: seconds) + " elapsed";
+    timerDiv.innerHTML = text;
+    if(seconds % 5 == 0) {
+        console.log(text);    
+    }
 }, 1000);
 
 const canvas = document.getElementById("particleCanvas");

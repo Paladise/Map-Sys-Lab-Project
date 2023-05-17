@@ -361,7 +361,7 @@ main {
 }
 
 .images-container {
-    width: 100%;
+    width: 60%;
     aspect-ratio: 3/2;
     overflow: hidden;
     border-radius: 20px;
@@ -376,7 +376,7 @@ main {
 }
 
 .slide-description {
-    width: 60%;
+    width: 50%;
     text-align: left;
 }
 

@@ -9,11 +9,6 @@ input {
 
 #upload-form {
     background-color: #f7f8f9;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    border-radius: 20px;
     padding: 30px; 
     display: flex;
     flex-wrap: wrap;
@@ -21,6 +16,8 @@ input {
     align-items: center;
     box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
     user-select: none;
+    min-height: 100vh;
+    box-sizing: border-box;
 }
 
 .single-container {
@@ -146,7 +143,7 @@ input.file-info {
     width: 175px;
     border-radius: 8px;
     height: 50px;
-    margin: 0 auto;
+    margin: 0 75px;
     font-size: 18px;
 }
 

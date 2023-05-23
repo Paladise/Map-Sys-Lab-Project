@@ -217,6 +217,8 @@ function animate() {
             slowDown++;
         }
         
+        n++;
+        
     }
 };
 

@@ -37,17 +37,17 @@ original_image = flatten_image(FILE_NAME)
 WIDTH, HEIGHT = original_image.size[0], original_image.size[1]
 
 bw_image = convert_to_bw(original_image.copy(), BW_THRESHOLD)
-bw_image.save(DIRECTORY + f"black_and_white_{READ_FROM[:-4]}.png")
+bw_image.save(DIRECTORY + f"bw_{READ_FROM[:-4]}.png")
 
 print("Max font size:", MAX_FONT_SIZE)
 print("Min font size:", MIN_FONT_SIZE)
-boxes, boxes_image = get_bounding_boxes_opencv(DIRECTORY + f"black_and_white_{READ_FROM[:-4]}.png", MAX_FONT_SIZE, MIN_FONT_SIZE)
+boxes, boxes_image = get_bounding_boxes_opencv(DIRECTORY + f"bw_{READ_FROM[:-4]}.png", MAX_FONT_SIZE, MIN_FONT_SIZE)
 boxes_image.save(DIRECTORY + f"boxes_{READ_FROM[:-4]}.png")
 
 print("Processing image...")
 rooms, blank_image, actual_boxes, stair_coords = process_image(boxes, original_image, bw_image, SIMILARITY_THRESHOLDS, ALLOWED_ROOM_NAMES, MAX_FONT_SIZE, DIRECTORY, SYMBOL_FILES) 
 
-blank_image.save(DIRECTORY + f"temp_blank_map_{READ_FROM[:-4]}.png")
+blank_image.save(DIRECTORY + f"temp_{READ_FROM[:-4]}.png")
 
 print("stairs BEFORE:", stair_coords)
 
@@ -56,17 +56,16 @@ found_symbols, blank_image = find_symbols(blank_image, POS_SYMBOLS, DIRECTORY, S
 rooms, stair_coords = integrate_detected(rooms, found_symbols, stair_coords, blank_image)
 
 print("Getting rectangles...")
-rectangles, _ = get_rectangles(blank_image, WIDTH, HEIGHT, rooms)
+rectangles, blank_image = get_rectangles(blank_image, WIDTH, HEIGHT, rooms)
 
-print("Getting doorways...")
-blank_image = get_doorways(blank_image, actual_boxes)
-blank_pixels = blank_image.load()
-blank_image.save(DIRECTORY + f"blank_map_{READ_FROM[:-4]}.png")
+# print("Getting doorways...")
+# blank_image = get_doorways(blank_image, actual_boxes)
+blank_image.save(DIRECTORY + f"blank_{READ_FROM[:-4]}.png")
 
 print("Getting paths and doorways...")
 blank_image, doorways = simplify_map(rooms, blank_image)
 blank_pixels = blank_image.load()
-blank_image.save(DIRECTORY + f"pathways_{READ_FROM[:-4]}.png")
+blank_image.save(DIRECTORY + f"paths_{READ_FROM[:-4]}.png")
 
 print("Saving paths...")
 map = [[1 if blank_pixels[x, y] == (0, 0, 0) else 2 if blank_pixels[x, y] == (255, 255, 0) else 0 for y in range(HEIGHT)] for x in range(WIDTH)] # 1 is for everything that is not a path, 0 is for the paths, and 2 is for doorways            
@@ -74,7 +73,7 @@ map = [[1 if blank_pixels[x, y] == (0, 0, 0) else 2 if blank_pixels[x, y] == (25
 with open(DIRECTORY + f"render_{READ_FROM[:-4]}.json", "w") as f:    
     json.dump({"rooms": rooms, "points": rectangles, "map": map, "doorways": doorways, "stairs": stair_coords}, f, indent = 4, default = str) 
     
-print("stairs:", stair_coords)
-    
-    
+print("stairs:", stair_coords) 
 print("Entire program took", round(perf_counter() - start_time, 3), "seconds.")
+
+# print(rooms)
